@@ -3,6 +3,11 @@
         android:label="hoophub"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Adding API Key -->
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

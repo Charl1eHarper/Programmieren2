@@ -29,9 +29,53 @@ class _MyAppState extends State<MyApp> {
         colorSchemeSeed: Colors.green[700],
       ),
       home: Scaffold(
+        extendBodyBehindAppBar: true, // Ensures the AppBar floats over the map
         appBar: AppBar(
-          title: const Text('Maps Sample App'),
-          elevation: 2,
+          backgroundColor: Colors.transparent, // Makes the AppBar transparent
+          elevation: 0, // Removes shadow under the AppBar
+          titleSpacing: 0,
+          toolbarHeight: 125, // Set a height that fits your content
+          title: Center(
+            child: Container(
+              width: 350,
+              height: 55,
+              margin: const EdgeInsets.only(top: 0), // Adjust this value to move the container down
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xCC717171),
+                // Sets the container to the specified grey with 80% opacity
+                borderRadius: BorderRadius.circular(35),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                        Icons.search, color: Colors.black, size: 35),
+                    // Adjust size here
+                    onPressed: () {
+                      // Add function here
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                        Icons.people, color: Colors.black, size: 35),
+                    onPressed: () {
+                      // Add function here
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                        Icons.account_circle, color: Colors.black, size: 35),
+                    // Adjust size here
+                    onPressed: () {
+                      // Add function here
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         body: GoogleMap(
           onMapCreated: _onMapCreated,

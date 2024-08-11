@@ -51,7 +51,7 @@ class _MyAppState extends State<MyApp> {
                 children: [
                   IconButton(
                     icon: const Icon(
-                        Icons.search, color: Colors.black, size: 35),
+                        Icons.search, color: Colors.black, size: 40),
                     // Adjust size here
                     onPressed: () {
                       // Add function here
@@ -59,14 +59,14 @@ class _MyAppState extends State<MyApp> {
                   ),
                   IconButton(
                     icon: const Icon(
-                        Icons.people, color: Colors.black, size: 35),
+                        Icons.people, color: Colors.black, size: 40),
                     onPressed: () {
                       // Add function here
                     },
                   ),
                   IconButton(
                     icon: const Icon(
-                        Icons.account_circle, color: Colors.black, size: 35),
+                        Icons.account_circle, color: Colors.black, size: 40),
                     // Adjust size here
                     onPressed: () {
                       // Add function here

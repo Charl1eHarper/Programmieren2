@@ -18,7 +18,8 @@ class MyApp extends StatelessWidget {
       ),
       home: const HomePage(), // Ensure this points to your actual home page
       routes: {
-        '/community':(context) => CommunityPage()
+        '/community':(context) => CommunityPage(),
+        '/home':(context) => const HomePage()
       },
     );
   }

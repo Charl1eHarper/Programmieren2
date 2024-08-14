@@ -10,7 +10,8 @@ class CommunityPage extends StatelessWidget {
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             // Handle back button press
-            Navigator.of(context).pop();
+            // Navigate back to the previous page
+            Navigator.pop(context);
           },
         ),
         title: Text('COMMUNITY', style: TextStyle(color: Colors.white)),

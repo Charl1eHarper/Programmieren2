@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 
-class CommunityPage extends StatelessWidget {
+class CommunityPage extends StatefulWidget {
+  @override
+  _CommunityPageState createState() => _CommunityPageState();
+}
+
+class _CommunityPageState extends State<CommunityPage> {
+  bool showFriendsDropdown = false;
+  bool showGroupsDropdown = false;
+
+  final List<String> friends = ['Friend 1', 'Friend 2', 'Friend 3'];
+  final List<String> groups = ['Group 1', 'Group 2'];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -9,74 +20,171 @@ class CommunityPage extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            // Handle back button press
-            // Navigate back to the previous page
             Navigator.pop(context);
           },
         ),
-        title: Text('COMMUNITY', style: TextStyle(color: Colors.white)),
+        title: Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 18)),
         actions: [
           IconButton(
             icon: Icon(Icons.email, color: Colors.white),
             onPressed: () {
               // Handle email button press
-              // Add your email logic here
             },
           ),
         ],
       ),
       body: Container(
         color: Colors.grey[850],
+        padding: EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              margin: EdgeInsets.all(16.0),
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'FREUNDESLISTE',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add, color: Colors.white),
-                    onPressed: () {
-                      // Handle add friend button press
-                    },
-                  ),
-                ],
-              ),
+            buildSectionWithButtonAndDropdown(
+              icon: Icons.person_outline,
+              title: 'FREUNDESLISTE',
+              buttonText: 'ADD FRIEND',
+              showDropdown: showFriendsDropdown,
+              onButtonPressed: () {
+                // Handle Add Friend button press
+              },
+              onDropdownToggle: () {
+                setState(() {
+                  showFriendsDropdown = !showFriendsDropdown;
+                });
+              },
+              titleFontSize: 16.0,
+              dropdownContent: buildFriendsDropdownContent(),
             ),
-            Container(
-              margin: EdgeInsets.all(16.0),
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'GRUPPEN',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.add, color: Colors.white),
-                    onPressed: () {
-                      // Handle create group button press
-                    },
-                  ),
-                ],
-              ),
+            SizedBox(height: 16.0),
+
+            buildSectionWithButtonAndDropdown(
+              icon: Icons.group_outlined,
+              title: 'GRUPPEN',
+              buttonText: 'CREATE GROUP',
+              showDropdown: showGroupsDropdown,
+              onButtonPressed: () {
+                // Handle Create Group button press
+              },
+              onDropdownToggle: () {
+                setState(() {
+                  showGroupsDropdown = !showGroupsDropdown;
+                });
+              },
+              titleFontSize: 16.0,
+              dropdownContent: buildGroupsDropdownContent(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildSectionWithButtonAndDropdown({
+    required IconData icon,
+    required String title,
+    required String buttonText,
+    required bool showDropdown,
+    required VoidCallback onButtonPressed,
+    required VoidCallback onDropdownToggle,
+    required double titleFontSize,
+    required Widget dropdownContent,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.white),
+              SizedBox(width: 8.0),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  showDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                  color: Colors.white,
+                ),
+                onPressed: onDropdownToggle,
+              ),
+              SizedBox(width: 8.0),
+              Flexible(
+                flex: 3,
+                child: TextButton.icon(
+                  onPressed: onButtonPressed,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  ),
+                  icon: Icon(Icons.add, color: Colors.white, size: 18.0),
+                  label: Text(buttonText, style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                ),
+              ),
+            ],
+          ),
+          Divider(color: Colors.white, thickness: 1),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: showDropdown ? dropdownContent : SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildFriendsDropdownContent() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      margin: EdgeInsets.only(top: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[700],
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: friends.map((friend) {
+          return ListTile(
+            title: Text(friend, style: TextStyle(color: Colors.white)),
+            onTap: () {
+              // Handle friend item tap
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget buildGroupsDropdownContent() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      margin: EdgeInsets.only(top: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[700],
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: groups.map((group) {
+          return ListTile(
+            title: Text(group, style: TextStyle(color: Colors.white)),
+            onTap: () {
+              // Handle group item tap
+            },
+          );
+        }).toList(),
       ),
     );
   }

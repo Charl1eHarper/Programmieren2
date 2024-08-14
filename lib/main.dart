@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hoophub/pages/community.dart';
 import 'package:hoophub/pages/homepage.dart'; // Ensure this path is correct
 
 void main() {
@@ -16,6 +17,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const HomePage(), // Ensure this points to your actual home page
+      routes: {
+        '/community':(context) => CommunityPage()
+      },
     );
   }
 }

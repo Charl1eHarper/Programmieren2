@@ -53,6 +53,7 @@ class _HomePageState extends State<HomePage> {
                       Icons.people, color: Colors.black, size: 40), // People icon button
                   onPressed: () {
                     // Define the action for the people button here
+                    Navigator.pushNamed(context, '/community');
                   },
                 ),
                 IconButton(

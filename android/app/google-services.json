@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "663055197483",
+    "project_id": "hoophub-aa29d",
+    "storage_bucket": "hoophub-aa29d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:663055197483:android:065ace1e1c84f929aa116e",
+        "android_client_info": {
+          "package_name": "com.example.hoophub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9uOgJ4RQdKitLi1sNWKo3BPbO4GxYF8g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final appBarHeight = screenHeight * 0.1; // Set AppBar height as 10% of screen height
+    final appBarHeight = screenHeight * 0.104; // Set AppBar height as 10% of screen height
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
         preferredSize: Size.fromHeight(appBarHeight),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.007), // Padding based on screen width
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.01), // Padding based on screen width
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.transparent,
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
           MapWidget(onMapCreated: _onMapCreated),
           if (_isSearchVisible)
             Positioned(
-              top: appBarHeight + screenHeight * 0.01, // Position based on AppBar height and screen height
+              top: appBarHeight + screenHeight * 0.007, // Position based on AppBar height and screen height
               left: screenWidth * 0.04,
               right: screenWidth * 0.04,
               child: SearchWidget(

@@ -68,7 +68,7 @@ class _SearchWidgetState extends State<SearchWidget> {
         if (widget.isSearchVisible)
           Container(
             height: 60, // Customize the height of the search bar
-            margin: const EdgeInsets.only(top: 20), // Adjust the margin
+            margin: const EdgeInsets.only(top: 0), // Adjust the margin
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,

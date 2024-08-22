@@ -12,7 +12,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
-  late GoogleMapController _mapController; // Initialize the controller
+  late GoogleMapController _mapController;
 
   void _onSearchIconPressed() {
     setState(() {
@@ -21,18 +21,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller; // Set the controller when the map is created
+    _mapController = controller;
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final appBarHeight = screenHeight * 0.1; // Set AppBar height as 10% of screen height
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
+        preferredSize: Size.fromHeight(appBarHeight),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(top: 20, left: 16.0, right: 16.0),
+            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.007), // Padding based on screen width
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.transparent,
@@ -40,21 +44,23 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(screenHeight * 0.04), // Radius as percentage of screen height
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05), // Padding based on screen width
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Center(
                       child: IconButton(
-                        icon: const Icon(Icons.search, color: Colors.black, size: 35),
+                        icon: const Icon(Icons.search, color: Colors.black),
+                        iconSize: screenWidth * 0.1, // Icon size as percentage of screen width
                         onPressed: _onSearchIconPressed,
                       ),
                     ),
                     Center(
                       child: IconButton(
-                        icon: const Icon(Icons.people, color: Colors.black, size: 35),
+                        icon: const Icon(Icons.people, color: Colors.black),
+                        iconSize: screenWidth * 0.1,
                         onPressed: () {
                           Navigator.pushNamed(context, '/community');
                         },
@@ -62,7 +68,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Center(
                       child: IconButton(
-                        icon: const Icon(Icons.account_circle, color: Colors.black, size: 35),
+                        icon: const Icon(Icons.account_circle, color: Colors.black),
+                        iconSize: screenWidth * 0.1,
                         onPressed: () {
                           // Action for account button
                         },
@@ -77,16 +84,16 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-          MapWidget(onMapCreated: _onMapCreated), // Pass the map creation callback
+          MapWidget(onMapCreated: _onMapCreated),
           if (_isSearchVisible)
             Positioned(
-              top: 95,
-              left: 16,
-              right: 16,
+              top: appBarHeight + screenHeight * 0.01, // Position based on AppBar height and screen height
+              left: screenWidth * 0.04,
+              right: screenWidth * 0.04,
               child: SearchWidget(
                 isSearchVisible: _isSearchVisible,
                 onSearchIconPressed: _onSearchIconPressed,
-                mapController: _mapController, // Pass the map controller to the SearchWidget
+                mapController: _mapController,
               ),
             ),
         ],
@@ -94,25 +101,28 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFFFFFFFF),
         child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          height: screenHeight * 0.1, // Bottom bar height as percentage of screen height
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.add, size: 40, color: Colors.black),
+                icon: const Icon(Icons.add, color: Colors.black),
+                iconSize: screenWidth * 0.1, // Icon size as percentage of screen width
                 onPressed: () {
                   // Action when add icon is pressed
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.gps_fixed, size: 40, color: Colors.black),
+                icon: const Icon(Icons.gps_fixed, color: Colors.black),
+                iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when GPS icon is pressed
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.settings, size: 40, color: Colors.black),
+                icon: const Icon(Icons.settings, color: Colors.black),
+                iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when settings icon is pressed
                 },

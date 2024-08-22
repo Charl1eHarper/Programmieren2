@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final appBarHeight = screenHeight * 0.08; // Höhe der AppBar
+    final appBarHeight = screenHeight * 0.08;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -37,18 +37,18 @@ class _HomePageState extends State<HomePage> {
           // Map in the background
           MapWidget(onMapCreated: _onMapCreated),
 
-          // Transparent container with AppBar and SearchBar
-          Column(
-            children: [
-              SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
-                  child: Container(
+          // AppBar and SearchBar
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
+              child: Column(
+                children: [
+                  Container(
                     height: appBarHeight,
-                    color: Colors.transparent, // Transparent background for the entire container
+                    color: Colors.transparent,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white, // White background for the AppBar
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(screenHeight * 0.04),
                       ),
                       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
@@ -84,34 +84,24 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                ),
-              ),
-              if (_isSearchVisible)
-                Padding(
-                  padding: const EdgeInsets.only(top: 0), // No extra space between AppBar and SearchBar
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-                    color: Colors.transparent, // Transparent background for the entire container
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white, // White background for the SearchBar
-                        borderRadius: BorderRadius.circular(screenHeight * 0.04),
-                      ),
+                  if (_isSearchVisible)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5),
                       child: SearchWidget(
                         isSearchVisible: _isSearchVisible,
                         onSearchIconPressed: _onSearchIconPressed,
                         mapController: _mapController,
                       ),
                     ),
-                  ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
       bottomNavigationBar: Container(
-        height: screenHeight * 0.09, // Höhe der unteren Leiste
-        color: Colors.white, // Hintergrundfarbe der Leiste
+        height: screenHeight * 0.09,
+        color: Colors.white,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
           child: Row(
@@ -119,7 +109,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               IconButton(
                 icon: const Icon(Icons.add, color: Colors.black),
-                iconSize: screenWidth * 0.1, // Größe des Icons
+                iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when add icon is pressed
                 },

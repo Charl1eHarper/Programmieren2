@@ -27,7 +27,7 @@ class _SearchWidgetState extends State<SearchWidget> {
       return;
     }
 
-    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'YOUR_API_KEY_HERE');
+    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
     PlacesAutocompleteResponse response = await places.autocomplete(query);
 
     if (response.isOkay) {
@@ -42,7 +42,7 @@ class _SearchWidgetState extends State<SearchWidget> {
   }
 
   Future<void> _moveCameraToPlace(String placeId) async {
-    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'YOUR_API_KEY_HERE');
+    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
     PlacesDetailsResponse detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
@@ -57,91 +57,59 @@ class _SearchWidgetState extends State<SearchWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Align(
-          alignment: Alignment.center,
-          child: Container(
-            width: 350,
-            height: 55,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        if (widget.isSearchVisible)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(35),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.search, color: Colors.black, size: 40),
-                  onPressed: widget.onSearchIconPressed,
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _searchPlaces,
+                    decoration: InputDecoration(
+                      hintText: 'Search for places...',
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.people, color: Colors.black, size: 40),
+                  icon: const Icon(Icons.clear),
                   onPressed: () {
-                    Navigator.pushNamed(context, '/community');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.account_circle,
-                      color: Colors.black, size: 40),
-                  onPressed: () {
-                    // Action for account button
+                    _searchController.clear();
+                    _searchPlaces('');
+                    widget.onSearchIconPressed();  // Close search when cleared
                   },
                 ),
               ],
             ),
           ),
-        ),
-        if (widget.isSearchVisible)
-          Container(
-            width: 350,
-            margin: const EdgeInsets.symmetric(vertical: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _searchPlaces,
-              decoration: InputDecoration(
-                hintText: 'Search for places...',
-                border: InputBorder.none,
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _searchPlaces('');
-                  },
-                ),
-              ),
-            ),
-          ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              width: 350,
-              margin: const EdgeInsets.only(top: 190),
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(10),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _placesList.length,
-                  itemBuilder: (context, index) {
-                    final place = _placesList[index];
-                    return ListTile(
-                      title: Text(place.description!),
-                      onTap: () {
-                        _moveCameraToPlace(place.placeId!);
-                        setState(() {
-                          _placesList.clear();
-                        });
-                      },
-                    );
-                  },
-                ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(10),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _placesList.length,
+                itemBuilder: (context, index) {
+                  final place = _placesList[index];
+                  return ListTile(
+                    title: Text(place.description!),
+                    onTap: () {
+                      _moveCameraToPlace(place.placeId!);
+                      setState(() {
+                        _placesList.clear();
+                      });
+                    },
+                  );
+                },
               ),
             ),
           ),

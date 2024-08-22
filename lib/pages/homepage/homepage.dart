@@ -22,20 +22,61 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
-        toolbarHeight: _isSearchVisible ? 120 : 80,
-        title: SearchWidget(
-          isSearchVisible: _isSearchVisible,
-          onSearchIconPressed: _onSearchIconPressed,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(80), // Höhe der AppBar
+        child: SafeArea( // SafeArea sorgt für Abstand vom oberen Rand
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0), // Anpassung des vertikalen Paddings
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white, // Hintergrundfarbe der AppBar
+                borderRadius: BorderRadius.circular(30), // Abgerundete Ecken
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0), // Padding für Icons
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Center(
+                    child: IconButton(
+                      icon: const Icon(Icons.search, color: Colors.black, size: 35),
+                      onPressed: _onSearchIconPressed,
+                    ),
+                  ),
+                  Center(
+                    child: IconButton(
+                      icon: const Icon(Icons.people, color: Colors.black, size: 35),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/community');
+                      },
+                    ),
+                  ),
+                  Center(
+                    child: IconButton(
+                      icon: const Icon(Icons.account_circle, color: Colors.black, size: 35),
+                      onPressed: () {
+                        // Action for account button
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: Stack(
         children: [
           MapWidget(),
-          // Weitere Widgets hier
+          if (_isSearchVisible)
+            Positioned(
+              top: 120, // Adjust this based on your layout
+              left: 16,
+              right: 16,
+              child: SearchWidget(
+                isSearchVisible: _isSearchVisible,
+                onSearchIconPressed: _onSearchIconPressed,
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: BottomAppBar(
@@ -59,8 +100,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.settings,
-                    size: 40, color: Colors.black),
+                icon: const Icon(Icons.settings, size: 40, color: Colors.black),
                 onPressed: () {
                   // Action when settings icon is pressed
                 },

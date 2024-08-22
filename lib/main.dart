@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hoophub/pages/community.dart';
-import 'package:hoophub/pages/homepage.dart'; // Ensure this path is correct
+import 'package:hoophub/pages/homepage/homepage.dart'; // Ensure this path is correct
 
 void main() {
   runApp(const MyApp());

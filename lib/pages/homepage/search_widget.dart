@@ -67,7 +67,7 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            height: 60, // Fixierte Höhe der Suchleiste
+            height: 50, // Fixierte Höhe der Suchleiste
             margin: const EdgeInsets.only(top: 0), // Kein Abstand zur AppBar
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(

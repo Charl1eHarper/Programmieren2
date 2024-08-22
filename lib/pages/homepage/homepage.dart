@@ -21,44 +21,49 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true, // Stelle sicher, dass der Body hinter der AppBar sein kann
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(80), // Höhe der AppBar
-        child: SafeArea( // SafeArea sorgt für Abstand vom oberen Rand
+        child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0), // Anpassung des vertikalen Paddings
+            padding: const EdgeInsets.only(top: 20, left:16, right: 16),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white, // Hintergrundfarbe der AppBar
-                borderRadius: BorderRadius.circular(30), // Abgerundete Ecken
+                color: Colors.transparent, // Hintergrundfarbe der AppBar auf transparent gesetzt
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20.0), // Padding für Icons
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Center(
-                    child: IconButton(
-                      icon: const Icon(Icons.search, color: Colors.black, size: 35),
-                      onPressed: _onSearchIconPressed,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, // Tatsächliche Hintergrundfarbe der AppBar
+                  borderRadius: BorderRadius.circular(30), // Abgerundete Ecken
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Padding für Icons
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Center(
+                      child: IconButton(
+                        icon: const Icon(Icons.search, color: Colors.black, size: 35),
+                        onPressed: _onSearchIconPressed,
+                      ),
                     ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      icon: const Icon(Icons.people, color: Colors.black, size: 35),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/community');
-                      },
+                    Center(
+                      child: IconButton(
+                        icon: const Icon(Icons.people, color: Colors.black, size: 35),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/community');
+                        },
+                      ),
                     ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      icon: const Icon(Icons.account_circle, color: Colors.black, size: 35),
-                      onPressed: () {
-                        // Action for account button
-                      },
+                    Center(
+                      child: IconButton(
+                        icon: const Icon(Icons.account_circle, color: Colors.black, size: 35),
+                        onPressed: () {
+                          // Action for account button
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -69,7 +74,7 @@ class _HomePageState extends State<HomePage> {
           MapWidget(),
           if (_isSearchVisible)
             Positioned(
-              top: 120, // Adjust this based on your layout
+              top: 110, // Abstand zwischen AppBar und Suchleiste
               left: 16,
               right: 16,
               child: SearchWidget(

@@ -59,8 +59,9 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            height: 50, // Höhe der Suchleiste anpassen
+            margin: const EdgeInsets.only(top: 0), // Abstand zur oberen AppBar
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(25),
@@ -72,7 +73,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     controller: _searchController,
                     onChanged: _searchPlaces,
                     decoration: InputDecoration(
-                      hintText: 'Search for places...',
+                      hintText: 'Search for courts...',
                       border: InputBorder.none,
                     ),
                   ),
@@ -90,7 +91,7 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
           Container(
-            width: double.infinity,
+            margin: const EdgeInsets.only(top: 10), // Abstand zu der Suchleiste
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Material(
               elevation: 4,

@@ -5,13 +5,13 @@ import 'package:google_maps_webservice/places.dart';
 class SearchWidget extends StatefulWidget {
   final bool isSearchVisible;
   final VoidCallback onSearchIconPressed;
-  final GoogleMapController mapController; // Pass the GoogleMapController here
+  final GoogleMapController mapController;
 
   const SearchWidget({
     super.key,
     required this.isSearchVisible,
     required this.onSearchIconPressed,
-    required this.mapController, // Initialize the controller
+    required this.mapController,
   });
 
   @override
@@ -67,8 +67,8 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            height: 60, // Customize the height of the search bar
-            margin: const EdgeInsets.only(top: 0), // Adjust the margin
+            height: 60, // Fixierte Höhe der Suchleiste
+            margin: const EdgeInsets.only(top: 0), // Kein Abstand zur AppBar
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -80,7 +80,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: _searchPlaces,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Search for courts...',
                       border: InputBorder.none,
                     ),
@@ -91,7 +91,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   onPressed: () {
                     _searchController.clear();
                     _searchPlaces('');
-                    widget.onSearchIconPressed(); // Close search when cleared
+                    widget.onSearchIconPressed(); // Schließen der Suchleiste, wenn sie geleert wird
                   },
                 ),
               ],
@@ -99,8 +99,11 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
           Container(
-            margin: const EdgeInsets.only(top: 10), // Adjust the margin
+            margin: const EdgeInsets.only(top: 10), // Abstand unterhalb der Suchleiste
             padding: const EdgeInsets.symmetric(horizontal: 15),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.25, // Begrenze die Höhe der Liste auf maximal 30% der Bildschirmhöhe
+            ),
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(10),
@@ -112,7 +115,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   return ListTile(
                     title: Text(place.description!),
                     onTap: () {
-                      _moveCameraToPlace(place.placeId!); // Move the camera to the selected place
+                      _moveCameraToPlace(place.placeId!); // Bewege die Kamera zum ausgewählten Ort
                     },
                   );
                 },

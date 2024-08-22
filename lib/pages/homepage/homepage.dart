@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       bottomNavigationBar: Container(
-        height: screenHeight * 0.08, // Höhe der unteren Leiste
+        height: screenHeight * 0.09, // Höhe der unteren Leiste
         color: Colors.white, // Hintergrundfarbe der Leiste
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
@@ -119,21 +119,21 @@ class _HomePageState extends State<HomePage> {
             children: [
               IconButton(
                 icon: const Icon(Icons.add, color: Colors.black),
-                iconSize: screenWidth * 0.08, // Größe des Icons
+                iconSize: screenWidth * 0.1, // Größe des Icons
                 onPressed: () {
                   // Action when add icon is pressed
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
-                iconSize: screenWidth * 0.08,
+                iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when GPS icon is pressed
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.black),
-                iconSize: screenWidth * 0.08,
+                iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when settings icon is pressed
                 },

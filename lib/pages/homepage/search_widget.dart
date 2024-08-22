@@ -81,7 +81,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     controller: _searchController,
                     onChanged: _searchPlaces,
                     decoration: InputDecoration(
-                      hintText: 'Search for places...',
+                      hintText: 'Search for courts...',
                       border: InputBorder.none,
                     ),
                   ),

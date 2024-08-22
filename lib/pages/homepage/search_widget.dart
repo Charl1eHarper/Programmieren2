@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 
 class SearchWidget extends StatefulWidget {
   final bool isSearchVisible;
   final VoidCallback onSearchIconPressed;
+  final GoogleMapController mapController; // Pass the GoogleMapController here
 
   const SearchWidget({
     super.key,
     required this.isSearchVisible,
     required this.onSearchIconPressed,
+    required this.mapController, // Initialize the controller
   });
 
   @override
@@ -48,7 +51,12 @@ class _SearchWidgetState extends State<SearchWidget> {
     if (detail.isOkay) {
       final location = detail.result.geometry?.location;
       if (location != null) {
-        // Hier den MapController verwenden, um die Kamera zu bewegen
+        widget.mapController.animateCamera(CameraUpdate.newLatLng(
+          LatLng(location.lat, location.lng),
+        ));
+        setState(() {
+          _placesList.clear(); // Clear the search results after moving the camera
+        });
       }
     }
   }
@@ -59,8 +67,8 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            height: 50, // Höhe der Suchleiste anpassen
-            margin: const EdgeInsets.only(top: 0), // Abstand zur oberen AppBar
+            height: 60, // Customize the height of the search bar
+            margin: const EdgeInsets.only(top: 20), // Adjust the margin
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -73,7 +81,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     controller: _searchController,
                     onChanged: _searchPlaces,
                     decoration: InputDecoration(
-                      hintText: 'Search for courts...',
+                      hintText: 'Search for places...',
                       border: InputBorder.none,
                     ),
                   ),
@@ -83,7 +91,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   onPressed: () {
                     _searchController.clear();
                     _searchPlaces('');
-                    widget.onSearchIconPressed();  // Close search when cleared
+                    widget.onSearchIconPressed(); // Close search when cleared
                   },
                 ),
               ],
@@ -91,7 +99,7 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
           Container(
-            margin: const EdgeInsets.only(top: 10), // Abstand zu der Suchleiste
+            margin: const EdgeInsets.only(top: 10), // Adjust the margin
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Material(
               elevation: 4,
@@ -104,10 +112,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   return ListTile(
                     title: Text(place.description!),
                     onTap: () {
-                      _moveCameraToPlace(place.placeId!);
-                      setState(() {
-                        _placesList.clear();
-                      });
+                      _moveCameraToPlace(place.placeId!); // Move the camera to the selected place
                     },
                   );
                 },

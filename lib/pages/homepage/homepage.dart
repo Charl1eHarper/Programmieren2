@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 
@@ -11,6 +12,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
+  late GoogleMapController _mapController; // Initialize the controller
 
   void _onSearchIconPressed() {
     setState(() {
@@ -18,25 +20,29 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller; // Set the controller when the map is created
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true, // Stelle sicher, dass der Body hinter der AppBar sein kann
+      extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80), // Höhe der AppBar
+        preferredSize: Size.fromHeight(80),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(top: 20, left:16, right: 16),
+            padding: const EdgeInsets.only(top: 20, left: 16.0, right: 16.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.transparent, // Hintergrundfarbe der AppBar auf transparent gesetzt
+                color: Colors.transparent,
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white, // Tatsächliche Hintergrundfarbe der AppBar
-                  borderRadius: BorderRadius.circular(30), // Abgerundete Ecken
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0), // Padding für Icons
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -71,15 +77,16 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: [
-          MapWidget(),
+          MapWidget(onMapCreated: _onMapCreated), // Pass the map creation callback
           if (_isSearchVisible)
             Positioned(
-              top: 110, // Abstand zwischen AppBar und Suchleiste
+              top: 95,
               left: 16,
               right: 16,
               child: SearchWidget(
                 isSearchVisible: _isSearchVisible,
                 onSearchIconPressed: _onSearchIconPressed,
+                mapController: _mapController, // Pass the map controller to the SearchWidget
               ),
             ),
         ],

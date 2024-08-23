@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_maps_webservice/places.dart';  // Import für Places API
+import 'package:google_maps_webservice/places.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 
@@ -13,9 +13,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
-  Set<Marker> _markers = {};
+  bool _isInfoWindowVisible = false;
+  // Entferne _infoWindowPosition, falls es nicht verwendet wird.
+  // late LatLng _infoWindowPosition;
+  late String _infoWindowTitle;
+  late String _infoWindowImage;
 
+  Set<Marker> _markers = {};
   late GoogleMapController _mapController;
+  GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
 
   void _onSearchIconPressed() {
     setState(() {
@@ -28,7 +34,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _findSportsPlaces(LatLng location) async {
-    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
     PlacesSearchResponse response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000, // 5km Radius
@@ -43,13 +48,32 @@ class _HomePageState extends State<HomePage> {
             Marker(
               markerId: MarkerId(place.placeId),
               position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
-              infoWindow: InfoWindow(
-                title: place.name,
-                snippet: place.vicinity,
-              ),
+              onTap: () {
+                _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
+              },
             ),
           );
         }
+      });
+    }
+  }
+
+  Future<void> _onMarkerTapped(String placeId, LatLng position) async {
+    PlacesDetailsResponse detail = await places.getDetailsByPlaceId(placeId);
+
+    if (detail.isOkay) {
+      final placeDetails = detail.result;
+      final photoReference = placeDetails.photos.isNotEmpty ? placeDetails.photos[0].photoReference : null;
+      final imageUrl = photoReference != null
+          ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
+          : 'https://via.placeholder.com/400'; // Platzhalterbild
+
+      setState(() {
+        _isInfoWindowVisible = true;
+        // Entferne oder nutze _infoWindowPosition
+        // _infoWindowPosition = position;
+        _infoWindowTitle = placeDetails.name;
+        _infoWindowImage = imageUrl;
       });
     }
   }
@@ -67,9 +91,69 @@ class _HomePageState extends State<HomePage> {
           // Map in the background
           MapWidget(
             onMapCreated: _onMapCreated,
-            markers: _markers, // Pass the markers to the map
+            markers: _markers,
           ),
-
+          if (_isInfoWindowVisible)
+            Positioned(
+              left: screenWidth * 0.2,
+              bottom: screenHeight * 0.3,
+              child: Container(
+                width: 200,
+                height: 250,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.network(
+                          _infoWindowImage,
+                          width: double.infinity,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(Icons.image_not_supported); // Platzhalter-Icon bei Fehler
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _infoWindowTitle,
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isInfoWindowVisible = false; // Schließt das InfoWindow
+                          });
+                        },
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           // AppBar and SearchBar
           SafeArea(
             child: Padding(

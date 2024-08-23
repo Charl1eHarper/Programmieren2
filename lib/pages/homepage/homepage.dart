@@ -103,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 10,
@@ -122,14 +122,14 @@ class _HomePageState extends State<HomePage> {
                           height: 150,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return Icon(Icons.image_not_supported); // Platzhalter-Icon bei Fehler
+                            return const Icon(Icons.image_not_supported); // Platzhalter-Icon bei Fehler
                           },
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             _infoWindowTitle,
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -144,9 +144,17 @@ class _HomePageState extends State<HomePage> {
                             _isInfoWindowVisible = false; // Schließt das InfoWindow
                           });
                         },
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.black,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.7), // Weißer transparenter Kreis
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.black,
+                            size: 16, // Größe des X-Symbols
+                          ),
                         ),
                       ),
                     ),

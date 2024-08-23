@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> {
                           child: const Icon(
                             Icons.close,
                             color: Colors.black,
-                            size: 16, // Größe des X-Symbols
+                            size: 20, // Größe des X-Symbols
                           ),
                         ),
                       ),

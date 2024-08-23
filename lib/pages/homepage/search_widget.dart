@@ -90,8 +90,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     onChanged: _searchPlaces,
                     decoration: const InputDecoration(
                       hintText: 'Search for courts...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 15.0), // Center the text vertically
+                      border: InputBorder.none
                     ),
                   ),
                 ),

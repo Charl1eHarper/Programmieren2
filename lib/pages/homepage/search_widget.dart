@@ -55,6 +55,7 @@ class _SearchWidgetState extends State<SearchWidget> {
           LatLng(location.lat, location.lng),
         ));
         setState(() {
+          _searchController.text = detail.result.name; // Display the selected place in the search bar
           _placesList.clear(); // Clear the search results after moving the camera
         });
       }
@@ -67,8 +68,8 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            height: 50, // Fixierte Höhe der Suchleiste
-            margin: const EdgeInsets.only(top: 0), // Kein Abstand zur AppBar
+            height: 50, // Fixed height of the search bar
+            margin: const EdgeInsets.only(top: 0), // No margin to the AppBar
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -91,7 +92,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   onPressed: () {
                     _searchController.clear();
                     _searchPlaces('');
-                    widget.onSearchIconPressed(); // Schließen der Suchleiste, wenn sie geleert wird
+                    widget.onSearchIconPressed(); // Close the search bar when cleared
                   },
                 ),
               ],
@@ -99,14 +100,15 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
           Container(
-            margin: const EdgeInsets.only(top: 10), // Abstand unterhalb der Suchleiste
-            padding: const EdgeInsets.symmetric(horizontal: 15),
+            margin: const EdgeInsets.only(top: 5), // Margin below the search bar
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.25, // Begrenze die Höhe der Liste auf maximal 30% der Bildschirmhöhe
+              maxHeight: MediaQuery.of(context).size.height * 0.25, // Limit the list height to 25% of the screen height
             ),
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(10),
+              color: Colors.white, // Same background color as the search bar
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: _placesList.length,
@@ -115,7 +117,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                   return ListTile(
                     title: Text(place.description!),
                     onTap: () {
-                      _moveCameraToPlace(place.placeId!); // Bewege die Kamera zum ausgewählten Ort
+                      _moveCameraToPlace(place.placeId!); // Move the camera to the selected place
                     },
                   );
                 },

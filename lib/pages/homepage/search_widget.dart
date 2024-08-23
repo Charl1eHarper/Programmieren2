@@ -6,14 +6,16 @@ class SearchWidget extends StatefulWidget {
   final bool isSearchVisible;
   final VoidCallback onSearchIconPressed;
   final GoogleMapController mapController;
-  final Function(LatLng) onPlaceSelected; // Callback für ausgewählten Ort
+  final Function(LatLng) onPlaceSelected;
+  final FocusNode focusNode; // FocusNode hinzufügen
 
   const SearchWidget({
     super.key,
     required this.isSearchVisible,
     required this.onSearchIconPressed,
     required this.mapController,
-    required this.onPlaceSelected, // Neuer Parameter
+    required this.onPlaceSelected,
+    required this.focusNode, // FocusNode Parameter
   });
 
   @override
@@ -84,6 +86,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                 Expanded(
                   child: TextField(
                     controller: _searchController,
+                    focusNode: widget.focusNode, // FocusNode verwenden
                     onChanged: _searchPlaces,
                     decoration: const InputDecoration(
                       hintText: 'Search for courts...',

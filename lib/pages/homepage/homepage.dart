@@ -14,14 +14,37 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
   bool _isInfoWindowVisible = false;
-  // Entferne _infoWindowPosition, falls es nicht verwendet wird.
+  // Entferne _infoWindowPosition, wenn sie nicht verwendet wird
   // late LatLng _infoWindowPosition;
   late String _infoWindowTitle;
   late String _infoWindowImage;
 
-  Set<Marker> _markers = {};
+  final Set<Marker> _markers = {};
   late GoogleMapController _mapController;
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
+
+  // FocusNode für das Suchfeld
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Listener, um zu reagieren, wenn das Suchfeld den Fokus erhält
+    _searchFocusNode.addListener(() {
+      if (_searchFocusNode.hasFocus) {
+        setState(() {
+          _isInfoWindowVisible = false; // Schließt das InfoWindow, wenn die Tastatur geöffnet wird
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
 
   void _onSearchIconPressed() {
     setState(() {
@@ -49,6 +72,7 @@ class _HomePageState extends State<HomePage> {
               markerId: MarkerId(place.placeId),
               position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
               onTap: () {
+                FocusScope.of(context).unfocus(); // Schließt die Tastatur
                 _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
               },
             ),
@@ -70,7 +94,7 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _isInfoWindowVisible = true;
-        // Entferne oder nutze _infoWindowPosition
+        // Entferne die _infoWindowPosition, wenn sie nicht verwendet wird
         // _infoWindowPosition = position;
         _infoWindowTitle = placeDetails.name;
         _infoWindowImage = imageUrl;
@@ -103,7 +127,7 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
+                  boxShadow: const[
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 10,
@@ -219,6 +243,7 @@ class _HomePageState extends State<HomePage> {
                         onPlaceSelected: (LatLng selectedLocation) {
                           _findSportsPlaces(selectedLocation);
                         },
+                        focusNode: _searchFocusNode, // FocusNode übergeben
                       ),
                     ),
                 ],

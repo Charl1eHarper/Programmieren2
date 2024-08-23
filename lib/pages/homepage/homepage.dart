@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_webservice/places.dart';  // Import für Places API
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 
@@ -12,6 +13,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
+  Set<Marker> _markers = {};
+
   late GoogleMapController _mapController;
 
   void _onSearchIconPressed() {
@@ -22,6 +25,33 @@ class _HomePageState extends State<HomePage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+  }
+
+  Future<void> _findSportsPlaces(LatLng location) async {
+    GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
+    PlacesSearchResponse response = await places.searchNearbyWithRadius(
+      Location(lat: location.latitude, lng: location.longitude),
+      5000, // 5km Radius
+      type: "stadium",
+    );
+
+    if (response.isOkay) {
+      setState(() {
+        _markers.clear();
+        for (var place in response.results) {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(place.placeId),
+              position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
+              infoWindow: InfoWindow(
+                title: place.name,
+                snippet: place.vicinity,
+              ),
+            ),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -35,7 +65,10 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: [
           // Map in the background
-          MapWidget(onMapCreated: _onMapCreated),
+          MapWidget(
+            onMapCreated: _onMapCreated,
+            markers: _markers, // Pass the markers to the map
+          ),
 
           // AppBar and SearchBar
           SafeArea(
@@ -91,6 +124,9 @@ class _HomePageState extends State<HomePage> {
                         isSearchVisible: _isSearchVisible,
                         onSearchIconPressed: _onSearchIconPressed,
                         mapController: _mapController,
+                        onPlaceSelected: (LatLng selectedLocation) {
+                          _findSportsPlaces(selectedLocation);
+                        },
                       ),
                     ),
                 ],

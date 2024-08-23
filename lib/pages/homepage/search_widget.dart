@@ -6,12 +6,14 @@ class SearchWidget extends StatefulWidget {
   final bool isSearchVisible;
   final VoidCallback onSearchIconPressed;
   final GoogleMapController mapController;
+  final Function(LatLng) onPlaceSelected; // Callback für ausgewählten Ort
 
   const SearchWidget({
     super.key,
     required this.isSearchVisible,
     required this.onSearchIconPressed,
     required this.mapController,
+    required this.onPlaceSelected, // Neuer Parameter
   });
 
   @override
@@ -51,13 +53,15 @@ class _SearchWidgetState extends State<SearchWidget> {
     if (detail.isOkay) {
       final location = detail.result.geometry?.location;
       if (location != null) {
-        widget.mapController.animateCamera(CameraUpdate.newLatLng(
-          LatLng(location.lat, location.lng),
-        ));
+        LatLng selectedLocation = LatLng(location.lat, location.lng);
+        widget.mapController.animateCamera(CameraUpdate.newLatLng(selectedLocation));
+
         setState(() {
           _searchController.text = detail.result.name; // Display the selected place in the search bar
           _placesList.clear(); // Clear the search results after moving the camera
         });
+
+        widget.onPlaceSelected(selectedLocation); // Trigger the callback to search for nearby sports places
       }
     }
   }
@@ -68,8 +72,8 @@ class _SearchWidgetState extends State<SearchWidget> {
       children: [
         if (widget.isSearchVisible)
           Container(
-            height: 50, // Fixed height of the search bar
-            margin: const EdgeInsets.only(top: 0), // No margin to the AppBar
+            height: 50,
+            margin: const EdgeInsets.only(top: 0),
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -84,6 +88,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     decoration: const InputDecoration(
                       hintText: 'Search for courts...',
                       border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 15.0), // Center the text vertically
                     ),
                   ),
                 ),
@@ -100,15 +105,15 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         if (widget.isSearchVisible && _placesList.isNotEmpty)
           Container(
-            margin: const EdgeInsets.only(top: 5), // Margin below the search bar
+            margin: const EdgeInsets.only(top: 5),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.25, // Limit the list height to 25% of the screen height
+              maxHeight: MediaQuery.of(context).size.height * 0.25,
             ),
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(10),
-              color: Colors.white, // Same background color as the search bar
+              color: Colors.white,
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: _placesList.length,

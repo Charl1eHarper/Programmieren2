@@ -31,6 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Das folgende Paket wird für die Integration von Firebase benötigt.
+  firebase_core: ^2.15.1
+
+  # Das folgende Paket wird für die Nutzung von Cloud Firestore benötigt.
+  cloud_firestore: ^4.14.0
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CommunityPage extends StatefulWidget {
+  const CommunityPage({super.key});
+
   @override
   _CommunityPageState createState() => _CommunityPageState();
 }
@@ -18,15 +20,15 @@ class _CommunityPageState extends State<CommunityPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 18)),
+        title: const Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 18)),
         actions: [
           IconButton(
-            icon: Icon(Icons.email, color: Colors.white),
+            icon: const Icon(Icons.email, color: Colors.white),
             onPressed: () {
               // Handle email button press
             },
@@ -35,7 +37,7 @@ class _CommunityPageState extends State<CommunityPage> {
       ),
       body: Container(
         color: Colors.grey[850],
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -55,7 +57,7 @@ class _CommunityPageState extends State<CommunityPage> {
               titleFontSize: 16.0,
               dropdownContent: buildFriendsDropdownContent(),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
 
             buildSectionWithButtonAndDropdown(
               icon: Icons.group_outlined,
@@ -90,7 +92,7 @@ class _CommunityPageState extends State<CommunityPage> {
     required Widget dropdownContent,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.grey[800],
         borderRadius: BorderRadius.circular(10.0),
@@ -101,7 +103,7 @@ class _CommunityPageState extends State<CommunityPage> {
           Row(
             children: [
               Icon(icon, color: Colors.white),
-              SizedBox(width: 8.0),
+              const SizedBox(width: 8.0),
               Expanded(
                 flex: 4,
                 child: Text(
@@ -120,25 +122,25 @@ class _CommunityPageState extends State<CommunityPage> {
                 ),
                 onPressed: onDropdownToggle,
               ),
-              SizedBox(width: 8.0),
+              const SizedBox(width: 8.0),
               Flexible(
                 flex: 3,
                 child: TextButton.icon(
                   onPressed: onButtonPressed,
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   ),
-                  icon: Icon(Icons.add, color: Colors.white, size: 18.0),
-                  label: Text(buttonText, style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                  icon: const Icon(Icons.add, color: Colors.white, size: 18.0),
+                  label: Text(buttonText, style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                 ),
               ),
             ],
           ),
-          Divider(color: Colors.white, thickness: 1),
+          const Divider(color: Colors.white, thickness: 1),
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            child: showDropdown ? dropdownContent : SizedBox.shrink(),
+            child: showDropdown ? dropdownContent : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -147,8 +149,8 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget buildFriendsDropdownContent() {
     return Container(
-      padding: EdgeInsets.all(8.0),
-      margin: EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.all(8.0),
+      margin: const EdgeInsets.only(top: 8.0),
       decoration: BoxDecoration(
         color: Colors.grey[700],
         borderRadius: BorderRadius.circular(10.0),
@@ -157,7 +159,7 @@ class _CommunityPageState extends State<CommunityPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: friends.map((friend) {
           return ListTile(
-            title: Text(friend, style: TextStyle(color: Colors.white)),
+            title: Text(friend, style: const TextStyle(color: Colors.white)),
             onTap: () {
               // Handle friend item tap
             },
@@ -169,8 +171,8 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget buildGroupsDropdownContent() {
     return Container(
-      padding: EdgeInsets.all(8.0),
-      margin: EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.all(8.0),
+      margin: const EdgeInsets.only(top: 8.0),
       decoration: BoxDecoration(
         color: Colors.grey[700],
         borderRadius: BorderRadius.circular(10.0),
@@ -179,7 +181,7 @@ class _CommunityPageState extends State<CommunityPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: groups.map((group) {
           return ListTile(
-            title: Text(group, style: TextStyle(color: Colors.white)),
+            title: Text(group, style: const TextStyle(color: Colors.white)),
             onTap: () {
               // Handle group item tap
             },

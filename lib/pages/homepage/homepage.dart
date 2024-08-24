@@ -14,8 +14,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
   bool _isInfoWindowVisible = false;
-  // Entferne _infoWindowPosition, wenn sie nicht verwendet wird
-  // late LatLng _infoWindowPosition;
   late String _infoWindowTitle;
   late String _infoWindowImage;
 
@@ -23,14 +21,12 @@ class _HomePageState extends State<HomePage> {
   late GoogleMapController _mapController;
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
 
-  // FocusNode für das Suchfeld
   final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
 
-    // Listener, um zu reagieren, wenn das Suchfeld den Fokus erhält
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         setState(() {
@@ -94,8 +90,6 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _isInfoWindowVisible = true;
-        // Entferne die _infoWindowPosition, wenn sie nicht verwendet wird
-        // _infoWindowPosition = position;
         _infoWindowTitle = placeDetails.name;
         _infoWindowImage = imageUrl;
       });
@@ -279,6 +273,14 @@ class _HomePageState extends State<HomePage> {
                 iconSize: screenWidth * 0.1,
                 onPressed: () {
                   // Action when settings icon is pressed
+                },
+              ),
+              // Add the test navigation button here
+              IconButton(
+                icon: const Icon(Icons.bug_report, color: Colors.red), // Icon for the test page
+                iconSize: screenWidth * 0.1,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/test_firestore'); // Navigate to TestFirestorePage
                 },
               ),
             ],

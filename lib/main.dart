@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hoophub/pages/community.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:hoophub/pages/homepage/homepage.dart'; // Ensure this path is correct
-import 'package:hoophub/pages/test_firestore.dart'; // Ensure this path is correct
+import 'package:hoophub/pages/community.dart';
+import 'package:hoophub/pages/homepage/homepage.dart';
+import 'package:hoophub/pages/test_firestore.dart';
+import 'package:hoophub/pages/landing.dart';
+import 'package:hoophub/auth_checker.dart'; // Add this import for AuthChecker
 
-
-
-
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures that Firebase is initialized
   await Firebase.initializeApp(); // Initializes Firebase
   runApp(const MyApp());
@@ -24,11 +22,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomePage(), // Ensure this points to your actual home page
+      home: AuthChecker(), // Use AuthChecker as the initial page
       routes: {
-        '/community':(context) => const CommunityPage(),
-        '/home':(context) => const HomePage(),
+        '/community': (context) => const CommunityPage(),
+        '/home': (context) => const HomePage(),
         '/test_firestore': (context) => TestFirestorePage(),
+        '/login': (context) => const LandingPage(), // You can still directly navigate to LandingPage if needed
       },
     );
   }

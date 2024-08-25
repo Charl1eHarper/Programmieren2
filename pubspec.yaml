@@ -33,6 +33,7 @@ dependencies:
 
   # Das folgende Paket wird für die Integration von Firebase benötigt.
   firebase_core: ^2.15.1
+  firebase_auth: ^4.16.0
 
   # Das folgende Paket wird für die Nutzung von Cloud Firestore benötigt.
   cloud_firestore: ^4.14.0

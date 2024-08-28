@@ -1,8 +1,8 @@
-import 'dart:async'; // Importiere dart:async für StreamSubscription
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:geolocator/geolocator.dart'; // Importiere Geolocator
+import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 
@@ -27,6 +27,9 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<Position>? _positionStream;
   LatLng? _currentLocation;
 
+  BitmapDescriptor? _userLocationIcon;
+  BitmapDescriptor? _basketballMarkerIcon;
+
   @override
   void initState() {
     super.initState();
@@ -34,13 +37,14 @@ class _HomePageState extends State<HomePage> {
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         setState(() {
-          _isInfoWindowVisible = false; // Schließt das InfoWindow, wenn die Tastatur geöffnet wird
+          _isInfoWindowVisible = false;
         });
       }
     });
 
-    _getUserLocation(initial: true); // Benutzerposition beim Start abrufen und zentrieren
-    _trackLocationChanges(); // Startet das Tracking der Standortänderungen
+    _loadCustomMarkers();
+    _getUserLocation(initial: true);
+    _trackLocationChanges();
   }
 
   @override
@@ -48,6 +52,18 @@ class _HomePageState extends State<HomePage> {
     _positionStream?.cancel();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCustomMarkers() async {
+    _userLocationIcon = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(48, 48)),
+      'assets/user_location_icon.png',
+    );
+
+    _basketballMarkerIcon = await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(48, 48)),
+      'assets/basketball_marker.png',
+    );
   }
 
   Future<void> _getUserLocation({bool initial = false}) async {
@@ -70,7 +86,7 @@ class _HomePageState extends State<HomePage> {
     Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    if (initial) {
+    if (initial || _mapController != null) {
       _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(userLocation, 15),
       );
@@ -85,13 +101,13 @@ class _HomePageState extends State<HomePage> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Mindestabstand in Metern, bevor ein Update erfolgt
+        distanceFilter: 10,
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       _currentLocation = newLocation;
       _updateUserLocationMarker(newLocation);
-      _findSportsPlaces(newLocation); // Automatische Suche bei Standortänderung
+      _findSportsPlaces(newLocation);
     });
   }
 
@@ -102,7 +118,7 @@ class _HomePageState extends State<HomePage> {
         Marker(
           markerId: const MarkerId('user_location'),
           position: location,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue), // Verwendet das standardmäßige blaue Symbol
+          icon: _userLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
       );
@@ -122,7 +138,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _findSportsPlaces(LatLng location) async {
     PlacesSearchResponse response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
-      5000, // 5km Radius
+      5000,
       keyword: "basketball",
     );
 
@@ -134,8 +150,9 @@ class _HomePageState extends State<HomePage> {
             Marker(
               markerId: MarkerId(place.placeId),
               position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
+              icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
               onTap: () {
-                FocusScope.of(context).unfocus(); // Schließt die Tastatur
+                FocusScope.of(context).unfocus();
                 _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
               },
             ),
@@ -153,7 +170,7 @@ class _HomePageState extends State<HomePage> {
       final photoReference = placeDetails.photos.isNotEmpty ? placeDetails.photos[0].photoReference : null;
       final imageUrl = photoReference != null
           ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
-          : 'https://via.placeholder.com/400'; // Platzhalterbild
+          : 'https://via.placeholder.com/400';
 
       setState(() {
         _isInfoWindowVisible = true;
@@ -173,7 +190,6 @@ class _HomePageState extends State<HomePage> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Map in the background
           MapWidget(
             onMapCreated: _onMapCreated,
             markers: _markers,
@@ -207,7 +223,7 @@ class _HomePageState extends State<HomePage> {
                           height: 150,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.image_not_supported); // Platzhalter-Icon bei Fehler
+                            return const Icon(Icons.image_not_supported);
                           },
                         ),
                         Padding(
@@ -226,19 +242,19 @@ class _HomePageState extends State<HomePage> {
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
-                            _isInfoWindowVisible = false; // Schließt das InfoWindow
+                            _isInfoWindowVisible = false;
                           });
                         },
                         child: Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.7), // Weißer transparenter Kreis
+                            color: Colors.white.withOpacity(0.7),
                           ),
                           padding: const EdgeInsets.all(5),
                           child: const Icon(
                             Icons.close,
                             color: Colors.black,
-                            size: 20, // Größe des X-Symbols
+                            size: 20,
                           ),
                         ),
                       ),
@@ -247,7 +263,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-          // AppBar and SearchBar
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
@@ -307,7 +322,7 @@ class _HomePageState extends State<HomePage> {
                           );
                           _findSportsPlaces(selectedLocation);
                         },
-                        focusNode: _searchFocusNode, // FocusNode übergeben
+                        focusNode: _searchFocusNode,
                       ),
                     ),
                 ],
@@ -343,12 +358,11 @@ class _HomePageState extends State<HomePage> {
                   // Action when settings icon is pressed
                 },
               ),
-              // Add the test navigation button here
               IconButton(
-                icon: const Icon(Icons.bug_report, color: Colors.red), // Icon for the test page
+                icon: const Icon(Icons.bug_report, color: Colors.red),
                 iconSize: screenWidth * 0.1,
                 onPressed: () {
-                  Navigator.pushNamed(context, '/test_firestore'); // Navigate to TestFirestorePage
+                  Navigator.pushNamed(context, '/test_firestore');
                 },
               ),
             ],

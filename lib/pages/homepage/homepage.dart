@@ -25,6 +25,7 @@ class _HomePageState extends State<HomePage> {
 
   final FocusNode _searchFocusNode = FocusNode();
   StreamSubscription<Position>? _positionStream;
+  LatLng? _currentLocation;
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    _getUserLocation(); // Benutzerposition abrufen, wenn die Seite geladen wird
+    _getUserLocation(initial: true); // Benutzerposition beim Start abrufen und zentrieren
     _trackLocationChanges(); // Startet das Tracking der Standortänderungen
   }
 
@@ -49,7 +50,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> _getUserLocation() async {
+  Future<void> _getUserLocation({bool initial = false}) async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -69,11 +70,15 @@ class _HomePageState extends State<HomePage> {
     Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    _mapController.animateCamera(
-      CameraUpdate.newLatLngZoom(userLocation, 15),
-    );
+    if (initial) {
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(userLocation, 15),
+      );
+    }
 
+    _currentLocation = userLocation;
     _updateUserLocationMarker(userLocation);
+    _findSportsPlaces(userLocation);
   }
 
   void _trackLocationChanges() {
@@ -84,10 +89,9 @@ class _HomePageState extends State<HomePage> {
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
-      _mapController.animateCamera(
-        CameraUpdate.newLatLng(newLocation),
-      );
+      _currentLocation = newLocation;
       _updateUserLocationMarker(newLocation);
+      _findSportsPlaces(newLocation); // Automatische Suche bei Standortänderung
     });
   }
 
@@ -298,6 +302,9 @@ class _HomePageState extends State<HomePage> {
                         onSearchIconPressed: _onSearchIconPressed,
                         mapController: _mapController,
                         onPlaceSelected: (LatLng selectedLocation) {
+                          _mapController.animateCamera(
+                            CameraUpdate.newLatLngZoom(selectedLocation, 15),
+                          );
                           _findSportsPlaces(selectedLocation);
                         },
                         focusNode: _searchFocusNode, // FocusNode übergeben
@@ -327,7 +334,7 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
                 iconSize: screenWidth * 0.1,
-                onPressed: _getUserLocation, // Benutzerstandort manuell abrufen
+                onPressed: () => _getUserLocation(), // Benutzerstandort manuell abrufen und zentrieren
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.black),

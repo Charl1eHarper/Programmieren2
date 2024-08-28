@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
     );
 
     _basketballMarkerIcon = await BitmapDescriptor.asset(
-      const ImageConfiguration(size: Size(48, 48)),
+      const ImageConfiguration(size: Size(30, 30)),
       'assets/basketball_marker.png',
     );
   }

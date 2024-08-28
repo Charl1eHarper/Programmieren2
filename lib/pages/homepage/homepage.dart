@@ -1,6 +1,8 @@
+import 'dart:async'; // Importiere dart:async für StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:geolocator/geolocator.dart'; // Importiere Geolocator
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 
@@ -22,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
 
   final FocusNode _searchFocusNode = FocusNode();
+  StreamSubscription<Position>? _positionStream;
 
   @override
   void initState() {
@@ -34,12 +37,72 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+
+    _getUserLocation(); // Benutzerposition abrufen, wenn die Seite geladen wird
+    _trackLocationChanges(); // Startet das Tracking der Standortänderungen
   }
 
   @override
   void dispose() {
+    _positionStream?.cancel();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _getUserLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    LatLng userLocation = LatLng(position.latitude, position.longitude);
+
+    _mapController.animateCamera(
+      CameraUpdate.newLatLngZoom(userLocation, 15),
+    );
+
+    _updateUserLocationMarker(userLocation);
+  }
+
+  void _trackLocationChanges() {
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // Mindestabstand in Metern, bevor ein Update erfolgt
+      ),
+    ).listen((Position position) {
+      LatLng newLocation = LatLng(position.latitude, position.longitude);
+      _mapController.animateCamera(
+        CameraUpdate.newLatLng(newLocation),
+      );
+      _updateUserLocationMarker(newLocation);
+    });
+  }
+
+  void _updateUserLocationMarker(LatLng location) {
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId == const MarkerId('user_location'));
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('user_location'),
+          position: location,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue), // Verwendet das standardmäßige blaue Symbol
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ),
+      );
+    });
   }
 
   void _onSearchIconPressed() {
@@ -61,7 +124,7 @@ class _HomePageState extends State<HomePage> {
 
     if (response.isOkay) {
       setState(() {
-        _markers.clear();
+        _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
         for (var place in response.results) {
           _markers.add(
             Marker(
@@ -121,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: const[
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 10,
@@ -264,9 +327,7 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
                 iconSize: screenWidth * 0.1,
-                onPressed: () {
-                  // Action when GPS icon is pressed
-                },
+                onPressed: _getUserLocation, // Benutzerstandort manuell abrufen
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.black),

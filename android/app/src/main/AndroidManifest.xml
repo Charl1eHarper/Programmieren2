@@ -1,4 +1,9 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.hoophub"> <!-- Stelle sicher, dass hier das richtige Paket angegeben ist -->
+
+    <!-- Standortberechtigungen -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />>
     <application
         android:label="hoophub"
         android:name="${applicationName}"

@@ -55,12 +55,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadCustomMarkers() async {
-    _userLocationIcon = await BitmapDescriptor.fromAssetImage(
+    _userLocationIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(48, 48)),
       'assets/user_location_icon.png',
     );
 
-    _basketballMarkerIcon = await BitmapDescriptor.fromAssetImage(
+    _basketballMarkerIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(48, 48)),
       'assets/basketball_marker.png',
     );

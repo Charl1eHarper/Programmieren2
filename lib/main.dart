@@ -5,10 +5,13 @@ import 'package:hoophub/pages/homepage/homepage.dart';
 import 'package:hoophub/pages/test_firestore.dart';
 import 'package:hoophub/pages/landing.dart';
 import 'package:hoophub/auth_checker.dart'; // Add this import for AuthChecker
+import 'package:hoophub/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures that Firebase is initialized
-  await Firebase.initializeApp(); // Initializes Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform, // Stelle sicher, dass dies korrekt initialisiert wird
+  ); // Initializes Firebase
   runApp(const MyApp());
 }
 

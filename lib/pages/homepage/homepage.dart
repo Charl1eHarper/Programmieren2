@@ -25,10 +25,10 @@ class _HomePageState extends State<HomePage> {
 
   final FocusNode _searchFocusNode = FocusNode();
   StreamSubscription<Position>? _positionStream;
-  LatLng? _currentLocation;
 
   BitmapDescriptor? _userLocationIcon;
   BitmapDescriptor? _basketballMarkerIcon;
+  Offset? _infoWindowPosition;
 
   @override
   void initState() {
@@ -86,13 +86,12 @@ class _HomePageState extends State<HomePage> {
     Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    if (initial || _mapController != null) {
+    if (initial) {
       _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(userLocation, 15),
       );
     }
 
-    _currentLocation = userLocation;
     _updateUserLocationMarker(userLocation);
     _findSportsPlaces(userLocation);
   }
@@ -105,7 +104,6 @@ class _HomePageState extends State<HomePage> {
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
-      _currentLocation = newLocation;
       _updateUserLocationMarker(newLocation);
       _findSportsPlaces(newLocation);
     });
@@ -136,7 +134,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _findSportsPlaces(LatLng location) async {
-    PlacesSearchResponse response = await places.searchNearbyWithRadius(
+    final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000,
       keyword: "basketball",
@@ -163,7 +161,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
-    PlacesDetailsResponse detail = await places.getDetailsByPlaceId(placeId);
+    final detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
       final placeDetails = detail.result;
@@ -172,11 +170,27 @@ class _HomePageState extends State<HomePage> {
           ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
           : 'https://via.placeholder.com/400';
 
-      setState(() {
-        _isInfoWindowVisible = true;
-        _infoWindowTitle = placeDetails.name;
-        _infoWindowImage = imageUrl;
-      });
+      // Kamera zoomen und zentrieren
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(position, 17), // Reduzierter Zoom-Level auf 17
+      );
+
+      // Infofensterposition relativ zu Bildschirmkoordinaten des Markers berechnen
+      final markerScreenPosition = await _mapController.getScreenCoordinate(position);
+
+      final infoWindowPosition = Offset(
+        markerScreenPosition.x.toDouble() + 10, // 10 Pixel rechts vom Marker
+        markerScreenPosition.y.toDouble() - 100, // 100 Pixel über dem Marker
+      );
+
+      if (mounted) {  // Sicherstellen, dass der BuildContext noch gültig ist
+        setState(() {
+          _infoWindowTitle = placeDetails.name;
+          _infoWindowImage = imageUrl;
+          _infoWindowPosition = infoWindowPosition;
+          _isInfoWindowVisible = true;
+        });
+      }
     }
   }
 
@@ -194,10 +208,11 @@ class _HomePageState extends State<HomePage> {
             onMapCreated: _onMapCreated,
             markers: _markers,
           ),
-          if (_isInfoWindowVisible)
-            Positioned(
-              left: screenWidth * 0.2,
-              bottom: screenHeight * 0.3,
+          if (_isInfoWindowVisible && _infoWindowPosition != null)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),  // Sanfter Übergang
+              left: _infoWindowPosition!.dx.clamp(0.0, screenWidth - 200), // Begrenzung links und rechts
+              top: _infoWindowPosition!.dy.clamp(0.0, screenHeight - 250), // Begrenzung oben und unten
               child: Container(
                 width: 200,
                 height: 250,

@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
           : 'https://via.placeholder.com/400';
 
       _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(position, 17),
+        CameraUpdate.newLatLngZoom(position, 15),
       );
 
       final markerScreenPosition = await _mapController.getScreenCoordinate(position);

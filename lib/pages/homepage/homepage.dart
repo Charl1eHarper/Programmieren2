@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   bool _isInfoWindowVisible = false;
   late String _infoWindowTitle;
   late String _infoWindowImage;
+  Offset? _infoWindowPosition;  // Deklaration der fehlenden Variable
 
   final Set<Marker> _markers = {};
   late GoogleMapController _mapController;
@@ -28,7 +29,6 @@ class _HomePageState extends State<HomePage> {
 
   BitmapDescriptor? _userLocationIcon;
   BitmapDescriptor? _basketballMarkerIcon;
-  Offset? _infoWindowPosition;
 
   @override
   void initState() {
@@ -87,9 +87,8 @@ class _HomePageState extends State<HomePage> {
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
     _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(userLocation, 15),
+      CameraUpdate.newLatLngZoom(userLocation, 15),
     );
-
 
     _updateUserLocationMarker(userLocation);
     _findSportsPlaces(userLocation);
@@ -160,6 +159,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
+    // Berechne screenHeight und screenWidth vor dem asynchronen Aufruf
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     final detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
@@ -169,23 +172,26 @@ class _HomePageState extends State<HomePage> {
           ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
           : 'https://via.placeholder.com/400';
 
-      _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(position, 15),
+      // Hier wird der Marker weiter unten als vertikal zentral positioniert
+      final adjustedPosition = LatLng(position.latitude + 0.0005, position.longitude);
+
+      // Kamera zoomen und auf die neue Position zentrieren
+      await _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(adjustedPosition, 17),
       );
 
-      final markerScreenPosition = await _mapController.getScreenCoordinate(position);
-
+      // Position des Infofensters in der oberen Bildschirmhälfte rechts
       final infoWindowPosition = Offset(
-        markerScreenPosition.x.toDouble() + 10,
-        markerScreenPosition.y.toDouble() - 100,
+        screenWidth * 0.55,  // 60% des Bildschirms von links nach rechts verschoben
+        screenHeight * 0.20,  // 25% des Bildschirms von oben nach unten verschoben (obere Bildschirmhälfte)
       );
 
       if (mounted) {
         setState(() {
           _infoWindowTitle = placeDetails.name;
           _infoWindowImage = imageUrl;
-          _infoWindowPosition = infoWindowPosition;
           _isInfoWindowVisible = true;
+          _infoWindowPosition = infoWindowPosition;
         });
       }
     }
@@ -206,72 +212,75 @@ class _HomePageState extends State<HomePage> {
             markers: _markers,
           ),
           if (_isInfoWindowVisible && _infoWindowPosition != null)
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              left: _infoWindowPosition!.dx.clamp(0.0, screenWidth - 200),
-              top: _infoWindowPosition!.dy.clamp(0.0, screenHeight - 250),
-              child: Container(
-                width: 200,
-                height: 250,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Image.network(
-                          _infoWindowImage,
-                          width: double.infinity,
-                          height: 150,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.image_not_supported);
+            Positioned(
+              left: _infoWindowPosition!.dx,
+              top: _infoWindowPosition!.dy,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: _isInfoWindowVisible ? 1.0 : 0.0,
+                child: Container(
+                  width: 150,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.network(
+                            _infoWindowImage,
+                            width: double.infinity,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.image_not_supported);
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              _infoWindowTitle,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isInfoWindowVisible = false;
+                            });
                           },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            _infoWindowTitle,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isInfoWindowVisible = false;
-                          });
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
-                          padding: const EdgeInsets.all(5),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.black,
-                            size: 20,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                            padding: const EdgeInsets.all(5),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.black,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -362,8 +371,7 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
                 iconSize: screenWidth * 0.1,
                 onPressed: () async {
-                  // Kamera auf aktuellen Standort zentrieren
-                  await _getUserLocation();
+                  await _getUserLocation(); // Kamera auf aktuellen Standort zentrieren
                 },
               ),
               IconButton(

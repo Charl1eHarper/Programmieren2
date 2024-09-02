@@ -86,11 +86,10 @@ class _HomePageState extends State<HomePage> {
     Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    if (initial) {
-      _mapController.animateCamera(
+    _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(userLocation, 15),
-      );
-    }
+    );
+
 
     _updateUserLocationMarker(userLocation);
     _findSportsPlaces(userLocation);
@@ -170,20 +169,18 @@ class _HomePageState extends State<HomePage> {
           ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
           : 'https://via.placeholder.com/400';
 
-      // Kamera zoomen und zentrieren
       _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(position, 17), // Reduzierter Zoom-Level auf 17
+        CameraUpdate.newLatLngZoom(position, 17),
       );
 
-      // Infofensterposition relativ zu Bildschirmkoordinaten des Markers berechnen
       final markerScreenPosition = await _mapController.getScreenCoordinate(position);
 
       final infoWindowPosition = Offset(
-        markerScreenPosition.x.toDouble() + 10, // 10 Pixel rechts vom Marker
-        markerScreenPosition.y.toDouble() - 100, // 100 Pixel über dem Marker
+        markerScreenPosition.x.toDouble() + 10,
+        markerScreenPosition.y.toDouble() - 100,
       );
 
-      if (mounted) {  // Sicherstellen, dass der BuildContext noch gültig ist
+      if (mounted) {
         setState(() {
           _infoWindowTitle = placeDetails.name;
           _infoWindowImage = imageUrl;
@@ -210,9 +207,9 @@ class _HomePageState extends State<HomePage> {
           ),
           if (_isInfoWindowVisible && _infoWindowPosition != null)
             AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),  // Sanfter Übergang
-              left: _infoWindowPosition!.dx.clamp(0.0, screenWidth - 200), // Begrenzung links und rechts
-              top: _infoWindowPosition!.dy.clamp(0.0, screenHeight - 250), // Begrenzung oben und unten
+              duration: const Duration(milliseconds: 300),
+              left: _infoWindowPosition!.dx.clamp(0.0, screenWidth - 200),
+              top: _infoWindowPosition!.dy.clamp(0.0, screenHeight - 250),
               child: Container(
                 width: 200,
                 height: 250,
@@ -364,7 +361,10 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
                 iconSize: screenWidth * 0.1,
-                onPressed: () => _getUserLocation(), // Benutzerstandort manuell abrufen und zentrieren
+                onPressed: () async {
+                  // Kamera auf aktuellen Standort zentrieren
+                  await _getUserLocation();
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.black),

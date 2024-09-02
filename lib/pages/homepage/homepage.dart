@@ -173,17 +173,17 @@ class _HomePageState extends State<HomePage> {
           : 'https://via.placeholder.com/400';
 
       // Hier wird der Marker weiter unten als vertikal zentral positioniert
-      final adjustedPosition = LatLng(position.latitude + 0.0005, position.longitude);
+      final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);
 
       // Kamera zoomen und auf die neue Position zentrieren
       await _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(adjustedPosition, 17),
+        CameraUpdate.newLatLngZoom(adjustedPosition, 16),
       );
 
       // Position des Infofensters in der oberen Bildschirmhälfte rechts
       final infoWindowPosition = Offset(
         screenWidth * 0.55,  // 60% des Bildschirms von links nach rechts verschoben
-        screenHeight * 0.20,  // 25% des Bildschirms von oben nach unten verschoben (obere Bildschirmhälfte)
+        screenHeight * 0.24,  // 25% des Bildschirms von oben nach unten verschoben (obere Bildschirmhälfte)
       );
 
       if (mounted) {

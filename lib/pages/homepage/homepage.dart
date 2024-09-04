@@ -188,6 +188,10 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
+          // Schließe die Suchleiste
+          _isSearchVisible = false;
+
+          // Aktualisiere den Infowindow Zustand
           _infoWindowTitle = placeDetails.name;
           _infoWindowImage = imageUrl;
           _isInfoWindowVisible = true;

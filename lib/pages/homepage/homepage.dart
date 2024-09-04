@@ -91,6 +91,12 @@ class _HomePageState extends State<HomePage> {
     );
 
     _updateUserLocationMarker(userLocation);
+
+    // Schließe das Infofenster, falls es geöffnet ist
+    setState(() {
+      _isInfoWindowVisible = false;
+    });
+
     _findSportsPlaces(userLocation);
   }
 

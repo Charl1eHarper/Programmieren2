@@ -228,68 +228,75 @@ class _HomePageState extends State<HomePage> {
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
-                child: Container(
-                  width: 150,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),  // Abrunden der oberen linken Ecke
+                    topRight: Radius.circular(10), // Abrunden der oberen rechten Ecke
+                    bottomLeft: Radius.circular(10), // Optional: Auch untere Ecken abrunden
+                    bottomRight: Radius.circular(10), // Optional: Auch untere Ecken abrunden
                   ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.network(
-                            _infoWindowImage,
-                            width: double.infinity,
-                            height: 100,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.image_not_supported);
+                  child: Container(
+                    width: 150,
+                    height: 200,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.network(
+                              _infoWindowImage,
+                              width: double.infinity,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.image_not_supported);
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                _infoWindowTitle,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isInfoWindowVisible = false;
+                              });
                             },
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              _infoWindowTitle,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isInfoWindowVisible = false;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                            padding: const EdgeInsets.all(5),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.black,
-                              size: 20,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                              padding: const EdgeInsets.all(5),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.black,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

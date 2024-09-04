@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000,  // Search within a 5km radius
-      keyword: "basketball",  // Search for basketball-related places
+      keyword: "basketball court", // Search for basketball-related places
     );
 
     if (response.isOkay) {

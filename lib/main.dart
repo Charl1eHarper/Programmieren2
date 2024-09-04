@@ -140,24 +140,28 @@ class _HomePageState extends State<HomePage> {
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000,  // Search within a 5km radius
-      keyword: "basketball court", // Search for basketball-related places
+      keyword: "basketball",  // Use a more specific keyword
     );
 
     if (response.isOkay) {
       setState(() {
         _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));  // Remove all non-user-location markers
+
         for (var place in response.results) {
-          _markers.add(
-            Marker(
-              markerId: MarkerId(place.placeId),
-              position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
-              icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
-              onTap: () {
-                FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
-                _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
-              },
-            ),
-          );
+          // Exclude places of type "store" or "gym"
+          if (!place.types.contains("store") && !place.types.contains("gym")) {
+            _markers.add(
+              Marker(
+                markerId: MarkerId(place.placeId),
+                position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
+                icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
+                onTap: () {
+                  FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
+                  _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
+                },
+              ),
+            );
+          }
         }
       });
     }
@@ -200,7 +204,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  // Required 'build' method for the State class
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final appBarHeight = screenHeight * 0.08;

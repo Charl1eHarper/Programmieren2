@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/user_location_icon.png
     - assets/basketball_marker.png
+    - assets/selected_basketball_marker.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

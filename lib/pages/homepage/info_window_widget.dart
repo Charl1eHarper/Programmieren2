@@ -23,10 +23,7 @@ class InfoWindowWidget extends StatelessWidget {
       borderRadius: const BorderRadius.all(Radius.circular(10)),
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery
-              .of(context)
-              .size
-              .height * 0.5,
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
           minWidth: 200,
           maxWidth: 200,
         ),
@@ -56,39 +53,36 @@ class InfoWindowWidget extends StatelessWidget {
                     return const Icon(Icons.image_not_supported);
                   },
                 ),
-                const SizedBox(height: 8),
+                const Divider(thickness: 1, height: 0),  // Divider after image
+
                 // Title with padding on the left and right
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),  // Add padding to left and right
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),  // Removed vertical padding for tighter fit
                   child: Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,  // Larger font for title
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 4),
-                // Reduced space between title and rating
+                const Divider(thickness: 1, height: 0),  // Set height smaller to control space
                 // Rating Section for Ring, Netz, Platz
                 _buildRatingSection("Ring"),
                 _buildRatingSection("Netz"),
                 _buildRatingSection("Platz"),
-                const SizedBox(height: 2),
-                // Reduced space between ratings and button
+
                 // Combined Rate Button with Icon and Text
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  // Add 16px padding at the bottom
+                  padding: const EdgeInsets.only(bottom: 8.0, top: 0),
                   child: TextButton.icon(
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero, // Remove any internal padding
-                      minimumSize: const Size(40, 30), // Adjust minimum size
-                      tapTargetSize: MaterialTapTargetSize
-                          .shrinkWrap, // Shrink wrap the button
+                      padding: EdgeInsets.zero,  // Remove any internal padding
+                      minimumSize: const Size(60, 30),  // Adjust minimum size
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,  // Shrink wrap the button
                     ),
-                    onPressed: onAddRatingPressed, // Callback to add rating
+                    onPressed: onAddRatingPressed,  // Callback to add rating
                     icon: const Icon(Icons.star, color: Colors.orange),
                     label: const Text(
                       "Rate!",
@@ -100,17 +94,19 @@ class InfoWindowWidget extends StatelessWidget {
                     ),
                   ),
                 ),
+                const Divider(thickness: 1, height: 0),  // Divider after "Rate!" button
                 // Show More Button
                 GestureDetector(
                   onTap: onShowMorePressed,
                   child: const Padding(
-                    padding: EdgeInsets.only(bottom: 8.0),
+                    padding: EdgeInsets.only(bottom: 5, top: 5),
                     child: Text(
                       'Show More',
                       style: TextStyle(
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -145,9 +141,10 @@ class InfoWindowWidget extends StatelessWidget {
   // Helper method to build the rating section with right-aligned text and left padding
   Widget _buildRatingSection(String category) {
     return Padding(
-      padding: const EdgeInsets.only(left: 31),  // Apply left padding to the whole row
+      padding: const EdgeInsets.symmetric(vertical: 2.0),  // Adjust spacing between rows
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center, // Ensure vertical alignment
+        mainAxisAlignment: MainAxisAlignment.center, // Center the whole row
         children: [
           // Use SizedBox with fixed width to align labels properly
           SizedBox(
@@ -156,6 +153,7 @@ class InfoWindowWidget extends StatelessWidget {
               "$category:",  // The label (e.g., "Ring:", "Netz:", "Platz:")
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
+                fontSize: 15,  // Slightly larger text for category labels
               ),
               textAlign: TextAlign.right,  // Right-align the text
             ),
@@ -169,7 +167,7 @@ class InfoWindowWidget extends StatelessWidget {
               color: Colors.amber,
             ),
             itemCount: 5,
-            itemSize: 14.0,
+            itemSize: 16.0,  // Larger stars
             direction: Axis.horizontal,
           ),
         ],

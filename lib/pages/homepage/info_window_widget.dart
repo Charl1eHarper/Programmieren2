@@ -8,13 +8,13 @@ class InfoWindowWidget extends StatelessWidget {
   final VoidCallback onClosePressed;
 
   const InfoWindowWidget({
-    Key? key,
+    super.key,  // Pass key directly to the superclass using the super parameter
     required this.title,
     required this.address,
     required this.imageUrl,
     required this.onShowMorePressed,
     required this.onClosePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

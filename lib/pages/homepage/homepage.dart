@@ -8,6 +8,7 @@ import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -46,7 +47,7 @@ class _HomePageState extends State<HomePage> {
       if (_searchFocusNode.hasFocus) {
         setState(() {
           _isInfoWindowVisible = false;  // Hide the info window when search bar is focused
-          _selectedMarkerId = null;  // Deselect marker when search is active
+          _onCloseInfoWindow();  // Deselect previous marker
         });
       }
     });
@@ -189,6 +190,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
+    if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
+      _onCloseInfoWindow();  // Reset the previous marker before selecting a new one
+    }
+
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -272,6 +277,9 @@ class _HomePageState extends State<HomePage> {
         _markers.clear();
         _markers.addAll(updatedMarkers);
       });
+
+      // Reset selected marker ID
+      _selectedMarkerId = null;
     }
   }
 

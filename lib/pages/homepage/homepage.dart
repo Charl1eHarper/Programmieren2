@@ -5,7 +5,9 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
-import 'package:hoophub/pages/homepage/custom_info_window.dart';
+import 'package:hoophub/pages/homepage/marker_details_page.dart';
+import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +23,8 @@ class _HomePageState extends State<HomePage> {
   late String _infoWindowImage;  // Holds the image URL of the info window
   late String _infoWindowAddress;
   Offset? _infoWindowPosition;  // Holds the position of the info window on the screen
+
+  List<String> _imagesForDetailPage = [];  // Holds all the image URLs for the details page
 
   final Set<Marker> _markers = {};  // Holds the set of map markers
   late GoogleMapController _mapController;  // Controller for Google Map
@@ -173,40 +177,54 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Abrufen der Details des Markers, einschließlich Bilder
     final detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
       final placeDetails = detail.result;
-      final photoReference = placeDetails.photos.isNotEmpty ? placeDetails.photos[0].photoReference : null;
-      final imageUrl = photoReference != null
-          ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
-          : 'https://via.placeholder.com/400';
 
-      final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);
+      // Erstellen einer Liste von Bild-URLs, falls Fotos vorhanden sind
+      List<String> imageUrls = [];
+      if (placeDetails.photos.isNotEmpty) {
+        for (var photo in placeDetails.photos) {
+          final photoReference = photo.photoReference;
+          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
+          imageUrls.add(imageUrl);
+        }
+      } else {
+        // Falls keine Bilder vorhanden sind, benutze einen Platzhalter
+        imageUrls.add('https://via.placeholder.com/400');
+      }
+
+      final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
       await _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(adjustedPosition, 16),
       );
 
       final infoWindowPosition = Offset(
-        screenWidth * 0.55,
-        screenHeight * 0.24,
+        screenWidth * 0.36,
+        screenHeight * 0.21,
       );
 
+      // Speichern der Informationen in den Zustandsvariablen
       _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
-      // Preserve the original setState block to manage UI state updates
+      // Setzt die gesammelten Informationen in den State (alle Bilder, Adresse, Name)
       if (mounted) {
         setState(() {
           _isSearchVisible = false;  // Hide the search bar
           _infoWindowTitle = placeDetails.name;  // Update the info window state with new data
-          _infoWindowImage = imageUrl;
+          _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';  // Verwende das erste Bild oder Platzhalter
           _isInfoWindowVisible = true;  // Show the small info window
           _infoWindowPosition = infoWindowPosition;  // Set the position of the info window
+          _imagesForDetailPage = imageUrls; // Speichern aller Bilder für die Detailseite
         });
       }
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {  // Required 'build' method for the State class
@@ -229,114 +247,43 @@ class _HomePageState extends State<HomePage> {
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10),
-                  ),
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.5,  // Set maximum height limit for the info window
-                      minWidth: 150,
-                      maxWidth: 150,  // Set width of the info window
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
+                child: InfoWindowWidget(
+                  title: _infoWindowTitle,
+                  imageUrl: _infoWindowImage,  // Address removed as it's no longer needed
+                  onShowMorePressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MarkerDetailsPage(
+                          markerName: _infoWindowTitle,
+                          markerAddress: _infoWindowAddress,
+                          images: _imagesForDetailPage,
+                          peoplePerHour: const {
+                            12: 4,
+                            13: 6,
+                            14: 3,
+                            15: 8,
+                            16: 5,
+                            17: 9,
+                            18: 4,
+                            19: 7,
+                          },
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,  // Let the height be flexible based on content
-                          children: [
-                            Image.network(
-                              _infoWindowImage,
-                              width: double.infinity,
-                              height: 100,  // Fixed height for the image
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.image_not_supported);
-                              },
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _infoWindowTitle,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Action to open the larger modal (expanded info window)
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return ExpandedInfoWindow(
-                                            imageUrl: _infoWindowImage,
-                                            title: _infoWindowTitle,
-                                            address: _infoWindowAddress,
-                                            ringRating: 1,  // Placeholder ratings
-                                            netRating: 2,
-                                            courtRating: 3,
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Show More',
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isInfoWindowVisible = false;  // Close the info window
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                              padding: const EdgeInsets.all(5),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
+                  onClosePressed: () {
+                    setState(() {
+                      _isInfoWindowVisible = false;
+                    });
+                  },
+                  onAddRatingPressed: () {
+                    // Add your logic for handling user rating submission here
+                  },
                 ),
               ),
             ),
+
 
           SafeArea(
             child: Padding(

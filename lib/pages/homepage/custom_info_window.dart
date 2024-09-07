@@ -23,7 +23,6 @@ class ExpandedInfoWindow extends StatelessWidget {
       elevation: 16,
       child: Container(
         width: MediaQuery.of(context).size.width * 0.8,
-        // Remove fixed height and make it flexible
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,  // Allow the height to be flexible
@@ -55,15 +54,6 @@ class ExpandedInfoWindow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.center,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the modal
-                },
-                child: const Text('Close'),
-              ),
-            ),
           ],
         ),
       ),
@@ -85,4 +75,5 @@ class ExpandedInfoWindow extends StatelessWidget {
     );
   }
 }
+
 

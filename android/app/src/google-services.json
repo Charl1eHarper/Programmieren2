@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "663055197483-cbqfc59vr0ced0ae0kt5ucbt2f1sf7gb.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.hoophub",
-            "certificate_hash": "06956d63caa504132dda657745c181bed44bdae5"
-          }
-        },
-        {
           "client_id": "663055197483-57nbe1c41t9tp92768a23oc1pc190efq.apps.googleusercontent.com",
           "client_type": 3
         }

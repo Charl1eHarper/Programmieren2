@@ -142,27 +142,29 @@ class InfoWindowWidget extends StatelessWidget {
     );
   }
 
-  // Helper method to build the rating section
+  // Helper method to build the rating section with right-aligned text and left padding
   Widget _buildRatingSection(String category) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.0),
-      // Adjust vertical padding if needed
+      padding: const EdgeInsets.only(left: 31),  // Apply left padding to the whole row
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center, // Ensure vertical alignment
         children: [
-          Text(
-            "$category:", // This is the text for Ring, Netz, Platz
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 15, // Set the desired font size here
+          // Use SizedBox with fixed width to align labels properly
+          SizedBox(
+            width: 50,  // Adjust this width as needed to ensure alignment
+            child: Text(
+              "$category:",  // The label (e.g., "Ring:", "Netz:", "Platz:")
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.right,  // Right-align the text
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 5),  // Space between the label and the rating stars
+          // Rating bar indicator
           RatingBarIndicator(
-            rating: 3.5,
-            // Placeholder rating; can be updated later
-            itemBuilder: (context, index) =>
-            const Icon(
+            rating: 3.5,  // Placeholder rating; can be updated later
+            itemBuilder: (context, index) => const Icon(
               Icons.star,
               color: Colors.amber,
             ),

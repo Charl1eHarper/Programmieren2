@@ -8,7 +8,6 @@ import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -35,6 +34,9 @@ class _HomePageState extends State<HomePage> {
 
   BitmapDescriptor? _userLocationIcon;  // Custom icon for the user's location marker
   BitmapDescriptor? _basketballMarkerIcon;  // Custom icon for basketball court markers
+  BitmapDescriptor? _selectedBasketballMarkerIcon;  // Custom icon for selected basketball marker
+
+  String? _selectedMarkerId;  // Holds the ID of the currently selected marker
 
   @override
   void initState() {
@@ -44,6 +46,7 @@ class _HomePageState extends State<HomePage> {
       if (_searchFocusNode.hasFocus) {
         setState(() {
           _isInfoWindowVisible = false;  // Hide the info window when search bar is focused
+          _selectedMarkerId = null;  // Deselect marker when search is active
         });
       }
     });
@@ -69,6 +72,11 @@ class _HomePageState extends State<HomePage> {
     _basketballMarkerIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(30, 30)),
       'assets/basketball_marker.png',
+    );
+
+    _selectedBasketballMarkerIcon = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(30, 30)),
+      'assets/selected_basketball_marker.png',
     );
   }
 
@@ -135,6 +143,12 @@ class _HomePageState extends State<HomePage> {
   void _onSearchIconPressed() {  // Toggle the visibility of the search bar when the search icon is pressed
     setState(() {
       _isSearchVisible = !_isSearchVisible;
+
+      if (_isSearchVisible) {
+        _onCloseInfoWindow();
+        _isInfoWindowVisible = false;  // Schließe das InfoWindow
+        _selectedMarkerId = null;  // Deselektiere den Marker
+      }
     });
   }
 
@@ -154,13 +168,14 @@ class _HomePageState extends State<HomePage> {
         _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));  // Remove all non-user-location markers
 
         for (var place in response.results) {
-          // Exclude places of type "store" or "gym"
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
                 position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
-                icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
+                icon: (_selectedMarkerId == place.placeId && _selectedBasketballMarkerIcon != null)
+                    ? _selectedBasketballMarkerIcon!  // Use selected marker icon
+                    : _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,  // Fallback to default
                 onTap: () {
                   FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
                   _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
@@ -218,13 +233,47 @@ class _HomePageState extends State<HomePage> {
           _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';  // Verwende das erste Bild oder Platzhalter
           _isInfoWindowVisible = true;  // Show the small info window
           _infoWindowPosition = infoWindowPosition;  // Set the position of the info window
-          _imagesForDetailPage = imageUrls; // Speichern aller Bilder für die Detailseite
+          _imagesForDetailPage = imageUrls;  // Speichern aller Bilder für die Detailseite
+          _selectedMarkerId = placeId;  // Set the selected marker ID
+
+          // Aktualisiere den Marker mit rotem Icon für den ausgewählten Marker
+          _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
+          _markers.add(
+            Marker(
+              markerId: MarkerId(placeId),
+              position: position,
+              icon: _selectedBasketballMarkerIcon!,  // Verwende das Icon mit rotem Rahmen
+              onTap: () {
+                FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
+                _onMarkerTapped(placeId, position);
+              },
+            ),
+          );
         });
       }
     }
   }
 
+  void _onCloseInfoWindow() {
+    if (_selectedMarkerId != null) {
+      // Erstelle eine neue Marker-Liste, in der wir das Icon des ausgewählten Markers ändern
+      final updatedMarkers = _markers.map((marker) {
+        if (marker.markerId.value == _selectedMarkerId) {
+          // Aktualisiere nur das Icon des ausgewählten Markers
+          return marker.copyWith(
+            iconParam: _basketballMarkerIcon!,  // Ändere das Icon auf das Standard-Basketball-Icon
+          );
+        }
+        return marker;  // Alle anderen Marker bleiben unverändert
+      }).toSet();
 
+      // Update den Marker-Set mit dem aktualisierten Marker
+      setState(() {
+        _markers.clear();
+        _markers.addAll(updatedMarkers);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {  // Required 'build' method for the State class
@@ -274,7 +323,9 @@ class _HomePageState extends State<HomePage> {
                   },
                   onClosePressed: () {
                     setState(() {
+                      _onCloseInfoWindow();  // Setze Marker auf Standard zurück
                       _isInfoWindowVisible = false;
+                      _selectedMarkerId = null;  // Deselect marker when the info window is closed
                     });
                   },
                   onAddRatingPressed: () {
@@ -283,7 +334,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
 
           SafeArea(
             child: Padding(
@@ -372,7 +422,13 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.gps_fixed, color: Colors.black),
                 iconSize: screenWidth * 0.1,
                 onPressed: () async {
-                  await _getUserLocation();  // Center the map on the current user location
+                  await _getUserLocation();
+
+                  setState(() {
+                    _onCloseInfoWindow();  // Setze Marker auf Standard zurück
+                    _isInfoWindowVisible = false;  // Verberge das InfoWindow
+                    _selectedMarkerId = null;  // Deselektiere den Marker
+                  });
                 },
               ),
               IconButton(

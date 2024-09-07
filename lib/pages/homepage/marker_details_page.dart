@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; // For bar chart
 
-class MarkerDetailsPage extends StatelessWidget {
+class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
   final String markerAddress;
   final List<String> images;
@@ -13,10 +13,32 @@ class MarkerDetailsPage extends StatelessWidget {
     required this.markerAddress,
     required this.images,
     required this.peoplePerHour,
-  });// Konstruktor als const deklariert
+  });
+
+  @override
+  _MarkerDetailsPageState createState() => _MarkerDetailsPageState();
+}
+
+class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -25,72 +47,117 @@ class MarkerDetailsPage extends StatelessWidget {
             Navigator.pop(context);
           },
         ),
-        title: Text(markerName),
+        title: Text(widget.markerName),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildImageCarousel(context),
-            const SizedBox(height: 16),
-            const Text(
-              'Adresse aus Google Maps',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            // Kein Padding für das Bildkarussell
+            SizedBox(
+              height: screenHeight * 0.30,  // Dynamische Höhe, z.B. 25% der Bildschirmhöhe
+              child: _buildImageCarousel(),
             ),
-            Text(markerAddress),
-            const SizedBox(height: 16),
-            const Text(
-              'Anzahl an Leuten (wann bist du da?)',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            // Padding für die anderen Elemente
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Adresse aus Google Maps',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(widget.markerAddress),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Anzahl an Leuten (wann bist du da?)',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  // Balkendiagramm dynamisch anpassen
+                  SizedBox(
+                    height: screenHeight * 0.3,  // Dynamische Höhe, z.B. 30% der Bildschirmhöhe
+                    child: _buildBarChart(),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildRegistrationSection(),
+                  const SizedBox(height: 16),
+                  _buildCommentSection(),
+                ],
+              ),
             ),
-            SizedBox(height: 200, child: _buildBarChart()),
-            const SizedBox(height: 16),
-            _buildRegistrationSection(),
-            const SizedBox(height: 16),
-            _buildCommentSection(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildImageCarousel(BuildContext context) {
-    return Column(
+  Widget _buildImageCarousel() {
+    return Stack(
+      alignment: Alignment.center, // Zentriere den Inhalt im Stack
       children: [
-        SizedBox(
-          height: 200,
-          child: PageView.builder(
-            itemCount: images.length,
-            onPageChanged: (index) {
-              // currentIndex = index; // Entfernt, da nicht verwendet
-            },
-            itemBuilder: (context, index) {
-              return Image.network(
-                images[index],
-                fit: BoxFit.cover,
-              );
+        PageView.builder(
+          controller: _pageController, // PageController wird verwendet
+          itemCount: widget.images.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index; // Aktueller Index wird gesetzt
+            });
+          },
+          itemBuilder: (context, index) {
+            return Image.network(
+              widget.images[index],
+              width: double.infinity,  // Über die gesamte Breite des Bildschirms
+              fit: BoxFit.cover,  // Das Bild wird zugeschnitten, um den verfügbaren Raum zu füllen
+            );
+          },
+        ),
+        // Linker Pfeil
+        Positioned(
+          left: 16,  // Abstand vom linken Rand
+          child: _buildArrowButton(
+            icon: Icons.arrow_back,
+            onPressed: () {
+              if (_currentIndex > 0) {
+                _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
             },
           ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                // Logic for previous image
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_forward),
-              onPressed: () {
-                // Logic for next image
-              },
-            ),
-          ],
+        // Rechter Pfeil
+        Positioned(
+          right: 16,  // Abstand vom rechten Rand
+          child: _buildArrowButton(
+            icon: Icons.arrow_forward,
+            onPressed: () {
+              if (_currentIndex < widget.images.length - 1) {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
+          ),
         ),
       ],
+    );
+  }
+
+  // Methode zum Erstellen der Pfeil-Buttons mit einem transparenten Kreis dahinter
+  Widget _buildArrowButton({required IconData icon, required VoidCallback onPressed}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.5),  // Transparenter grauer Hintergrund
+        shape: BoxShape.circle,  // Rundes Design
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),  // Weißer Pfeil
+        onPressed: onPressed,
+      ),
     );
   }
 
@@ -102,7 +169,7 @@ class MarkerDetailsPage extends StatelessWidget {
           BarChartData(
             alignment: BarChartAlignment.spaceAround,
             maxY: 10, // Max height of bars
-            barGroups: peoplePerHour.entries.map((entry) {
+            barGroups: widget.peoplePerHour.entries.map((entry) {
               return BarChartGroupData(
                 x: entry.key, // The hour
                 barRods: [

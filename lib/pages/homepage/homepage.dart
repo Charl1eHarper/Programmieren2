@@ -22,6 +22,8 @@ class _HomePageState extends State<HomePage> {
   late String _infoWindowAddress;
   Offset? _infoWindowPosition;  // Holds the position of the info window on the screen
 
+  List<String> _imagesForDetailPage = [];  // Holds all the image URLs for the details page
+
   final Set<Marker> _markers = {};  // Holds the set of map markers
   late GoogleMapController _mapController;  // Controller for Google Map
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');  // Places API instance
@@ -173,14 +175,24 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // Abrufen der Details des Markers, einschließlich Bilder
     final detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
       final placeDetails = detail.result;
-      final photoReference = placeDetails.photos.isNotEmpty ? placeDetails.photos[0].photoReference : null;
-      final imageUrl = photoReference != null
-          ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
-          : 'https://via.placeholder.com/400';
+
+      // Erstellen einer Liste von Bild-URLs, falls Fotos vorhanden sind
+      List<String> imageUrls = [];
+      if (placeDetails.photos.isNotEmpty) {
+        for (var photo in placeDetails.photos) {
+          final photoReference = photo.photoReference;
+          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
+          imageUrls.add(imageUrl);
+        }
+      } else {
+        // Falls keine Bilder vorhanden sind, benutze einen Platzhalter
+        imageUrls.add('https://via.placeholder.com/400');
+      }
 
       final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);
 
@@ -193,20 +205,23 @@ class _HomePageState extends State<HomePage> {
         screenHeight * 0.24,
       );
 
+      // Speichern der Informationen in den Zustandsvariablen
       _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
-      // Berechne Position und öffne Info Window
+      // Setzt die gesammelten Informationen in den State (alle Bilder, Adresse, Name)
       if (mounted) {
         setState(() {
           _isSearchVisible = false;  // Hide the search bar
           _infoWindowTitle = placeDetails.name;  // Update the info window state with new data
-          _infoWindowImage = imageUrl;
+          _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';  // Verwende das erste Bild oder Platzhalter
           _isInfoWindowVisible = true;  // Show the small info window
           _infoWindowPosition = infoWindowPosition;  // Set the position of the info window
+          _imagesForDetailPage = imageUrls; // Speichern aller Bilder für die Detailseite
         });
       }
     }
   }
+
 
 
   @override
@@ -281,14 +296,14 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 8),
                                   GestureDetector(
                                     onTap: () {
-                                      // Navigiere zur neuen Seite
+                                      // Navigiere zur neuen Seite und übergebe alle gesammelten Bilder
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => MarkerDetailsPage(
-                                            markerName: _infoWindowTitle,
-                                            markerAddress: _infoWindowAddress,
-                                            images: [_infoWindowImage],  // Placeholder for images
+                                            markerName: _infoWindowTitle,  // Name des Markers aus der _onMarkerTapped Funktion
+                                            markerAddress: _infoWindowAddress,  // Adresse des Markers aus der _onMarkerTapped Funktion
+                                            images: _imagesForDetailPage,  // Übergabe aller Bilder von _onMarkerTapped
                                             peoplePerHour: const {
                                               12: 4,
                                               13: 6,

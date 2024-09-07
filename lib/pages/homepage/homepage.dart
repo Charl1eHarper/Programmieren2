@@ -5,7 +5,7 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
-import 'package:hoophub/pages/homepage/custom_info_window.dart';
+import 'package:hoophub/pages/homepage/marker_details_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -195,7 +195,7 @@ class _HomePageState extends State<HomePage> {
 
       _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
-      // Preserve the original setState block to manage UI state updates
+      // Berechne Position und öffne Info Window
       if (mounted) {
         setState(() {
           _isSearchVisible = false;  // Hide the search bar
@@ -207,6 +207,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {  // Required 'build' method for the State class
@@ -280,19 +281,26 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 8),
                                   GestureDetector(
                                     onTap: () {
-                                      // Action to open the larger modal (expanded info window)
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return ExpandedInfoWindow(
-                                            imageUrl: _infoWindowImage,
-                                            title: _infoWindowTitle,
-                                            address: _infoWindowAddress,
-                                            ringRating: 1,  // Placeholder ratings
-                                            netRating: 2,
-                                            courtRating: 3,
-                                          );
-                                        },
+                                      // Navigiere zur neuen Seite
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => MarkerDetailsPage(
+                                            markerName: _infoWindowTitle,
+                                            markerAddress: _infoWindowAddress,
+                                            images: [_infoWindowImage],  // Placeholder for images
+                                            peoplePerHour: const {
+                                              12: 4,
+                                              13: 6,
+                                              14: 3,
+                                              15: 8,
+                                              16: 5,
+                                              17: 9,
+                                              18: 4,
+                                              19: 7,
+                                            },
+                                          ),
+                                        ),
                                       );
                                     },
                                     child: const Text(

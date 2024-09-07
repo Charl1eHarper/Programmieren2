@@ -196,15 +196,15 @@ class _HomePageState extends State<HomePage> {
         imageUrls.add('https://via.placeholder.com/400');
       }
 
-      final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);
+      final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
       await _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(adjustedPosition, 16),
       );
 
       final infoWindowPosition = Offset(
-        screenWidth * 0.55,
-        screenHeight * 0.24,
+        screenWidth * 0.36,
+        screenHeight * 0.21,
       );
 
       // Speichern der Informationen in den Zustandsvariablen
@@ -249,8 +249,7 @@ class _HomePageState extends State<HomePage> {
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
                 child: InfoWindowWidget(
                   title: _infoWindowTitle,
-                  address: _infoWindowAddress,
-                  imageUrl: _infoWindowImage,
+                  imageUrl: _infoWindowImage,  // Address removed as it's no longer needed
                   onShowMorePressed: () {
                     Navigator.push(
                       context,
@@ -277,6 +276,9 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       _isInfoWindowVisible = false;
                     });
+                  },
+                  onAddRatingPressed: () {
+                    // Add your logic for handling user rating submission here
                   },
                 ),
               ),

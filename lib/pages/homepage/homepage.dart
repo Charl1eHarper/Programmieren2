@@ -19,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   bool _isInfoWindowVisible = false;  // Flag to control the visibility of the info window
   late String _infoWindowTitle;  // Holds the title of the info window
   late String _infoWindowImage;  // Holds the image URL of the info window
+  late String _infoWindowAddress;
   Offset? _infoWindowPosition;  // Holds the position of the info window on the screen
 
   final Set<Marker> _markers = {};  // Holds the set of map markers
@@ -192,6 +193,8 @@ class _HomePageState extends State<HomePage> {
         screenHeight * 0.24,
       );
 
+      _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
+
       // Preserve the original setState block to manage UI state updates
       if (mounted) {
         setState(() {
@@ -284,6 +287,7 @@ class _HomePageState extends State<HomePage> {
                                           return ExpandedInfoWindow(
                                             imageUrl: _infoWindowImage,
                                             title: _infoWindowTitle,
+                                            address: _infoWindowAddress,
                                             ringRating: 1,  // Placeholder ratings
                                             netRating: 2,
                                             courtRating: 3,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class ExpandedInfoWindow extends StatelessWidget {
   final String imageUrl;
   final String title;
+  final String address;  // Address passed to the window
   final int ringRating;
   final int netRating;
   final int courtRating;
@@ -11,6 +12,7 @@ class ExpandedInfoWindow extends StatelessWidget {
     super.key,
     required this.imageUrl,
     required this.title,
+    required this.address,  // Added address as a required field
     required this.ringRating,
     required this.netRating,
     required this.courtRating,
@@ -40,9 +42,9 @@ class ExpandedInfoWindow extends StatelessWidget {
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Adresse aus google Maps',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            Text(  // Display the address here
+              address,  // Show the address from Google Maps
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
             Row(
@@ -75,5 +77,3 @@ class ExpandedInfoWindow extends StatelessWidget {
     );
   }
 }
-
-

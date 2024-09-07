@@ -6,6 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
+import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -245,121 +247,41 @@ class _HomePageState extends State<HomePage> {
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10),
-                  ),
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.5,  // Set maximum height limit for the info window
-                      minWidth: 150,
-                      maxWidth: 150,  // Set width of the info window
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: Offset(0, 2),
+                child: InfoWindowWidget(
+                  title: _infoWindowTitle,
+                  address: _infoWindowAddress,
+                  imageUrl: _infoWindowImage,
+                  onShowMorePressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MarkerDetailsPage(
+                          markerName: _infoWindowTitle,
+                          markerAddress: _infoWindowAddress,
+                          images: _imagesForDetailPage,
+                          peoplePerHour: const {
+                            12: 4,
+                            13: 6,
+                            14: 3,
+                            15: 8,
+                            16: 5,
+                            17: 9,
+                            18: 4,
+                            19: 7,
+                          },
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,  // Let the height be flexible based on content
-                          children: [
-                            Image.network(
-                              _infoWindowImage,
-                              width: double.infinity,
-                              height: 100,  // Fixed height for the image
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.image_not_supported);
-                              },
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _infoWindowTitle,
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Navigiere zur neuen Seite und übergebe alle gesammelten Bilder
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => MarkerDetailsPage(
-                                            markerName: _infoWindowTitle,  // Name des Markers aus der _onMarkerTapped Funktion
-                                            markerAddress: _infoWindowAddress,  // Adresse des Markers aus der _onMarkerTapped Funktion
-                                            images: _imagesForDetailPage,  // Übergabe aller Bilder von _onMarkerTapped
-                                            peoplePerHour: const {
-                                              12: 4,
-                                              13: 6,
-                                              14: 3,
-                                              15: 8,
-                                              16: 5,
-                                              17: 9,
-                                              18: 4,
-                                              19: 7,
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Show More',
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isInfoWindowVisible = false;  // Close the info window
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.7),
-                              ),
-                              padding: const EdgeInsets.all(5),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
+                  onClosePressed: () {
+                    setState(() {
+                      _isInfoWindowVisible = false;
+                    });
+                  },
                 ),
               ),
             ),
+
 
           SafeArea(
             child: Padding(

@@ -5,6 +5,7 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
+import 'package:hoophub/pages/homepage/custom_info_window.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -167,8 +168,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _onMarkerTapped(String placeId, LatLng position) async {  // Show the info window for a marker when tapped
-    final screenHeight = MediaQuery.of(context).size.height;  // Get screen dimensions before the async call
+  Future<void> _onMarkerTapped(String placeId, LatLng position) async {
+    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     final detail = await places.getDetailsByPlaceId(placeId);
@@ -180,24 +181,25 @@ class _HomePageState extends State<HomePage> {
           ? "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o"
           : 'https://via.placeholder.com/400';
 
-      final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);  // Adjust the position slightly to center vertically
+      final adjustedPosition = LatLng(position.latitude + 0.001, position.longitude);
 
-      await _mapController.animateCamera(  // Zoom and center the map on the marker's position
+      await _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(adjustedPosition, 16),
       );
 
-      final infoWindowPosition = Offset(  // Position the info window on the screen (upper right quadrant)
-        screenWidth * 0.55,  // Shift 60% from left to right
-        screenHeight * 0.24,  // Shift 25% from top to bottom
+      final infoWindowPosition = Offset(
+        screenWidth * 0.55,
+        screenHeight * 0.24,
       );
 
+      // Preserve the original setState block to manage UI state updates
       if (mounted) {
         setState(() {
           _isSearchVisible = false;  // Hide the search bar
           _infoWindowTitle = placeDetails.name;  // Update the info window state with new data
           _infoWindowImage = imageUrl;
-          _isInfoWindowVisible = true;
-          _infoWindowPosition = infoWindowPosition;
+          _isInfoWindowVisible = true;  // Show the small info window
+          _infoWindowPosition = infoWindowPosition;  // Set the position of the info window
         });
       }
     }
@@ -226,14 +228,17 @@ class _HomePageState extends State<HomePage> {
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),  // Round top left corner
-                    topRight: Radius.circular(10),  // Round top right corner
-                    bottomLeft: Radius.circular(10),  // Round bottom left corner
-                    bottomRight: Radius.circular(10),  // Round bottom right corner
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
                   ),
                   child: Container(
-                    width: 150,
-                    height: 200,
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.5,  // Set maximum height limit for the info window
+                      minWidth: 150,
+                      maxWidth: 150,  // Set width of the info window
+                    ),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       boxShadow: [
@@ -248,11 +253,12 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,  // Let the height be flexible based on content
                           children: [
                             Image.network(
                               _infoWindowImage,
                               width: double.infinity,
-                              height: 100,
+                              height: 100,  // Fixed height for the image
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Icon(Icons.image_not_supported);
@@ -260,10 +266,41 @@ class _HomePageState extends State<HomePage> {
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                _infoWindowTitle,
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _infoWindowTitle,
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      // Action to open the larger modal (expanded info window)
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return ExpandedInfoWindow(
+                                            imageUrl: _infoWindowImage,
+                                            title: _infoWindowTitle,
+                                            ringRating: 1,  // Placeholder ratings
+                                            netRating: 2,
+                                            courtRating: 3,
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Show More',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -297,6 +334,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),

@@ -296,7 +296,6 @@ class _HomePageState extends State<HomePage> {
                                       style: TextStyle(
                                         color: Colors.blue,
                                         fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
                                       ),
                                     ),
                                   ),

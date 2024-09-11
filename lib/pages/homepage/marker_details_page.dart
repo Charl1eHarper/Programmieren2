@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; // For bar chart
+import 'package:intl/intl.dart'; // For formatting the date
 
 class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
@@ -38,6 +38,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now()); // Get the current date
 
     return Scaffold(
       appBar: AppBar(
@@ -53,36 +55,40 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kein Padding für das Bildkarussell
+            // Image carousel
             SizedBox(
-              height: screenHeight * 0.30,  // Dynamische Höhe, z.B. 25% der Bildschirmhöhe
+              height: screenHeight * 0.30,
               child: _buildImageCarousel(),
             ),
-            // Padding für die anderen Elemente
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  const Text(
-                    'Adresse aus Google Maps',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                   Text(widget.markerAddress),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Anzahl an Leuten (wann bist du da?)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+
+                  // Display current date
+                  Text(
+                    '$currentDate', // Display formatted date
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  // Balkendiagramm dynamisch anpassen
+                  const SizedBox(height: 8),
+
+                  // Section for "Anzahl an Leuten" (People count for each hour)
                   SizedBox(
-                    height: screenHeight * 0.3,  // Dynamische Höhe, z.B. 30% der Bildschirmhöhe
-                    child: _buildBarChart(),
+                    height: screenHeight * 0.2,  // Smaller height since we're using circles
+                    child: _buildScrollableHourCircles(screenWidth), // Scrollable circles
                   ),
                   const SizedBox(height: 16),
+
+                  // Registration button
                   _buildRegistrationSection(),
+
                   const SizedBox(height: 16),
+
+                  // Comment section
                   _buildCommentSection(),
                 ],
               ),
@@ -95,27 +101,26 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
   Widget _buildImageCarousel() {
     return Stack(
-      alignment: Alignment.center, // Zentriere den Inhalt im Stack
+      alignment: Alignment.center,
       children: [
         PageView.builder(
-          controller: _pageController, // PageController wird verwendet
+          controller: _pageController,
           itemCount: widget.images.length,
           onPageChanged: (index) {
             setState(() {
-              _currentIndex = index; // Aktueller Index wird gesetzt
+              _currentIndex = index;
             });
           },
           itemBuilder: (context, index) {
             return Image.network(
               widget.images[index],
-              width: double.infinity,  // Über die gesamte Breite des Bildschirms
-              fit: BoxFit.cover,  // Das Bild wird zugeschnitten, um den verfügbaren Raum zu füllen
+              width: double.infinity,
+              fit: BoxFit.cover,
             );
           },
         ),
-        // Linker Pfeil
         Positioned(
-          left: 16,  // Abstand vom linken Rand
+          left: 16,
           child: _buildArrowButton(
             icon: Icons.arrow_back,
             onPressed: () {
@@ -128,9 +133,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
             },
           ),
         ),
-        // Rechter Pfeil
         Positioned(
-          right: 16,  // Abstand vom rechten Rand
+          right: 16,
           child: _buildArrowButton(
             icon: Icons.arrow_forward,
             onPressed: () {
@@ -147,46 +151,49 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Methode zum Erstellen der Pfeil-Buttons mit einem transparenten Kreis dahinter
-  Widget _buildArrowButton({required IconData icon, required VoidCallback onPressed}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.5),  // Transparenter grauer Hintergrund
-        shape: BoxShape.circle,  // Rundes Design
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white),  // Weißer Pfeil
-        onPressed: onPressed,
-      ),
-    );
-  }
-
-  Widget _buildBarChart() {
-    return ListView(
+  // Function to build circles under each hour
+  Widget _buildScrollableHourCircles(double screenWidth) {
+    return ListView.builder(
       scrollDirection: Axis.horizontal,
-      children: [
-        BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: 10, // Max height of bars
-            barGroups: widget.peoplePerHour.entries.map((entry) {
-              return BarChartGroupData(
-                x: entry.key, // The hour
-                barRods: [
-                  BarChartRodData(
-                    toY: entry.value.toDouble(), // Updated to `toY`
-                    width: 15,
-                    color: Colors.blue, // Updated from `colors` to `color`
+      itemCount: 24, // 24 hours in a day
+      itemBuilder: (context, index) {
+        final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Column(
+            children: [
+              Text(
+                '${index} Uhr', // Display the hour
+                style: const TextStyle(fontSize: 14), // Smaller font size for hour
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: screenWidth / 10, // Dynamically set the width based on screen size
+                height: screenWidth / 10, // Height same as width to make a perfect circle
+                decoration: const BoxDecoration(
+                  color: Colors.grey, // Default background color for the circle
+                  shape: BoxShape.circle, // Make it a circle
+                ),
+                child: Center(
+                  child: Text(
+                    '$peopleCount', // Display the people count
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
+  // Registration section with a button
   Widget _buildRegistrationSection() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,7 +202,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         IconButton(
           icon: const Icon(Icons.add_circle, color: Colors.green),
           onPressed: () {
-            // Registration action
+            // Placeholder action for user registration
+            // In future, connect to database and allow user to select a time
           },
         ),
       ],
@@ -209,7 +217,6 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold)),
         _buildComment('User1', 'Der Platz ist ok, aber nicht mehr!'),
         _buildComment('User2', 'Nicht schlecht aber auch nicht krass'),
-        // Add more placeholder comments if needed
       ],
     );
   }
@@ -231,6 +238,20 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Method to build arrow buttons for the carousel
+  Widget _buildArrowButton({required IconData icon, required VoidCallback onPressed}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.5),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white),
+        onPressed: onPressed,
       ),
     );
   }

@@ -54,13 +54,13 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         title: Text(
           widget.markerName,
-          style: const TextStyle(color: Colors.white, fontSize: 22)// Set the title text to white
+          style: const TextStyle(color: Colors.black, fontSize: 22)// Set the title text to white
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white,),
+          icon: const Icon(Icons.arrow_back, color: Colors.black,),
           onPressed: () {
             Navigator.pop(context);
           },

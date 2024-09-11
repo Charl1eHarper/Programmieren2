@@ -22,11 +22,22 @@ class MarkerDetailsPage extends StatefulWidget {
 class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
+  late int _nextHour; // Variable to hold the next full hour
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+
+    // Get the current time and calculate the next full hour
+    DateTime now = DateTime.now();
+    int currentHour = now.hour;
+    int currentMinute = now.minute;
+
+    // If it's past the current hour (e.g., 20:41), set the next hour to 21
+    setState(() {
+      _nextHour = (currentMinute > 0) ? (currentHour + 1) % 24 : currentHour;
+    });
   }
 
   @override
@@ -159,13 +170,19 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       itemBuilder: (context, index) {
         final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
 
+        // Determine if this is the next hour, and set the color accordingly
+        final bool isNextHour = index == _nextHour;
+
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Column(
             children: [
               Text(
                 '${index} Uhr', // Display the hour
-                style: const TextStyle(fontSize: 14), // Smaller font size for hour
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
+                ),
               ),
               const SizedBox(height: 8),
               Container(

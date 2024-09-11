@@ -71,15 +71,23 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
               height: screenHeight * 0.30,
               child: _buildImageCarousel(),
             ),
+            // Reduced padding between image and address
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Adjusted padding for better alignment
+              child: Text(
+                widget.markerAddress,
+                style: const TextStyle(
+                  fontSize: 15, // Larger font size for the address
+                ),
+              ),
+            ),
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
-                  Text(widget.markerAddress),
-                  const SizedBox(height: 16),
-
                   // Display current date
                   Text(
                     '$currentDate', // Display formatted date

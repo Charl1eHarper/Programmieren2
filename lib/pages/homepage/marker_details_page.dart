@@ -54,13 +54,17 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text(
+          widget.markerName,
+          style: const TextStyle(color: Colors.white, fontSize: 22)// Set the title text to white
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white,),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text(widget.markerName),
       ),
       body: SingleChildScrollView(
         child: Column(

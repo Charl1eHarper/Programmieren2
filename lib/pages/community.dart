@@ -25,7 +25,7 @@ class _CommunityPageState extends State<CommunityPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 18)),
+        title: const Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 22)),
         actions: [
           IconButton(
             icon: const Icon(Icons.email, color: Colors.white),

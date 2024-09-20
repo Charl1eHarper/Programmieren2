@@ -259,7 +259,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
             backgroundColor: WidgetStateProperty.resolveWith<Color>(
                   (Set<WidgetState> states) {
                 if (states.contains(WidgetState.pressed)) {
-                  return Colors.grey[800]!;  // Darker gray when pressed
+                  return Colors.orange;  // Darker gray when pressed
                 }
                 return Colors.black;  // Default color
               },

@@ -191,7 +191,6 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(
-      height: 5, // Set an appropriate height for the circles and text to be visible
       decoration: BoxDecoration(
         border: Border.all(color: Colors.orange, width: 2.0), // Orange outline with 2.0 width
       ),
@@ -220,8 +219,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   ),
                   const SizedBox(height: 4), // Adjusted space between text and circle
                   Container(
-                    width: screenWidth / 10, // Dynamically set the width based on screen size
-                    height: screenWidth / 10, // Same height as width for perfect circle
+                    width: screenWidth * 0.1, // Dynamically set the width based on screen size
+                    height: screenWidth * 0.1, // Same height as width for perfect circle
                     decoration: BoxDecoration(
                       color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
                       shape: BoxShape.circle, // Make it a circle

@@ -192,60 +192,61 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.orange, width: 2.0), // Orange outline with 2.0 width
+        border: Border.all(color: Colors.orange, width: 2.0), // Orange border with 2.0 width
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal, // Horizontal scrolling
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
-          children: List.generate(24, (index) {
-            final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0), // Vertical padding for better alignment
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
+            children: List.generate(24, (index) {
+              final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
 
-            // Determine if this is the next hour, and set the color accordingly
-            final bool isNextHour = index == _nextHour;
+              // Determine if this is the next hour, and set the color accordingly
+              final bool isNextHour = index == _nextHour;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0), // Horizontal padding for spacing
-              child: Column(
-                mainAxisSize: MainAxisSize.min, // Minimize vertical space
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    '${index} Uhr', // Display the hour
-                    style: TextStyle(
-                      fontSize: 14, // Slightly smaller font size for the hour label
-                      color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0), // Horizontal padding for spacing
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // Minimize vertical space
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${index} Uhr', // Display the hour
+                      style: TextStyle(
+                        fontSize: 14, // Slightly smaller font size for the hour label
+                        color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4), // Adjusted space between text and circle
-                  Container(
-                    width: screenWidth * 0.1, // Dynamically set the width based on screen size
-                    height: screenWidth * 0.1, // Same height as width for perfect circle
-                    decoration: BoxDecoration(
-                      color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
-                      shape: BoxShape.circle, // Make it a circle
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$peopleCount', // Display the people count
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4), // Adjusted space between text and circle
+                    Container(
+                      width: screenWidth * 0.1, // Dynamically set the width based on screen size
+                      height: screenWidth * 0.1, // Same height as width for perfect circle
+                      decoration: BoxDecoration(
+                        color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
+                        shape: BoxShape.circle, // Make it a circle
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$peopleCount', // Display the people count
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                  ],
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
   }
-
-
 
 
   // Updated Registration section with reduced padding and dynamic size

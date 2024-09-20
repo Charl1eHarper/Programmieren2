@@ -189,53 +189,65 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Function to build circles under each hour
   Widget _buildScrollableHourCircles(double screenWidth) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: 24, // 24 hours in a day
-      itemBuilder: (context, index) {
-        final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
+    return Container(
+      height: 5, // Set an appropriate height for the circles and text to be visible
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.orange, width: 2.0), // Orange outline with 2.0 width
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal, // Horizontal scrolling
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
+          children: List.generate(24, (index) {
+            final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
 
-        // Determine if this is the next hour, and set the color accordingly
-        final bool isNextHour = index == _nextHour;
+            // Determine if this is the next hour, and set the color accordingly
+            final bool isNextHour = index == _nextHour;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Column(
-            children: [
-              Text(
-                '${index} Uhr', // Display the hour
-                style: TextStyle(
-                  fontSize: 15,
-                  color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: screenWidth / 10, // Dynamically set the width based on screen size
-                height: screenWidth / 10, // Height same as width to make a perfect circle
-                decoration: const BoxDecoration(
-                  color: Colors.black, // Default background color for the circle
-                  shape: BoxShape.circle, // Make it a circle
-                ),
-                child: Center(
-                  child: Text(
-                    '$peopleCount', // Display the people count
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0), // Horizontal padding for spacing
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // Minimize vertical space
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '${index} Uhr', // Display the hour
+                    style: TextStyle(
+                      fontSize: 14, // Slightly smaller font size for the hour label
+                      color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
                     ),
                   ),
-                ),
+                  const SizedBox(height: 4), // Adjusted space between text and circle
+                  Container(
+                    width: screenWidth / 10, // Dynamically set the width based on screen size
+                    height: screenWidth / 10, // Same height as width for perfect circle
+                    decoration: BoxDecoration(
+                      color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
+                      shape: BoxShape.circle, // Make it a circle
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$peopleCount', // Display the people count
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
+            );
+          }),
+        ),
+      ),
     );
   }
+
+
+
 
   // Updated Registration section with reduced padding and dynamic size
   Widget _buildRegistrationSection(double screenWidth) {

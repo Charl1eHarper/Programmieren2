@@ -8,7 +8,7 @@ class MarkerDetailsPage extends StatefulWidget {
   final Map<int, int> peoplePerHour; // Placeholder for people count per hour
 
   const MarkerDetailsPage({
-    super.key,  // 'key' direkt als Superparameter übergeben
+    super.key,
     required this.markerName,
     required this.markerAddress,
     required this.images,
@@ -52,15 +52,18 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now()); // Get the current date
 
+    // Format the address to "Streetname Number, Postal Code City"
+    String formattedAddress = formatAddress(widget.markerAddress);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         title: Text(
-          widget.markerName,
-          style: const TextStyle(color: Colors.black, fontSize: 22)// Set the title text to white
+            widget.markerName,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold) // Set the title text to white
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black,),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -75,18 +78,16 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
               height: screenHeight * 0.30,
               child: _buildImageCarousel(),
             ),
-            // Reduced padding between image and address
-            const SizedBox(height: 10),
+            const SizedBox(height: 10), // Space between image and address
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Adjusted padding for better alignment
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                widget.markerAddress,
+                formattedAddress,
                 style: const TextStyle(
-                  fontSize: 15, // Larger font size for the address
+                  fontSize: 17,
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -94,22 +95,22 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                 children: [
                   // Display current date
                   Text(
-                    '$currentDate', // Display formatted date
+                    '$currentDate',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
 
                   // Section for "Anzahl an Leuten" (People count for each hour)
                   SizedBox(
-                    height: screenHeight * 0.2,  // Smaller height since we're using circles
-                    child: _buildScrollableHourCircles(screenWidth), // Scrollable circles
+                    height: screenHeight * 0.15,  // Reduced height for circles
+                    child: _buildScrollableHourCircles(screenWidth),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12), // Reduced space between circles and button
 
                   // Registration button
-                  _buildRegistrationSection(),
+                  _buildRegistrationSection(screenWidth),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12), // Same space between button and comments
 
                   // Comment section
                   _buildCommentSection(),
@@ -120,6 +121,20 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         ),
       ),
     );
+  }
+
+  // Function to format the address
+  String formatAddress(String address) {
+    List<String> addressParts = address.split(',');
+
+    // If the address has more than 2 parts (e.g., Streetname Number, Postal Code City, Country)
+    // We remove the last part, assuming it's the country.
+    if (addressParts.length > 2) {
+      addressParts.removeLast(); // Remove the last part, which is the country.
+    }
+
+    // Join the remaining parts back into the desired format "Streetname Number, Postal Code City"
+    return addressParts.join(',').trim();
   }
 
   Widget _buildImageCarousel() {
@@ -201,7 +216,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                 width: screenWidth / 10, // Dynamically set the width based on screen size
                 height: screenWidth / 10, // Height same as width to make a perfect circle
                 decoration: const BoxDecoration(
-                  color: Colors.grey, // Default background color for the circle
+                  color: Colors.black, // Default background color for the circle
                   shape: BoxShape.circle, // Make it a circle
                 ),
                 child: Center(
@@ -222,20 +237,45 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Registration section with a button
-  Widget _buildRegistrationSection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text('Wann bist du da?'),
-        IconButton(
-          icon: const Icon(Icons.add_circle, color: Colors.green),
+  // Updated Registration section with reduced padding and dynamic size
+  Widget _buildRegistrationSection(double screenWidth) {
+    return Center(
+      child: SizedBox(
+        width: screenWidth * 0.6,  // Full-width button
+        child: TextButton(
+          style: TextButton.styleFrom(
+            backgroundColor: Colors.black, // Set background color to black
+            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20), // Dynamically set padding
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30), // Rounded corners
+            ),
+          ),
           onPressed: () {
             // Placeholder action for user registration
             // In future, connect to database and allow user to select a time
           },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Wann bist du da?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.045,  // Dynamically set font size based on screen width
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),  // Space between text and icon
+              Icon(
+                Icons.add_circle,
+                color: Colors.white,
+                size: screenWidth * 0.06, // Dynamically set icon size
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 

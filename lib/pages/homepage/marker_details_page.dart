@@ -249,17 +249,26 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   }
 
 
-  // Updated Registration section with reduced padding and dynamic size
+  // Updated Registration section with "Pressed" effect using WidgetStateProperty
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(
       child: SizedBox(
         width: screenWidth * 0.6,  // Full-width button
         child: TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: Colors.black, // Set background color to black
-            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20), // Dynamically set padding
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30), // Rounded corners
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return Colors.grey[800]!;  // Darker gray when pressed
+                }
+                return Colors.black;  // Default color
+              },
+            ),
+            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 0, horizontal: 20)), // Set padding
+            shape: WidgetStateProperty.all(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30), // Rounded corners
+              ),
             ),
           ),
           onPressed: () {
@@ -290,6 +299,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
+
 
   Widget _buildCommentSection() {
     return Column(

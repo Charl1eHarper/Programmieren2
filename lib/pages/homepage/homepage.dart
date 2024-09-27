@@ -7,6 +7,7 @@ import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
+import 'package:hoophub/pages/homepage/add_court_page.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -423,7 +424,10 @@ class _HomePageState extends State<HomePage> {
                 icon: const Icon(Icons.add, color: Colors.black),
                 iconSize: screenWidth * 0.1,
                 onPressed: () {
-                  // Action when add icon is pressed
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddCourtPage()),
+                  );
                 },
               ),
               IconButton(

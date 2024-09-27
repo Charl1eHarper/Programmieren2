@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:google_sign_in/google_sign_in.dart'; // Add Google SignIn package
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({Key? key}) : super(key: key);
@@ -43,28 +42,23 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Google Sign-In Logic
   Future<void> _loginWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       if (googleUser == null) {
-        // The user canceled the sign-in
         return;
       }
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in with Firebase using the Google credential
       UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
 
-      // Save user details in Firestore
       if (userCredential.additionalUserInfo!.isNewUser) {
         await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
           'email': userCredential.user!.email,
@@ -87,132 +81,204 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Add the missing _showLoginDialog method
-  Future<void> _showLoginDialog() async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Sign In / Create Account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _login(); // Attempt login
-                Navigator.pop(context); // Close the dialog after login
-              },
-              child: const Text('Sign In'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _register(); // Attempt registration
-                Navigator.pop(context); // Close the dialog after registration
-              },
-              child: const Text('Create Account'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Logo Placeholder at the top
-            const Placeholder(
-              fallbackHeight: 100,
-              color: Colors.blueAccent,
-            ),
-            const SizedBox(height: 20),
-
-            // Animated welcome text
-            SizedBox(
-              child: DefaultTextStyle(
-                style: const TextStyle(
-                  fontSize: 24.0,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-                child: AnimatedTextKit(
-                  animatedTexts: [
-                    WavyAnimatedText('Welcome to the Experience'),
-                  ],
-                  isRepeatingAnimation: false,
-                ),
+      body: Stack(
+        children: [
+          // Background gradient from black to grey
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black,
+                  Colors.grey,
+                ],
               ),
             ),
-            const SizedBox(height: 30),
+          ),
 
-            // Icons for login methods
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Email/Password Login Icon
-                IconButton(
-                  icon: const Icon(Icons.email, size: 40, color: Colors.blue),
-                  onPressed: _showLoginDialog,
-                  tooltip: 'Login with Email',
-                ),
-                // Google Login Icon
-                IconButton(
-                  icon: const Icon(Icons.account_circle, size: 40, color: Colors.red),
-                  onPressed: _loginWithGoogle,
-                  tooltip: 'Login with Google',
-                ),
-                // Guest Login Icon
-                IconButton(
-                  icon: const Icon(Icons.person_outline, size: 40, color: Colors.green),
-                  onPressed: _loginAsGuest,
-                  tooltip: 'Login as Guest',
-                ),
-              ],
-            ),
-            const SizedBox(height: 50),
+          // Triangle at the top
+          CustomPaint(
+            size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.5), // 50% of screen height
+            painter: EvenWiderTrianglePainter(),
+          ),
 
-            // Footer Text
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                'Hopp Hub 2024, All Rights Reserved',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          // Content (logo, form, etc.)
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Branding logo and text
+                  Column(
+                    children: [
+                      Container(
+                        child: Image.asset(
+                          'assets/HoopHub.png',
+                          height: 200, // Adjust height as needed
+                          width: 200,  // Adjust width as needed
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 5), // Reduced height to bring text closer to the logo
+                      const Text(
+                        'Connect with the game',
+                        style: TextStyle(fontSize: 16, color: Colors.white54),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Login form (Email & Password)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                            suffixIcon: TextButton(
+                              onPressed: () {
+                                // Add forgot password logic here
+                              },
+                              child: const Text('Forgot?'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Log In Button
+                  ElevatedButton(
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      minimumSize: const Size.fromHeight(50),
+                      backgroundColor: Colors.black, // Dark button style
+                    ),
+                    child: const Text(
+                      'Log In',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // "Or continue with" text
+                  const Text('Or continue with', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 10),
+
+                  // Social login buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _loginWithGoogle,
+                        icon: const Icon(Icons.account_circle, color: Colors.red),
+                        label: const Text('Google'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          elevation: 5,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // Facebook login logic here
+                        },
+                        icon: const Icon(Icons.facebook, color: Colors.blue),
+                        label: const Text('Facebook'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          elevation: 5,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Footer
+                  TextButton(
+                    onPressed: _register,
+                    child: const Text('Don’t have an account? Create now'),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
+
+// Custom painter to draw an even wider and taller triangle
+class EvenWiderTrianglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(-300, 0); // Start even further outside the left of the screen
+    path.lineTo(size.width + 300, 0); // Extend even further outside the right of the screen
+    path.lineTo(size.width / 2, size.height); // Point at the bottom center
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+
+
+
+
+
+

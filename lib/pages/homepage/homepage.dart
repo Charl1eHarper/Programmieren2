@@ -18,54 +18,60 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isSearchVisible = false;  // Flag to control the visibility of the search bar
-  bool _isInfoWindowVisible = false;  // Flag to control the visibility of the info window
-  late String _infoWindowTitle;  // Holds the title of the info window
-  late String _infoWindowImage;  // Holds the image URL of the info window
+  bool _isSearchVisible = false; // Flag to control the visibility of the search bar
+  bool _isInfoWindowVisible = false; // Flag to control the visibility of the info window
+  late String _infoWindowTitle; // Holds the title of the info window
+  late String _infoWindowImage; // Holds the image URL of the info window
   late String _infoWindowAddress;
-  Offset? _infoWindowPosition;  // Holds the position of the info window on the screen
+  Offset? _infoWindowPosition; // Holds the position of the info window on the screen
 
-  List<String> _imagesForDetailPage = [];  // Holds all the image URLs for the details page
+  List<String> _imagesForDetailPage = [
+  ]; // Holds all the image URLs for the details page
 
-  final Set<Marker> _markers = {};  // Holds the set of map markers
-  late GoogleMapController _mapController;  // Controller for Google Map
-  GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');  // Places API instance
+  final Set<Marker> _markers = {}; // Holds the set of map markers
+  late GoogleMapController _mapController; // Controller for Google Map
+  GoogleMapsPlaces places = GoogleMapsPlaces(
+      apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o'); // Places API instance
 
-  final FocusNode _searchFocusNode = FocusNode();  // Focus node for the search bar
-  StreamSubscription<Position>? _positionStream;  // Subscription to location stream updates
+  final FocusNode _searchFocusNode = FocusNode(); // Focus node for the search bar
+  StreamSubscription<
+      Position>? _positionStream; // Subscription to location stream updates
 
-  BitmapDescriptor? _userLocationIcon;  // Custom icon for the user's location marker
-  BitmapDescriptor? _basketballMarkerIcon;  // Custom icon for basketball court markers
-  BitmapDescriptor? _selectedBasketballMarkerIcon;  // Custom icon for selected basketball marker
+  BitmapDescriptor? _userLocationIcon; // Custom icon for the user's location marker
+  BitmapDescriptor? _basketballMarkerIcon; // Custom icon for basketball court markers
+  BitmapDescriptor? _selectedBasketballMarkerIcon; // Custom icon for selected basketball marker
 
-  String? _selectedMarkerId;  // Holds the ID of the currently selected marker
+  String? _selectedMarkerId; // Holds the ID of the currently selected marker
 
   @override
   void initState() {
     super.initState();
 
-    _searchFocusNode.addListener(() {  // Add listener to detect when the search field gains/loses focus
+    _searchFocusNode
+        .addListener(() { // Add listener to detect when the search field gains/loses focus
       if (_searchFocusNode.hasFocus) {
         setState(() {
-          _isInfoWindowVisible = false;  // Hide the info window when search bar is focused
-          _onCloseInfoWindow();  // Deselect previous marker
+          _isInfoWindowVisible =
+          false; // Hide the info window when search bar is focused
+          _onCloseInfoWindow(); // Deselect previous marker
         });
       }
     });
 
-    _loadCustomMarkers();  // Load custom markers for the map
-    _getUserLocation(initial: true);  // Get the user's initial location
-    _trackLocationChanges();  // Start tracking the user's location
+    _loadCustomMarkers(); // Load custom markers for the map
+    _getUserLocation(initial: true); // Get the user's initial location
+    _trackLocationChanges(); // Start tracking the user's location
   }
 
   @override
   void dispose() {
-    _positionStream?.cancel();  // Cancel the location stream subscription
-    _searchFocusNode.dispose();  // Dispose of the search focus node
+    _positionStream?.cancel(); // Cancel the location stream subscription
+    _searchFocusNode.dispose(); // Dispose of the search focus node
     super.dispose();
   }
 
-  Future<void> _loadCustomMarkers() async {  // Load custom marker icons from assets
+  Future<void> _loadCustomMarkers() async {
+    // Load custom marker icons from assets
     _userLocationIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(64, 64)),
       'assets/user_location_icon.png',
@@ -82,105 +88,129 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _getUserLocation({bool initial = false}) async {  // Get the current location of the user and zoom to that location
+  Future<void> _getUserLocation({bool initial = false}) async {
+    // Get the current location of the user and zoom to that location
     bool serviceEnabled;
     LocationPermission permission;
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();  // Check if the location services are enabled
+    serviceEnabled = await Geolocator
+        .isLocationServiceEnabled(); // Check if the location services are enabled
     if (!serviceEnabled) {
       return;
     }
 
-    permission = await Geolocator.checkPermission();  // Check and request location permissions if needed
+    permission = await Geolocator
+        .checkPermission(); // Check and request location permissions if needed
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
         return;
       }
     }
 
-    Position position = await Geolocator.getCurrentPosition();  // Get the current location of the user
+    Position position = await Geolocator
+        .getCurrentPosition(); // Get the current location of the user
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    _mapController.animateCamera(  // Move the map camera to the user's location
+    _mapController.animateCamera( // Move the map camera to the user's location
       CameraUpdate.newLatLngZoom(userLocation, 15),
     );
 
-    _updateUserLocationMarker(userLocation);  // Update the user's location marker on the map
+    _updateUserLocationMarker(
+        userLocation); // Update the user's location marker on the map
 
     setState(() {
-      _isInfoWindowVisible = false;  // Hide the info window if it's open
+      _isInfoWindowVisible = false; // Hide the info window if it's open
     });
 
-    _findSportsPlaces(userLocation);  // Find nearby basketball places
+    _findSportsPlaces(userLocation); // Find nearby basketball places
   }
 
-  void _trackLocationChanges() {  // Track location changes and update the map markers accordingly
+  void _trackLocationChanges() {
+    // Track location changes and update the map markers accordingly
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,  // High accuracy for location updates
-        distanceFilter: 10,  // Update every 10 meters
+        accuracy: LocationAccuracy.high, // High accuracy for location updates
+        distanceFilter: 10, // Update every 10 meters
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
-      _updateUserLocationMarker(newLocation);  // Update the user's location marker
-      _findSportsPlaces(newLocation);  // Search for basketball places near the new location
+      _updateUserLocationMarker(
+          newLocation); // Update the user's location marker
+      _findSportsPlaces(
+          newLocation); // Search for basketball places near the new location
     });
   }
 
-  void _updateUserLocationMarker(LatLng location) {  // Update the marker for the user's location on the map
+  void _updateUserLocationMarker(LatLng location) {
+    // Update the marker for the user's location on the map
     setState(() {
-      _markers.removeWhere((marker) => marker.markerId == const MarkerId('user_location'));  // Remove any existing user location marker
+      _markers.removeWhere((marker) =>
+      marker.markerId == const MarkerId(
+          'user_location')); // Remove any existing user location marker
       _markers.add(
         Marker(
           markerId: const MarkerId('user_location'),
           position: location,
-          icon: _userLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          icon: _userLocationIcon ??
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
       );
     });
   }
 
-  void _onSearchIconPressed() {  // Toggle the visibility of the search bar when the search icon is pressed
+  void _onSearchIconPressed() {
+    // Toggle the visibility of the search bar when the search icon is pressed
     setState(() {
       _isSearchVisible = !_isSearchVisible;
 
       if (_isSearchVisible) {
         _onCloseInfoWindow();
-        _isInfoWindowVisible = false;  // Schließe das InfoWindow
-        _selectedMarkerId = null;  // Deselektiere den Marker
+        _isInfoWindowVisible = false; // Schließe das InfoWindow
+        _selectedMarkerId = null; // Deselektiere den Marker
       }
     });
   }
 
-  void _onMapCreated(GoogleMapController controller) {  // Callback when the Google Map is created
+  void _onMapCreated(GoogleMapController controller) {
+    // Callback when the Google Map is created
     _mapController = controller;
   }
 
-  Future<void> _findSportsPlaces(LatLng location) async {  // Search for basketball places near the given location
+  Future<void> _findSportsPlaces(LatLng location) async {
+    // Search for basketball places near the given location
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
-      5000,  // Search within a 5km radius
-      keyword: "basketball",  // Use a more specific keyword
+      5000, // Search within a 5km radius
+      keyword: "basketball", // Use a more specific keyword
     );
 
     if (response.isOkay) {
       setState(() {
-        _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));  // Remove all non-user-location markers
+        _markers.removeWhere((marker) =>
+        marker.markerId != const MarkerId(
+            'user_location')); // Remove all non-user-location markers
 
         for (var place in response.results) {
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
-                position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
-                icon: (_selectedMarkerId == place.placeId && _selectedBasketballMarkerIcon != null)
-                    ? _selectedBasketballMarkerIcon!  // Use selected marker icon
-                    : _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,  // Fallback to default
+                position: LatLng(
+                    place.geometry!.location.lat, place.geometry!.location.lng),
+                icon: (_selectedMarkerId == place.placeId &&
+                    _selectedBasketballMarkerIcon != null)
+                    ? _selectedBasketballMarkerIcon! // Use selected marker icon
+                    : _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
+                // Fallback to default
                 onTap: () {
-                  FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
-                  _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
+                  FocusScope.of(context)
+                      .unfocus(); // Close the keyboard and show the info window for the selected marker
+                  _onMarkerTapped(place.placeId, LatLng(
+                      place.geometry!.location.lat,
+                      place.geometry!.location.lng));
                 },
               ),
             );
@@ -192,11 +222,17 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
-      _onCloseInfoWindow();  // Reset the previous marker before selecting a new one
+      _onCloseInfoWindow(); // Reset the previous marker before selecting a new one
     }
 
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
 
     // Abrufen der Details des Markers, einschließlich Bilder
     final detail = await places.getDetailsByPlaceId(placeId);
@@ -217,7 +253,8 @@ class _HomePageState extends State<HomePage> {
         imageUrls.add('https://via.placeholder.com/400');
       }
 
-      final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
+      final adjustedPosition = LatLng(
+          position.latitude + 0.0028, position.longitude + 0.0015);
 
       await _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(adjustedPosition, 16),
@@ -229,28 +266,37 @@ class _HomePageState extends State<HomePage> {
       );
 
       // Speichern der Informationen in den Zustandsvariablen
-      _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
+      _infoWindowAddress =
+          placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
       // Setzt die gesammelten Informationen in den State (alle Bilder, Adresse, Name)
       if (mounted) {
         setState(() {
-          _isSearchVisible = false;  // Hide the search bar
-          _infoWindowTitle = placeDetails.name;  // Update the info window state with new data
-          _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';  // Verwende das erste Bild oder Platzhalter
-          _isInfoWindowVisible = true;  // Show the small info window
-          _infoWindowPosition = infoWindowPosition;  // Set the position of the info window
-          _imagesForDetailPage = imageUrls;  // Speichern aller Bilder für die Detailseite
-          _selectedMarkerId = placeId;  // Set the selected marker ID
+          _isSearchVisible = false; // Hide the search bar
+          _infoWindowTitle =
+              placeDetails.name; // Update the info window state with new data
+          _infoWindowImage = imageUrls.isNotEmpty
+              ? imageUrls[0]
+              : 'https://via.placeholder.com/400'; // Verwende das erste Bild oder Platzhalter
+          _isInfoWindowVisible = true; // Show the small info window
+          _infoWindowPosition =
+              infoWindowPosition; // Set the position of the info window
+          _imagesForDetailPage =
+              imageUrls; // Speichern aller Bilder für die Detailseite
+          _selectedMarkerId = placeId; // Set the selected marker ID
 
           // Aktualisiere den Marker mit rotem Icon für den ausgewählten Marker
-          _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
+          _markers.removeWhere((marker) =>
+          marker.markerId == MarkerId(placeId));
           _markers.add(
             Marker(
               markerId: MarkerId(placeId),
               position: position,
-              icon: _selectedBasketballMarkerIcon!,  // Verwende das Icon mit rotem Rahmen
+              icon: _selectedBasketballMarkerIcon!,
+              // Verwende das Icon mit rotem Rahmen
               onTap: () {
-                FocusScope.of(context).unfocus();  // Close the keyboard and show the info window for the selected marker
+                FocusScope.of(context)
+                    .unfocus(); // Close the keyboard and show the info window for the selected marker
                 _onMarkerTapped(placeId, position);
               },
             ),
@@ -267,10 +313,10 @@ class _HomePageState extends State<HomePage> {
         if (marker.markerId.value == _selectedMarkerId) {
           // Aktualisiere nur das Icon des ausgewählten Markers
           return marker.copyWith(
-            iconParam: _basketballMarkerIcon!,  // Ändere das Icon auf das Standard-Basketball-Icon
+            iconParam: _basketballMarkerIcon!, // Ändere das Icon auf das Standard-Basketball-Icon
           );
         }
-        return marker;  // Alle anderen Marker bleiben unverändert
+        return marker; // Alle anderen Marker bleiben unverändert
       }).toSet();
 
       // Update den Marker-Set mit dem aktualisierten Marker
@@ -285,18 +331,27 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {  // Required 'build' method for the State class
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+  Widget build(BuildContext context) {
+    // Required 'build' method for the State class
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
     final appBarHeight = screenHeight * 0.08;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      // Verhindert das Verschieben des Inhalts bei geöffneter Tastatur
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           MapWidget(
             onMapCreated: _onMapCreated,
-            markers: _markers,  // Pass markers to the MapWidget
+            markers: _markers, // Pass markers to the MapWidget
           ),
           if (_isInfoWindowVisible && _infoWindowPosition != null)
             Positioned(
@@ -307,34 +362,37 @@ class _HomePageState extends State<HomePage> {
                 opacity: _isInfoWindowVisible ? 1.0 : 0.0,
                 child: InfoWindowWidget(
                   title: _infoWindowTitle,
-                  imageUrl: _infoWindowImage,  // Address removed as it's no longer needed
+                  imageUrl: _infoWindowImage,
+                  // Address removed as it's no longer needed
                   onShowMorePressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MarkerDetailsPage(
-                          markerName: _infoWindowTitle,
-                          markerAddress: _infoWindowAddress,
-                          images: _imagesForDetailPage,
-                          peoplePerHour: const {
-                            12: 4,
-                            13: 6,
-                            14: 3,
-                            15: 8,
-                            16: 5,
-                            17: 9,
-                            18: 4,
-                            19: 7,
-                          },
-                        ),
+                        builder: (context) =>
+                            MarkerDetailsPage(
+                              markerName: _infoWindowTitle,
+                              markerAddress: _infoWindowAddress,
+                              images: _imagesForDetailPage,
+                              peoplePerHour: const {
+                                12: 4,
+                                13: 6,
+                                14: 3,
+                                15: 8,
+                                16: 5,
+                                17: 9,
+                                18: 4,
+                                19: 7,
+                              },
+                            ),
                       ),
                     );
                   },
                   onClosePressed: () {
                     setState(() {
-                      _onCloseInfoWindow();  // Setze Marker auf Standard zurück
+                      _onCloseInfoWindow(); // Setze Marker auf Standard zurück
                       _isInfoWindowVisible = false;
-                      _selectedMarkerId = null;  // Deselect marker when the info window is closed
+                      _selectedMarkerId =
+                      null; // Deselect marker when the info window is closed
                     });
                   },
                   onAddRatingPressed: () {
@@ -346,7 +404,8 @@ class _HomePageState extends State<HomePage> {
 
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04,
+                  vertical: screenHeight * 0.015),
               child: Column(
                 children: [
                   Container(
@@ -355,22 +414,26 @@ class _HomePageState extends State<HomePage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(screenHeight * 0.04),
+                        borderRadius: BorderRadius.circular(
+                            screenHeight * 0.04),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.05),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Center(
                             child: IconButton(
-                              icon: const Icon(Icons.search, color: Colors.black),
+                              icon: const Icon(
+                                  Icons.search, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: _onSearchIconPressed,
                             ),
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(Icons.people, color: Colors.black),
+                              icon: const Icon(
+                                  Icons.people, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
                                 Navigator.pushNamed(context, '/community');
@@ -379,7 +442,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(Icons.account_circle, color: Colors.black),
+                              icon: const Icon(
+                                  Icons.account_circle, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
                                 // Action for account button
@@ -416,7 +480,8 @@ class _HomePageState extends State<HomePage> {
         height: screenHeight * 0.09,
         color: Colors.white,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),  // Correctly using named argument 'padding'
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+          // Correctly using named argument 'padding'
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -426,7 +491,8 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AddCourtPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const AddCourtPage()),
                   );
                 },
               ),
@@ -437,9 +503,9 @@ class _HomePageState extends State<HomePage> {
                   await _getUserLocation();
 
                   setState(() {
-                    _onCloseInfoWindow();  // Setze Marker auf Standard zurück
-                    _isInfoWindowVisible = false;  // Verberge das InfoWindow
-                    _selectedMarkerId = null;  // Deselektiere den Marker
+                    _onCloseInfoWindow(); // Setze Marker auf Standard zurück
+                    _isInfoWindowVisible = false; // Verberge das InfoWindow
+                    _selectedMarkerId = null; // Deselektiere den Marker
                   });
                 },
               ),

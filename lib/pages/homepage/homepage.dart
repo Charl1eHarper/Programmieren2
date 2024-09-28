@@ -8,6 +8,7 @@ import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
 import 'package:hoophub/pages/homepage/add_court_page.dart';
+import 'package:hoophub/pages/account.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -447,6 +448,7 @@ class _HomePageState extends State<HomePage> {
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
                                 // Action for account button
+                                Navigator.pushNamed(context, '/account');
                               },
                             ),
                           ),

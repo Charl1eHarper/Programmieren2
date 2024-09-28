@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hoophub/pages/account.dart';
 import 'package:hoophub/pages/community.dart';
 import 'package:hoophub/pages/homepage/homepage.dart';
 import 'package:hoophub/pages/test_firestore.dart';
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/test_firestore': (context) => TestFirestorePage(),
         '/login': (context) => const LandingPage(),
+        '/account': (context) => AccountPage(),
       },
     );
   }

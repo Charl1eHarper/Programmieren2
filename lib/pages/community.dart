@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'communitypage/inbox.dart'; // Import the inbox page
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -28,9 +29,13 @@ class _CommunityPageState extends State<CommunityPage> {
         title: const Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 22)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.email, color: Colors.white),
+            icon: const Icon(Icons.inbox, color: Colors.white),
             onPressed: () {
-              // Handle email button press
+              // Navigate to InboxPage when the inbox icon is clicked
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => InboxPage()), // Push to new InboxPage
+              );
             },
           ),
         ],
@@ -47,7 +52,7 @@ class _CommunityPageState extends State<CommunityPage> {
               buttonText: 'ADD FRIEND',
               showDropdown: showFriendsDropdown,
               onButtonPressed: () {
-                // Handle Add Friend button press
+                _showFriendSearchPopup(context);
               },
               onDropdownToggle: () {
                 setState(() {
@@ -65,7 +70,7 @@ class _CommunityPageState extends State<CommunityPage> {
               buttonText: 'CREATE GROUP',
               showDropdown: showGroupsDropdown,
               onButtonPressed: () {
-                // Handle Create Group button press
+                _showCreateCommunityPopup(context);
               },
               onDropdownToggle: () {
                 setState(() {
@@ -190,4 +195,120 @@ class _CommunityPageState extends State<CommunityPage> {
       ),
     );
   }
+
+  // Pop-up for searching friends
+  void _showFriendSearchPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Search Friends'),
+          content: TextField(
+            decoration: const InputDecoration(hintText: 'Enter email or username'),
+            onChanged: (value) {
+              // Handle search logic here
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('CANCEL'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Handle friend adding logic here
+              },
+              child: const Text('ADD'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Pop-up for creating a community with "Allow Invites" option for private groups
+  void _showCreateCommunityPopup(BuildContext context) {
+    bool isPrivate = false;
+    bool allowInvites = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Create Community'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(hintText: 'Community Name'),
+                    onChanged: (value) {
+                      // Handle community name input
+                    },
+                  ),
+                  Row(
+                    children: [
+                      const Text('Private'),
+                      Switch(
+                        value: isPrivate,
+                        onChanged: (value) {
+                          setState(() {
+                            isPrivate = value;
+                            if (!isPrivate) {
+                              allowInvites = false; // Reset allow invites if the group is public
+                            }
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (isPrivate)
+                    Row(
+                      children: [
+                        const Text('Allow Invites'),
+                        Switch(
+                          value: allowInvites,
+                          onChanged: (value) {
+                            setState(() {
+                              allowInvites = value;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('CANCEL'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Handle community creation logic here
+                    Navigator.pop(context);
+                  },
+                  child: const Text('CREATE'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
+
+
+
+
+
+
+
+
+

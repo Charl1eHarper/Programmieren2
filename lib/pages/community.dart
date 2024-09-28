@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'communitypage/inbox.dart'; // Import the inbox page
 
 class CommunityPage extends StatefulWidget {
@@ -11,9 +13,6 @@ class CommunityPage extends StatefulWidget {
 class _CommunityPageState extends State<CommunityPage> {
   bool showFriendsDropdown = false;
   bool showGroupsDropdown = false;
-
-  final List<String> friends = ['Friend 1', 'Friend 2', 'Friend 3'];
-  final List<String> groups = ['Group 1', 'Group 2'];
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +30,9 @@ class _CommunityPageState extends State<CommunityPage> {
           IconButton(
             icon: const Icon(Icons.inbox, color: Colors.white),
             onPressed: () {
-              // Navigate to InboxPage when the inbox icon is clicked
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => InboxPage()), // Push to new InboxPage
+                MaterialPageRoute(builder: (context) => InboxPage()), // Push to InboxPage
               );
             },
           ),
@@ -63,7 +61,6 @@ class _CommunityPageState extends State<CommunityPage> {
               dropdownContent: buildFriendsDropdownContent(),
             ),
             const SizedBox(height: 16.0),
-
             buildSectionWithButtonAndDropdown(
               icon: Icons.group_outlined,
               title: 'GRUPPEN',
@@ -152,62 +149,233 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
+  // Fetch friends from Firestore and display them
   Widget buildFriendsDropdownContent() {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      margin: const EdgeInsets.only(top: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[700],
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: friends.map((friend) {
-          return ListTile(
-            title: Text(friend, style: const TextStyle(color: Colors.white)),
-            onTap: () {
-              // Handle friend item tap
-            },
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final firestore = FirebaseFirestore.instance;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestore.collection('users').doc(currentUser!.uid).collection('friends').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'No friends added yet.',
+              style: TextStyle(color: Colors.white),
+            ),
           );
-        }).toList(),
-      ),
+        }
+
+        final friendsDocs = snapshot.data!.docs;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: friendsDocs.length,
+          itemBuilder: (context, index) {
+            var friend = friendsDocs[index];
+            return ListTile(
+              title: Text(friend['friendName'], style: const TextStyle(color: Colors.white)),
+              onTap: () {
+                // Handle friend item tap
+                print('Tapped on ${friend['friendName']}');
+              },
+            );
+          },
+        );
+      },
     );
   }
 
+  // Fetch groups from Firestore and display them
   Widget buildGroupsDropdownContent() {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      margin: const EdgeInsets.only(top: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[700],
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: groups.map((group) {
-          return ListTile(
-            title: Text(group, style: const TextStyle(color: Colors.white)),
-            onTap: () {
-              // Handle group item tap
-            },
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final firestore = FirebaseFirestore.instance;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestore.collection('groups').where('members', arrayContains: currentUser!.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'No groups found.',
+              style: TextStyle(color: Colors.white),
+            ),
           );
-        }).toList(),
-      ),
+        }
+
+        final groupsDocs = snapshot.data!.docs;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: groupsDocs.length,
+          itemBuilder: (context, index) {
+            var group = groupsDocs[index];
+            return ListTile(
+              title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
+              subtitle: group['isPrivate']
+                  ? const Text('Private Group', style: TextStyle(color: Colors.grey))
+                  : const Text('Public Group', style: TextStyle(color: Colors.grey)),
+              trailing: IconButton(
+                icon: Icon(Icons.settings, color: Colors.white),
+                onPressed: () {
+                  // Open group options when the settings icon is clicked
+                  _showGroupOptionsPopup(context, group);
+                },
+              ),
+              onTap: () {
+                print('Tapped on ${group['groupName']}');
+              },
+            );
+          },
+        );
+      },
     );
+  }
+
+  // Group options popup (Settings: make public/private, delete, allow invites, invite users)
+  void _showGroupOptionsPopup(BuildContext context, DocumentSnapshot group) {
+    bool isPrivate = group['isPrivate'];
+    bool allowInvites = group['allowInvites'];
+    TextEditingController inviteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Manage ${group['groupName']}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Private'),
+                      Switch(
+                        value: isPrivate,
+                        onChanged: (value) async {
+                          setState(() {
+                            isPrivate = value;
+                          });
+                          await _updateGroupPrivacy(group.id, value);
+                        },
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Text('Allow Invites'),
+                      Switch(
+                        value: allowInvites,
+                        onChanged: (value) async {
+                          setState(() {
+                            allowInvites = value;
+                          });
+                          await _updateGroupInvites(group.id, value);
+                        },
+                      ),
+                    ],
+                  ),
+                  TextField(
+                    controller: inviteController,
+                    decoration: InputDecoration(hintText: 'Invite user by email'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (inviteController.text.isNotEmpty) {
+                        await _inviteUserToGroup(inviteController.text, group.id, group['groupName']);
+                      }
+                    },
+                    child: const Text('INVITE'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    await _deleteGroup(group.id);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('DELETE GROUP', style: TextStyle(color: Colors.red)),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('CLOSE'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Firestore: Update group privacy
+  Future<void> _updateGroupPrivacy(String groupId, bool isPrivate) async {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('groups').doc(groupId).update({'isPrivate': isPrivate});
+    print('Group privacy updated.');
+  }
+
+  // Firestore: Update group invite permission
+  Future<void> _updateGroupInvites(String groupId, bool allowInvites) async {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('groups').doc(groupId).update({'allowInvites': allowInvites});
+    print('Group invites permission updated.');
+  }
+
+  // Firestore: Invite a user to the group (Send invite instead of adding directly)
+  Future<void> _inviteUserToGroup(String email, String groupId, String groupName) async {
+    final firestore = FirebaseFirestore.instance;
+    final userQuery = await firestore.collection('users').where('email', isEqualTo: email).get();
+
+    if (userQuery.docs.isNotEmpty) {
+      final userDoc = userQuery.docs.first;
+      final userId = userDoc.id;
+
+      // Add an invite to the user's group_invites sub-collection
+      await firestore.collection('users').doc(userId).collection('group_invites').add({
+        'groupId': groupId,
+        'groupName': groupName,
+        'invitedBy': FirebaseAuth.instance.currentUser!.uid, // The user sending the invite
+        'createdAt': Timestamp.now(),
+      });
+
+      print('User invited to group.');
+    } else {
+      print('User not found.');
+    }
+  }
+
+  // Firestore: Delete group
+  Future<void> _deleteGroup(String groupId) async {
+    final firestore = FirebaseFirestore.instance;
+    await firestore.collection('groups').doc(groupId).delete();
+    print('Group deleted.');
   }
 
   // Pop-up for searching friends
   void _showFriendSearchPopup(BuildContext context) {
+    TextEditingController searchController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Search Friends'),
           content: TextField(
+            controller: searchController,
             decoration: const InputDecoration(hintText: 'Enter email or username'),
-            onChanged: (value) {
-              // Handle search logic here
-            },
           ),
           actions: [
             TextButton(
@@ -217,8 +385,9 @@ class _CommunityPageState extends State<CommunityPage> {
               child: const Text('CANCEL'),
             ),
             TextButton(
-              onPressed: () {
-                // Handle friend adding logic here
+              onPressed: () async {
+                await sendFriendRequest(searchController.text);
+                Navigator.pop(context);
               },
               child: const Text('ADD'),
             ),
@@ -228,10 +397,35 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
+  // Send Friend Request Function
+  Future<void> sendFriendRequest(String friendEmail) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final firestore = FirebaseFirestore.instance;
+
+    final friendQuery = await firestore.collection('users').where('email', isEqualTo: friendEmail).get();
+
+    if (friendQuery.docs.isNotEmpty) {
+      final friendDoc = friendQuery.docs.first;
+      final friendId = friendDoc.id;
+
+      await firestore.collection('users').doc(friendId).collection('friend_requests').add({
+        'fromUserId': currentUser!.uid,
+        'fromUserName': currentUser.displayName ?? 'Anonymous',
+        'fromUserEmail': currentUser.email,
+        'createdAt': Timestamp.now(),
+      });
+
+      print("Friend request sent.");
+    } else {
+      print('Friend not found.');
+    }
+  }
+
   // Pop-up for creating a community with "Allow Invites" option for private groups
   void _showCreateCommunityPopup(BuildContext context) {
     bool isPrivate = false;
     bool allowInvites = false;
+    TextEditingController groupNameController = TextEditingController();
 
     showDialog(
       context: context,
@@ -244,10 +438,8 @@ class _CommunityPageState extends State<CommunityPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
+                    controller: groupNameController,
                     decoration: const InputDecoration(hintText: 'Community Name'),
-                    onChanged: (value) {
-                      // Handle community name input
-                    },
                   ),
                   Row(
                     children: [
@@ -258,7 +450,7 @@ class _CommunityPageState extends State<CommunityPage> {
                           setState(() {
                             isPrivate = value;
                             if (!isPrivate) {
-                              allowInvites = false; // Reset allow invites if the group is public
+                              allowInvites = false;
                             }
                           });
                         },
@@ -289,9 +481,14 @@ class _CommunityPageState extends State<CommunityPage> {
                   child: const Text('CANCEL'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    // Handle community creation logic here
-                    Navigator.pop(context);
+                  onPressed: () async {
+                    String groupName = groupNameController.text.trim();
+                    if (groupName.isNotEmpty) {
+                      await _createCommunity(groupName, isPrivate, allowInvites);
+                      Navigator.pop(context);
+                    } else {
+                      print('Group name cannot be empty');
+                    }
                   },
                   child: const Text('CREATE'),
                 ),
@@ -302,7 +499,29 @@ class _CommunityPageState extends State<CommunityPage> {
       },
     );
   }
+
+  // Function to create a community (group) in Firestore
+  Future<void> _createCommunity(String groupName, bool isPrivate, bool allowInvites) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final firestore = FirebaseFirestore.instance;
+
+    await firestore.collection('groups').add({
+      'groupName': groupName,
+      'isPrivate': isPrivate,
+      'allowInvites': allowInvites,
+      'createdBy': currentUser!.uid,
+      'createdAt': Timestamp.now(),
+      'members': [currentUser.uid],
+    });
+
+    print('Group "$groupName" created successfully');
+  }
 }
+
+
+
+
+
 
 
 

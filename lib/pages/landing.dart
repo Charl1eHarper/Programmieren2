@@ -14,14 +14,15 @@ class _LandingPageState extends State<LandingPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  Future<void> _register() async {
+  // Registration logic
+  Future<void> _register(String email, String password) async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        email: email,
+        password: password,
       );
       await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'email': _emailController.text.trim(),
+        'email': email,
         'createdAt': Timestamp.now(),
       });
       Navigator.pushReplacementNamed(context, '/home');
@@ -30,6 +31,7 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
+  // Login logic
   Future<void> _login() async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -42,6 +44,7 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
+  // Google login logic
   Future<void> _loginWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -72,6 +75,7 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
+  // Guest login logic
   Future<void> _loginAsGuest() async {
     try {
       await FirebaseAuth.instance.signInAnonymously();
@@ -79,6 +83,99 @@ class _LandingPageState extends State<LandingPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Guest login failed: ${e.toString()}')));
     }
+  }
+
+  // Function to show the sign-up pop-up
+  void _showSignUpPopup(BuildContext context) {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    final TextEditingController confirmPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Welcome!',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Create your account',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Email input
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Password input
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Confirm password input
+                  TextField(
+                    controller: confirmPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm Password',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Sign up button
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        String email = emailController.text.trim();
+                        String password = passwordController.text.trim();
+                        String confirmPassword = confirmPasswordController.text.trim();
+
+                        if (password == confirmPassword) {
+                          _register(email, password);
+                          Navigator.pop(context);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Passwords do not match!')));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.black,
+                      ),
+                      child: const Text('Create Account'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -244,7 +341,9 @@ class _LandingPageState extends State<LandingPage> {
 
                   // Footer
                   TextButton(
-                    onPressed: _register,
+                    onPressed: () {
+                      _showSignUpPopup(context); // Call the sign-up popup when clicking 'Create now'
+                    },
                     child: const Text('Don’t have an account? Create now'),
                   ),
                 ],
@@ -279,6 +378,8 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
+
 
 
 

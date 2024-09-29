@@ -10,6 +10,7 @@ import 'package:hoophub/pages/homepage/info_window_widget.dart';
 import 'package:hoophub/pages/homepage/add_court_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -29,8 +30,7 @@ class _HomePageState extends State<HomePage> {
 
   final Set<Marker> _markers = {};
   late GoogleMapController _mapController;
-  GoogleMapsPlaces places = GoogleMapsPlaces(
-      apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
+  GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
 
   final FocusNode _searchFocusNode = FocusNode();
   StreamSubscription<Position>? _positionStream;
@@ -95,8 +95,7 @@ class _HomePageState extends State<HomePage> {
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.deniedForever ||
-          permission == LocationPermission.denied) {
+      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
         return;
       }
     }
@@ -114,7 +113,7 @@ class _HomePageState extends State<HomePage> {
       _isInfoWindowVisible = false;
     });
 
-    _findSportsPlaces(userLocation);
+    _findSportsPlaces(userLocation); // Updated method call here
   }
 
   void _trackLocationChanges() {
@@ -144,45 +143,10 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _onSearchIconPressed() {
-    setState(() {
-      _isSearchVisible = !_isSearchVisible;
-
-      if (_isSearchVisible) {
-        _onCloseInfoWindow();
-        _isInfoWindowVisible = false;
-        _selectedMarkerId = null;
-      }
-    });
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-  }
-
-  // Funktion zum Speichern von Plätzen in Firebase
-  Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
-    final String placeId = placeData['placeId'];
-    final firestore = FirebaseFirestore.instance;
-
-    // Überprüfen, ob der Platz bereits in Firestore existiert
-    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(placeId).get();
-
-    if (!placeDoc.exists) {
-      // Platz noch nicht vorhanden, also speichern
-      await firestore.collection('basketball_courts').doc(placeId).set({
-        'name': placeData['name'],
-        'location': GeoPoint(placeData['latitude'], placeData['longitude']),
-        'imageUrls': placeData['imageUrls'],
-        'address': placeData['address'],
-      });
-    }
-  }
-
   Future<void> _findSportsPlaces(LatLng location) async {
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
-      5000, // Radius von 5 km
+      5000, // 5km radius
       keyword: "basketball",
     );
 
@@ -203,10 +167,10 @@ class _HomePageState extends State<HomePage> {
                   : ['https://via.placeholder.com/400'],
             };
 
-            // Speichere den Platz in Firebase, falls er noch nicht existiert
+            // Add place to Firebase if it doesn't already exist
             _savePlaceToFirebase(placeData);
 
-            // Füge den Marker zur Karte hinzu
+            // Add marker to the map
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
@@ -223,6 +187,41 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Saving the place to Firebase
+  Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
+    final String placeId = placeData['placeId'];
+    final firestore = FirebaseFirestore.instance;
+
+    // Check if the place already exists in Firestore
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(placeId).get();
+
+    if (!placeDoc.exists) {
+      // Save the place to Firebase if it doesn't exist
+      await firestore.collection('basketball_courts').doc(placeId).set({
+        'name': placeData['name'],
+        'location': GeoPoint(placeData['latitude'], placeData['longitude']),
+        'imageUrls': placeData['imageUrls'],
+        'address': placeData['address'],
+      });
+    }
+  }
+
+  void _onSearchIconPressed() {
+    setState(() {
+      _isSearchVisible = !_isSearchVisible;
+
+      if (_isSearchVisible) {
+        _onCloseInfoWindow();
+        _isInfoWindowVisible = false;
+        _selectedMarkerId = null;
+      }
+    });
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
+
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -236,6 +235,15 @@ class _HomePageState extends State<HomePage> {
     if (detail.isOkay) {
       final placeDetails = detail.result;
 
+      // Abrufen der Bewertungen aus Firestore
+      final DocumentSnapshot placeDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(placeId).get();
+      Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
+      Map<String, dynamic>? ratings = data?['ratings'];
+
+      double ringRating = ratings != null ? ratings['ring']['average'] ?? 0.0 : 0.0;
+      double netzRating = ratings != null ? ratings['netz']['average'] ?? 0.0 : 0.0;
+      double platzRating = ratings != null ? ratings['platz']['average'] ?? 0.0 : 0.0;
+
       List<String> imageUrls = [];
       if (placeDetails.photos.isNotEmpty) {
         for (var photo in placeDetails.photos) {
@@ -247,17 +255,13 @@ class _HomePageState extends State<HomePage> {
         imageUrls.add('https://via.placeholder.com/400');
       }
 
-      final adjustedPosition = LatLng(
-          position.latitude + 0.0028, position.longitude + 0.0015);
+      final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
       await _mapController.animateCamera(
         CameraUpdate.newLatLngZoom(adjustedPosition, 16),
       );
 
-      final infoWindowPosition = Offset(
-        screenWidth * 0.36,
-        screenHeight * 0.21,
-      );
+      final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
 
       _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
@@ -265,9 +269,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _isSearchVisible = false;
           _infoWindowTitle = placeDetails.name;
-          _infoWindowImage = imageUrls.isNotEmpty
-              ? imageUrls[0]
-              : 'https://via.placeholder.com/400';
+          _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
           _isInfoWindowVisible = true;
           _infoWindowPosition = infoWindowPosition;
           _imagesForDetailPage = imageUrls;
@@ -335,6 +337,9 @@ class _HomePageState extends State<HomePage> {
                 child: InfoWindowWidget(
                   title: _infoWindowTitle,
                   imageUrl: _infoWindowImage,
+                  ringRating: 0.0,
+                  netzRating: 0.0,
+                  platzRating: 0.0,
                   onShowMorePressed: () {
                     Navigator.push(
                       context,
@@ -365,12 +370,11 @@ class _HomePageState extends State<HomePage> {
                     });
                   },
                   onAddRatingPressed: () {
-                    // Add your logic for handling user rating submission here
+                    // Logik für das Hinzufügen einer Bewertung
                   },
                 ),
               ),
             ),
-
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
@@ -453,8 +457,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const AddCourtPage()),
+                    MaterialPageRoute(builder: (context) => const AddCourtPage()),
                   );
                 },
               ),

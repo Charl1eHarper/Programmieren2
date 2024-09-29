@@ -163,7 +163,7 @@ class _HomePageState extends State<HomePage> {
               'longitude': place.geometry!.location.lng,
               'address': place.vicinity,
               'imageUrls': place.photos.isNotEmpty
-                  ? place.photos.map((photo) => "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photoReference}&key=YOUR_API_KEY").toList()
+                  ? place.photos.map((photo) => "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photoReference}&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o").toList()
                   : ['https://via.placeholder.com/400'],
             };
 

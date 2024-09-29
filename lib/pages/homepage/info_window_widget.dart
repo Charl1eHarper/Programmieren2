@@ -4,9 +4,9 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';  // For star rating
 class InfoWindowWidget extends StatelessWidget {
   final String title;
   final String imageUrl;
-  final double ringRating;  // Aktuelle Durchschnittsbewertung für Ring
-  final double netzRating;  // Aktuelle Durchschnittsbewertung für Netz
-  final double platzRating;  // Aktuelle Durchschnittsbewertung für Platz
+  final double ringRating;  // Average rating for Ring
+  final double netzRating;  // Average rating for Netz
+  final double platzRating; // Average rating for Platz
   final VoidCallback onShowMorePressed;
   final VoidCallback onClosePressed;
   final VoidCallback onAddRatingPressed;
@@ -23,8 +23,50 @@ class InfoWindowWidget extends StatelessWidget {
     required this.onAddRatingPressed,
   });
 
+  // Helper method to build the rating section with right-aligned text and left padding
+  Widget _buildRatingSection(String category, double rating) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),  // Adjust spacing between rows
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,  // Ensure vertical alignment
+        mainAxisAlignment: MainAxisAlignment.center,  // Center the whole row
+        children: [
+          SizedBox(
+            width: 50,
+            child: Text(
+              "$category:",  // The label (e.g., "Ring:", "Netz:", "Platz:")
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+          const SizedBox(width: 5),  // Space between the label and the rating stars
+
+          // Rating bar indicator showing the average rating for each category
+          RatingBarIndicator(
+            rating: rating,
+            itemBuilder: (context, index) => const Icon(
+              Icons.star,
+              color: Colors.amber,
+            ),
+            itemCount: 5,
+            itemSize: 16.0,
+            direction: Axis.horizontal,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    print("Ring Rating im InfoWindow: $ringRating");
+    print("Netz Rating im InfoWindow: $netzRating");
+    print("Platz Rating im InfoWindow: $platzRating");
+
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
       child: Container(
@@ -75,10 +117,10 @@ class InfoWindowWidget extends StatelessWidget {
                 ),
                 const Divider(thickness: 1, height: 0),
 
-                // Rating Section for Ring, Netz, Platz with actual values
-                _buildRatingSection("Ring", ringRating),
-                _buildRatingSection("Netz", netzRating),
-                _buildRatingSection("Platz", platzRating),
+                // Rating sections for Ring, Netz, and Platz
+                _buildRatingSection("Ring", ringRating),   // Ring rating
+                _buildRatingSection("Netz", netzRating),   // Netz rating
+                _buildRatingSection("Platz", platzRating), // Platz rating
 
                 // Combined Rate Button with Icon and Text
                 Padding(
@@ -142,43 +184,6 @@ class InfoWindowWidget extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Helper method to build the rating section with right-aligned text and left padding
-  Widget _buildRatingSection(String category, double rating) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),  // Adjust spacing between rows
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,  // Ensure vertical alignment
-        mainAxisAlignment: MainAxisAlignment.center,  // Center the whole row
-        children: [
-          SizedBox(
-            width: 50,
-            child: Text(
-              "$category:",  // The label (e.g., "Ring:", "Netz:", "Platz:")
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-              textAlign: TextAlign.right,
-            ),
-          ),
-          const SizedBox(width: 5),  // Space between the label and the rating stars
-
-          // Rating bar indicator showing the average rating
-          RatingBarIndicator(
-            rating: rating,
-            itemBuilder: (context, index) => const Icon(
-              Icons.star,
-              color: Colors.amber,
-            ),
-            itemCount: 5,
-            itemSize: 16.0,
-            direction: Axis.horizontal,
-          ),
-        ],
       ),
     );
   }

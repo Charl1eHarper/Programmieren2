@@ -9,7 +9,7 @@ import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';
 import 'package:hoophub/pages/homepage/add_court_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Ensure flutter_rating_bar is imported
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,24 +21,25 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isSearchVisible = false;
   bool _isInfoWindowVisible = false;
+  double _ringRating = 0.0;
+  double _netzRating = 0.0;
+  double _platzRating = 0.0;
+
   late String _infoWindowTitle;
   late String _infoWindowImage;
   late String _infoWindowAddress;
   Offset? _infoWindowPosition;
 
   List<String> _imagesForDetailPage = [];
-
   final Set<Marker> _markers = {};
   late GoogleMapController _mapController;
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
-
   final FocusNode _searchFocusNode = FocusNode();
   StreamSubscription<Position>? _positionStream;
 
   BitmapDescriptor? _userLocationIcon;
   BitmapDescriptor? _basketballMarkerIcon;
   BitmapDescriptor? _selectedBasketballMarkerIcon;
-
   String? _selectedMarkerId;
 
   @override
@@ -64,6 +65,17 @@ class _HomePageState extends State<HomePage> {
     _positionStream?.cancel();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  // Hier definierst du _onMapCreated und _onSearchIconPressed
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
+
+  void _onSearchIconPressed() {
+    setState(() {
+      _isSearchVisible = !_isSearchVisible;
+    });
   }
 
   Future<void> _loadCustomMarkers() async {
@@ -113,7 +125,7 @@ class _HomePageState extends State<HomePage> {
       _isInfoWindowVisible = false;
     });
 
-    _findSportsPlaces(userLocation); // Updated method call here
+    _findSportsPlaces(userLocation);
   }
 
   void _trackLocationChanges() {
@@ -313,7 +325,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Ensure this method is properly defined and updates Firestore
   Future<void> _saveRatingToFirebase(
       String placeId, double ringRating, double netzRating, double platzRating) async {
     final firestore = FirebaseFirestore.instance;
@@ -323,7 +334,6 @@ class _HomePageState extends State<HomePage> {
     if (placeDoc.exists) {
       Map<String, dynamic> data = placeDoc.data() as Map<String, dynamic>;
 
-      // Überprüfe, ob das 'ratings'-Feld existiert, und initialisiere es bei Bedarf
       if (data['ratings'] == null) {
         data['ratings'] = {
           'ring': {'total_ratings': 0, 'sum_of_ratings': 0.0, 'average': 0.0},
@@ -368,24 +378,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
-  void _onSearchIconPressed() {
-    setState(() {
-      _isSearchVisible = !_isSearchVisible;
-
-      if (_isSearchVisible) {
-        _onCloseInfoWindow();
-        _isInfoWindowVisible = false;
-        _selectedMarkerId = null;
-      }
-    });
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-  }
-
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -399,14 +391,20 @@ class _HomePageState extends State<HomePage> {
     if (detail.isOkay) {
       final placeDetails = detail.result;
 
-      // Abrufen der Bewertungen aus Firestore
-      final DocumentSnapshot placeDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(placeId).get();
-      Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
-      Map<String, dynamic>? ratings = data?['ratings'];
+      final DocumentSnapshot placeDoc = await FirebaseFirestore.instance
+          .collection('basketball_courts')
+          .doc(placeId)
+          .get();
 
-      double ringRating = ratings != null ? ratings['ring']['average'] ?? 0.0 : 0.0;
-      double netzRating = ratings != null ? ratings['netz']['average'] ?? 0.0 : 0.0;
-      double platzRating = ratings != null ? ratings['platz']['average'] ?? 0.0 : 0.0;
+      Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
+
+      double ringRatingFB = data?['ratings']?['ring']?['average'] ?? 0.0;
+      double netzRatingFB = data?['ratings']?['netz']?['average'] ?? 0.0;
+      double platzRatingFB = data?['ratings']?['platz']?['average'] ?? 0.0;
+
+      print("Firebase Ring Rating: $ringRatingFB");
+      print("Firebase Netz Rating: $netzRatingFB");
+      print("Firebase Platz Rating: $platzRatingFB");
 
       List<String> imageUrls = [];
       if (placeDetails.photos.isNotEmpty) {
@@ -431,6 +429,10 @@ class _HomePageState extends State<HomePage> {
 
       if (mounted) {
         setState(() {
+          _ringRating = ringRatingFB;
+          _netzRating = netzRatingFB;
+          _platzRating = platzRatingFB;
+
           _isSearchVisible = false;
           _infoWindowTitle = placeDetails.name;
           _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
@@ -501,9 +503,9 @@ class _HomePageState extends State<HomePage> {
                 child: InfoWindowWidget(
                   title: _infoWindowTitle,
                   imageUrl: _infoWindowImage,
-                  ringRating: 0.0,
-                  netzRating: 0.0,
-                  platzRating: 0.0,
+                  ringRating: _ringRating,
+                  netzRating: _netzRating,
+                  platzRating: _platzRating,
                   onShowMorePressed: () {
                     Navigator.push(
                       context,

@@ -6,10 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hoophub/pages/homepage/map_widget.dart';
 import 'package:hoophub/pages/homepage/search_widget.dart';
 import 'package:hoophub/pages/homepage/marker_details_page.dart';
-import 'package:hoophub/pages/homepage/info_window_widget.dart';  // Import the new widget
+import 'package:hoophub/pages/homepage/info_window_widget.dart';
 import 'package:hoophub/pages/homepage/add_court_page.dart';
-import 'package:hoophub/pages/account.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,60 +18,55 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isSearchVisible = false; // Flag to control the visibility of the search bar
-  bool _isInfoWindowVisible = false; // Flag to control the visibility of the info window
-  late String _infoWindowTitle; // Holds the title of the info window
-  late String _infoWindowImage; // Holds the image URL of the info window
+  bool _isSearchVisible = false;
+  bool _isInfoWindowVisible = false;
+  late String _infoWindowTitle;
+  late String _infoWindowImage;
   late String _infoWindowAddress;
-  Offset? _infoWindowPosition; // Holds the position of the info window on the screen
+  Offset? _infoWindowPosition;
 
-  List<String> _imagesForDetailPage = [
-  ]; // Holds all the image URLs for the details page
+  List<String> _imagesForDetailPage = [];
 
-  final Set<Marker> _markers = {}; // Holds the set of map markers
-  late GoogleMapController _mapController; // Controller for Google Map
+  final Set<Marker> _markers = {};
+  late GoogleMapController _mapController;
   GoogleMapsPlaces places = GoogleMapsPlaces(
-      apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o'); // Places API instance
+      apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
 
-  final FocusNode _searchFocusNode = FocusNode(); // Focus node for the search bar
-  StreamSubscription<
-      Position>? _positionStream; // Subscription to location stream updates
+  final FocusNode _searchFocusNode = FocusNode();
+  StreamSubscription<Position>? _positionStream;
 
-  BitmapDescriptor? _userLocationIcon; // Custom icon for the user's location marker
-  BitmapDescriptor? _basketballMarkerIcon; // Custom icon for basketball court markers
-  BitmapDescriptor? _selectedBasketballMarkerIcon; // Custom icon for selected basketball marker
+  BitmapDescriptor? _userLocationIcon;
+  BitmapDescriptor? _basketballMarkerIcon;
+  BitmapDescriptor? _selectedBasketballMarkerIcon;
 
-  String? _selectedMarkerId; // Holds the ID of the currently selected marker
+  String? _selectedMarkerId;
 
   @override
   void initState() {
     super.initState();
 
-    _searchFocusNode
-        .addListener(() { // Add listener to detect when the search field gains/loses focus
+    _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         setState(() {
-          _isInfoWindowVisible =
-          false; // Hide the info window when search bar is focused
-          _onCloseInfoWindow(); // Deselect previous marker
+          _isInfoWindowVisible = false;
+          _onCloseInfoWindow();
         });
       }
     });
 
-    _loadCustomMarkers(); // Load custom markers for the map
-    _getUserLocation(initial: true); // Get the user's initial location
-    _trackLocationChanges(); // Start tracking the user's location
+    _loadCustomMarkers();
+    _getUserLocation(initial: true);
+    _trackLocationChanges();
   }
 
   @override
   void dispose() {
-    _positionStream?.cancel(); // Cancel the location stream subscription
-    _searchFocusNode.dispose(); // Dispose of the search focus node
+    _positionStream?.cancel();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _loadCustomMarkers() async {
-    // Load custom marker icons from assets
     _userLocationIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(64, 64)),
       'assets/user_location_icon.png',
@@ -90,18 +84,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _getUserLocation({bool initial = false}) async {
-    // Get the current location of the user and zoom to that location
     bool serviceEnabled;
     LocationPermission permission;
 
-    serviceEnabled = await Geolocator
-        .isLocationServiceEnabled(); // Check if the location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return;
     }
 
-    permission = await Geolocator
-        .checkPermission(); // Check and request location permissions if needed
+    permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.deniedForever ||
@@ -110,52 +101,43 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    Position position = await Geolocator
-        .getCurrentPosition(); // Get the current location of the user
+    Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
-    _mapController.animateCamera( // Move the map camera to the user's location
+    _mapController.animateCamera(
       CameraUpdate.newLatLngZoom(userLocation, 15),
     );
 
-    _updateUserLocationMarker(
-        userLocation); // Update the user's location marker on the map
+    _updateUserLocationMarker(userLocation);
 
     setState(() {
-      _isInfoWindowVisible = false; // Hide the info window if it's open
+      _isInfoWindowVisible = false;
     });
 
-    _findSportsPlaces(userLocation); // Find nearby basketball places
+    _findSportsPlaces(userLocation);
   }
 
   void _trackLocationChanges() {
-    // Track location changes and update the map markers accordingly
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high, // High accuracy for location updates
-        distanceFilter: 10, // Update every 10 meters
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
-      _updateUserLocationMarker(
-          newLocation); // Update the user's location marker
-      _findSportsPlaces(
-          newLocation); // Search for basketball places near the new location
+      _updateUserLocationMarker(newLocation);
+      _findSportsPlaces(newLocation);
     });
   }
 
   void _updateUserLocationMarker(LatLng location) {
-    // Update the marker for the user's location on the map
     setState(() {
-      _markers.removeWhere((marker) =>
-      marker.markerId == const MarkerId(
-          'user_location')); // Remove any existing user location marker
+      _markers.removeWhere((marker) => marker.markerId == const MarkerId('user_location'));
       _markers.add(
         Marker(
           markerId: const MarkerId('user_location'),
           position: location,
-          icon: _userLocationIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          icon: _userLocationIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
       );
@@ -163,55 +145,75 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onSearchIconPressed() {
-    // Toggle the visibility of the search bar when the search icon is pressed
     setState(() {
       _isSearchVisible = !_isSearchVisible;
 
       if (_isSearchVisible) {
         _onCloseInfoWindow();
-        _isInfoWindowVisible = false; // Schließe das InfoWindow
-        _selectedMarkerId = null; // Deselektiere den Marker
+        _isInfoWindowVisible = false;
+        _selectedMarkerId = null;
       }
     });
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    // Callback when the Google Map is created
     _mapController = controller;
   }
 
+  // Funktion zum Speichern von Plätzen in Firebase
+  Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
+    final String placeId = placeData['placeId'];
+    final firestore = FirebaseFirestore.instance;
+
+    // Überprüfen, ob der Platz bereits in Firestore existiert
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(placeId).get();
+
+    if (!placeDoc.exists) {
+      // Platz noch nicht vorhanden, also speichern
+      await firestore.collection('basketball_courts').doc(placeId).set({
+        'name': placeData['name'],
+        'location': GeoPoint(placeData['latitude'], placeData['longitude']),
+        'imageUrls': placeData['imageUrls'],
+        'address': placeData['address'],
+      });
+    }
+  }
+
   Future<void> _findSportsPlaces(LatLng location) async {
-    // Search for basketball places near the given location
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
-      5000, // Search within a 5km radius
-      keyword: "basketball", // Use a more specific keyword
+      5000, // Radius von 5 km
+      keyword: "basketball",
     );
 
     if (response.isOkay) {
       setState(() {
-        _markers.removeWhere((marker) =>
-        marker.markerId != const MarkerId(
-            'user_location')); // Remove all non-user-location markers
+        _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
 
         for (var place in response.results) {
           if (!place.types.contains("store") && !place.types.contains("gym")) {
+            var placeData = {
+              'placeId': place.placeId,
+              'name': place.name,
+              'latitude': place.geometry!.location.lat,
+              'longitude': place.geometry!.location.lng,
+              'address': place.vicinity,
+              'imageUrls': place.photos.isNotEmpty
+                  ? place.photos.map((photo) => "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photoReference}&key=YOUR_API_KEY").toList()
+                  : ['https://via.placeholder.com/400'],
+            };
+
+            // Speichere den Platz in Firebase, falls er noch nicht existiert
+            _savePlaceToFirebase(placeData);
+
+            // Füge den Marker zur Karte hinzu
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
-                position: LatLng(
-                    place.geometry!.location.lat, place.geometry!.location.lng),
-                icon: (_selectedMarkerId == place.placeId &&
-                    _selectedBasketballMarkerIcon != null)
-                    ? _selectedBasketballMarkerIcon! // Use selected marker icon
-                    : _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
-                // Fallback to default
+                position: LatLng(place.geometry!.location.lat, place.geometry!.location.lng),
+                icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
                 onTap: () {
-                  FocusScope.of(context)
-                      .unfocus(); // Close the keyboard and show the info window for the selected marker
-                  _onMarkerTapped(place.placeId, LatLng(
-                      place.geometry!.location.lat,
-                      place.geometry!.location.lng));
+                  _onMarkerTapped(place.placeId, LatLng(place.geometry!.location.lat, place.geometry!.location.lng));
                 },
               ),
             );
@@ -223,25 +225,17 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
-      _onCloseInfoWindow(); // Reset the previous marker before selecting a new one
+      _onCloseInfoWindow();
     }
 
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    // Abrufen der Details des Markers, einschließlich Bilder
     final detail = await places.getDetailsByPlaceId(placeId);
 
     if (detail.isOkay) {
       final placeDetails = detail.result;
 
-      // Erstellen einer Liste von Bild-URLs, falls Fotos vorhanden sind
       List<String> imageUrls = [];
       if (placeDetails.photos.isNotEmpty) {
         for (var photo in placeDetails.photos) {
@@ -250,7 +244,6 @@ class _HomePageState extends State<HomePage> {
           imageUrls.add(imageUrl);
         }
       } else {
-        // Falls keine Bilder vorhanden sind, benutze einen Platzhalter
         imageUrls.add('https://via.placeholder.com/400');
       }
 
@@ -266,38 +259,28 @@ class _HomePageState extends State<HomePage> {
         screenHeight * 0.21,
       );
 
-      // Speichern der Informationen in den Zustandsvariablen
-      _infoWindowAddress =
-          placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
+      _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
 
-      // Setzt die gesammelten Informationen in den State (alle Bilder, Adresse, Name)
       if (mounted) {
         setState(() {
-          _isSearchVisible = false; // Hide the search bar
-          _infoWindowTitle =
-              placeDetails.name; // Update the info window state with new data
+          _isSearchVisible = false;
+          _infoWindowTitle = placeDetails.name;
           _infoWindowImage = imageUrls.isNotEmpty
               ? imageUrls[0]
-              : 'https://via.placeholder.com/400'; // Verwende das erste Bild oder Platzhalter
-          _isInfoWindowVisible = true; // Show the small info window
-          _infoWindowPosition =
-              infoWindowPosition; // Set the position of the info window
-          _imagesForDetailPage =
-              imageUrls; // Speichern aller Bilder für die Detailseite
-          _selectedMarkerId = placeId; // Set the selected marker ID
+              : 'https://via.placeholder.com/400';
+          _isInfoWindowVisible = true;
+          _infoWindowPosition = infoWindowPosition;
+          _imagesForDetailPage = imageUrls;
+          _selectedMarkerId = placeId;
 
-          // Aktualisiere den Marker mit rotem Icon für den ausgewählten Marker
-          _markers.removeWhere((marker) =>
-          marker.markerId == MarkerId(placeId));
+          _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
           _markers.add(
             Marker(
               markerId: MarkerId(placeId),
               position: position,
               icon: _selectedBasketballMarkerIcon!,
-              // Verwende das Icon mit rotem Rahmen
               onTap: () {
-                FocusScope.of(context)
-                    .unfocus(); // Close the keyboard and show the info window for the selected marker
+                FocusScope.of(context).unfocus();
                 _onMarkerTapped(placeId, position);
               },
             ),
@@ -309,50 +292,38 @@ class _HomePageState extends State<HomePage> {
 
   void _onCloseInfoWindow() {
     if (_selectedMarkerId != null) {
-      // Erstelle eine neue Marker-Liste, in der wir das Icon des ausgewählten Markers ändern
       final updatedMarkers = _markers.map((marker) {
         if (marker.markerId.value == _selectedMarkerId) {
-          // Aktualisiere nur das Icon des ausgewählten Markers
           return marker.copyWith(
-            iconParam: _basketballMarkerIcon!, // Ändere das Icon auf das Standard-Basketball-Icon
+            iconParam: _basketballMarkerIcon!,
           );
         }
-        return marker; // Alle anderen Marker bleiben unverändert
+        return marker;
       }).toSet();
 
-      // Update den Marker-Set mit dem aktualisierten Marker
       setState(() {
         _markers.clear();
         _markers.addAll(updatedMarkers);
       });
 
-      // Reset selected marker ID
       _selectedMarkerId = null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Required 'build' method for the State class
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     final appBarHeight = screenHeight * 0.08;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      // Verhindert das Verschieben des Inhalts bei geöffneter Tastatur
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           MapWidget(
             onMapCreated: _onMapCreated,
-            markers: _markers, // Pass markers to the MapWidget
+            markers: _markers,
           ),
           if (_isInfoWindowVisible && _infoWindowPosition != null)
             Positioned(
@@ -364,36 +335,33 @@ class _HomePageState extends State<HomePage> {
                 child: InfoWindowWidget(
                   title: _infoWindowTitle,
                   imageUrl: _infoWindowImage,
-                  // Address removed as it's no longer needed
                   onShowMorePressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            MarkerDetailsPage(
-                              markerName: _infoWindowTitle,
-                              markerAddress: _infoWindowAddress,
-                              images: _imagesForDetailPage,
-                              peoplePerHour: const {
-                                12: 4,
-                                13: 6,
-                                14: 3,
-                                15: 8,
-                                16: 5,
-                                17: 9,
-                                18: 4,
-                                19: 7,
-                              },
-                            ),
+                        builder: (context) => MarkerDetailsPage(
+                          markerName: _infoWindowTitle,
+                          markerAddress: _infoWindowAddress,
+                          images: _imagesForDetailPage,
+                          peoplePerHour: const {
+                            12: 4,
+                            13: 6,
+                            14: 3,
+                            15: 8,
+                            16: 5,
+                            17: 9,
+                            18: 4,
+                            19: 7,
+                          },
+                        ),
                       ),
                     );
                   },
                   onClosePressed: () {
                     setState(() {
-                      _onCloseInfoWindow(); // Setze Marker auf Standard zurück
+                      _onCloseInfoWindow();
                       _isInfoWindowVisible = false;
-                      _selectedMarkerId =
-                      null; // Deselect marker when the info window is closed
+                      _selectedMarkerId = null;
                     });
                   },
                   onAddRatingPressed: () {
@@ -405,8 +373,7 @@ class _HomePageState extends State<HomePage> {
 
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04,
-                  vertical: screenHeight * 0.015),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04, vertical: screenHeight * 0.015),
               child: Column(
                 children: [
                   Container(
@@ -415,26 +382,22 @@ class _HomePageState extends State<HomePage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            screenHeight * 0.04),
+                        borderRadius: BorderRadius.circular(screenHeight * 0.04),
                       ),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.05),
+                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Center(
                             child: IconButton(
-                              icon: const Icon(
-                                  Icons.search, color: Colors.black),
+                              icon: const Icon(Icons.search, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: _onSearchIconPressed,
                             ),
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(
-                                  Icons.people, color: Colors.black),
+                              icon: const Icon(Icons.people, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
                                 Navigator.pushNamed(context, '/community');
@@ -443,11 +406,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(
-                                  Icons.account_circle, color: Colors.black),
+                              icon: const Icon(Icons.account_circle, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
-                                // Action for account button
                                 Navigator.pushNamed(context, '/account');
                               },
                             ),
@@ -483,7 +444,6 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-          // Correctly using named argument 'padding'
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -505,9 +465,9 @@ class _HomePageState extends State<HomePage> {
                   await _getUserLocation();
 
                   setState(() {
-                    _onCloseInfoWindow(); // Setze Marker auf Standard zurück
-                    _isInfoWindowVisible = false; // Verberge das InfoWindow
-                    _selectedMarkerId = null; // Deselektiere den Marker
+                    _onCloseInfoWindow();
+                    _isInfoWindowVisible = false;
+                    _selectedMarkerId = null;
                   });
                 },
               ),

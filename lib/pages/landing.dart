@@ -134,47 +134,53 @@ class _LandingPageState extends State<LandingPage> {
                   const SizedBox(height: 30),
 
                   // Login form (Email & Password)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 5,
-                          blurRadius: 7,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFFFF), // White background
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            border: const OutlineInputBorder(),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                            suffixIcon: TextButton(
-                              onPressed: () {
-                                // Add forgot password logic here
-                              },
-                              child: const Text('Forgot?'),
+                          child: TextField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide.none, // No border to match background
+                              ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 5), // Reduced the space between the email and password box
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFFFF), // White background
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: const OutlineInputBorder(
+                                borderSide: BorderSide.none, // No border to match background
+                              ),
+                              suffixIcon: TextButton(
+                                onPressed: () {
+                                  // Add forgot password logic here
+                                },
+                                child: const Text('Forgot?'),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
@@ -204,7 +210,7 @@ class _LandingPageState extends State<LandingPage> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: _loginWithGoogle,
-                        icon: const Icon(Icons.account_circle, color: Colors.red),
+                        icon: const Icon(Icons.account_circle, color: Colors.red), // Google icon
                         label: const Text('Google'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -218,11 +224,9 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // Facebook login logic here
-                        },
-                        icon: const Icon(Icons.facebook, color: Colors.blue),
-                        label: const Text('Facebook'),
+                        onPressed: _loginAsGuest, // Guest login now replaces Facebook option
+                        icon: const Icon(Icons.person, color: Colors.blue), // Character icon
+                        label: const Text('Guest'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -275,6 +279,9 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
+
+
 
 
 

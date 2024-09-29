@@ -402,10 +402,6 @@ class _HomePageState extends State<HomePage> {
       double netzRatingFB = data?['ratings']?['netz']?['average'] ?? 0.0;
       double platzRatingFB = data?['ratings']?['platz']?['average'] ?? 0.0;
 
-      print("Firebase Ring Rating: $ringRatingFB");
-      print("Firebase Netz Rating: $netzRatingFB");
-      print("Firebase Platz Rating: $platzRatingFB");
-
       List<String> imageUrls = [];
       if (placeDetails.photos.isNotEmpty) {
         for (var photo in placeDetails.photos) {

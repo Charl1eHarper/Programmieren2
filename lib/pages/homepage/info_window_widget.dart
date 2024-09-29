@@ -63,10 +63,6 @@ class InfoWindowWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    print("Ring Rating im InfoWindow: $ringRating");
-    print("Netz Rating im InfoWindow: $netzRating");
-    print("Platz Rating im InfoWindow: $platzRating");
-
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(10)),
       child: Container(

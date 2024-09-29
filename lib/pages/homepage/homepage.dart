@@ -9,7 +9,7 @@ import 'package:hoophub/pages/homepage/marker_details_page.dart';
 import 'package:hoophub/pages/homepage/info_window_widget.dart';
 import 'package:hoophub/pages/homepage/add_court_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:flutter_rating_bar/flutter_rating_bar.dart'; // Ensure flutter_rating_bar is imported
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -206,6 +206,170 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _showRatingDialog(String placeId) async {
+    // Variables to store ratings
+    double ringRating = 3.0; // Default rating
+    double netzRating = 3.0;
+    double platzRating = 3.0;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Bewerte diesen Platz'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Ring"),
+                    RatingBar.builder(
+                      initialRating: ringRating,
+                      minRating: 1,
+                      allowHalfRating: true,
+                      itemCount: 5,
+                      itemBuilder: (context, _) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                      ),
+                      onRatingUpdate: (rating) {
+                        setState(() {
+                          ringRating = rating; // Update Ring rating
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text("Netz"),
+                    RatingBar.builder(
+                      initialRating: netzRating,
+                      minRating: 1,
+                      allowHalfRating: true,
+                      itemCount: 5,
+                      itemBuilder: (context, _) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                      ),
+                      onRatingUpdate: (rating) {
+                        setState(() {
+                          netzRating = rating; // Update Netz rating
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text("Platz"),
+                    RatingBar.builder(
+                      initialRating: platzRating,
+                      minRating: 1,
+                      allowHalfRating: true,
+                      itemCount: 5,
+                      itemBuilder: (context, _) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                      ),
+                      onRatingUpdate: (rating) {
+                        setState(() {
+                          platzRating = rating; // Update Platz rating
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("Abbrechen"),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog without submitting
+                  },
+                ),
+                TextButton(
+                  child: const Text("Submit"),
+                  onPressed: () async {
+                    try {
+                      // Speichern der Bewertung in Firebase
+                      await _saveRatingToFirebase(placeId, ringRating, netzRating, platzRating);
+
+                      // Zeige eine Bestätigungsmeldung an, dass die Bewertung erfolgreich war
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Rating submitted successfully!')),
+                      );
+
+                      // Schließe den Dialog nach dem Speichern
+                      Navigator.of(context).pop();
+                    } catch (e) {
+                      // Zeige eine Fehlermeldung an, falls etwas schiefgeht
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to submit rating: $e')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+// Ensure this method is properly defined and updates Firestore
+  Future<void> _saveRatingToFirebase(
+      String placeId, double ringRating, double netzRating, double platzRating) async {
+    final firestore = FirebaseFirestore.instance;
+    final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(placeId);
+    final DocumentSnapshot placeDoc = await placeDocRef.get();
+
+    if (placeDoc.exists) {
+      Map<String, dynamic> data = placeDoc.data() as Map<String, dynamic>;
+
+      // Überprüfe, ob das 'ratings'-Feld existiert, und initialisiere es bei Bedarf
+      if (data['ratings'] == null) {
+        data['ratings'] = {
+          'ring': {'total_ratings': 0, 'sum_of_ratings': 0.0, 'average': 0.0},
+          'netz': {'total_ratings': 0, 'sum_of_ratings': 0.0, 'average': 0.0},
+          'platz': {'total_ratings': 0, 'sum_of_ratings': 0.0, 'average': 0.0}
+        };
+      }
+
+      // Berechnungen für die Kategorie "Ring"
+      double newRingSum = (data['ratings']['ring']['sum_of_ratings'] ?? 0.0) + ringRating;
+      int newRingCount = (data['ratings']['ring']['total_ratings'] ?? 0) + 1;
+      double newRingAverage = newRingSum / newRingCount;
+
+      // Berechnungen für die Kategorie "Netz"
+      double newNetzSum = (data['ratings']['netz']['sum_of_ratings'] ?? 0.0) + netzRating;
+      int newNetzCount = (data['ratings']['netz']['total_ratings'] ?? 0) + 1;
+      double newNetzAverage = newNetzSum / newNetzCount;
+
+      // Berechnungen für die Kategorie "Platz"
+      double newPlatzSum = (data['ratings']['platz']['sum_of_ratings'] ?? 0.0) + platzRating;
+      int newPlatzCount = (data['ratings']['platz']['total_ratings'] ?? 0) + 1;
+      double newPlatzAverage = newPlatzSum / newPlatzCount;
+
+      // Aktualisiere die Firestore-Dokumente mit den neuen Bewertungen
+      await placeDocRef.update({
+        'ratings.ring': {
+          'total_ratings': newRingCount,
+          'sum_of_ratings': newRingSum,
+          'average': newRingAverage
+        },
+        'ratings.netz': {
+          'total_ratings': newNetzCount,
+          'sum_of_ratings': newNetzSum,
+          'average': newNetzAverage
+        },
+        'ratings.platz': {
+          'total_ratings': newPlatzCount,
+          'sum_of_ratings': newPlatzSum,
+          'average': newPlatzAverage
+        }
+      });
+    }
+  }
+
+
+
   void _onSearchIconPressed() {
     setState(() {
       _isSearchVisible = !_isSearchVisible;
@@ -370,7 +534,7 @@ class _HomePageState extends State<HomePage> {
                     });
                   },
                   onAddRatingPressed: () {
-                    // Logik für das Hinzufügen einer Bewertung
+                    _showRatingDialog(_selectedMarkerId!);  // Show rating dialog
                   },
                 ),
               ),

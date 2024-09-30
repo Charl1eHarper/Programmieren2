@@ -19,10 +19,11 @@ class MarkerDetailsPage extends StatefulWidget {
   });
 
   @override
-  _MarkerDetailsPageState createState() => _MarkerDetailsPageState();
+  MarkerDetailsPageState createState() => MarkerDetailsPageState(); // Removed the underscore
 }
 
-class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
+// Renamed _MarkerDetailsPageState to MarkerDetailsPageState
+class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _nextHour;
@@ -69,8 +70,6 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
           'comments': [],
         });
       }
-    } else {
-      print("Dokument existiert nicht oder ist leer");
     }
   }
 
@@ -101,16 +100,14 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       setState(() {
         _comments.add(newComment);
       });
-
-      print('Kommentar erfolgreich hinzugefügt');
     } catch (e) {
-      print('Fehler beim Hinzufügen des Kommentars: $e');
+      // Handle error if needed
     }
   }
 
   // Zeige den Dialog zum Hinzufügen von Kommentaren
   Future<void> _showCommentDialog() async {
-    final TextEditingController _commentController = TextEditingController();
+    final TextEditingController commentController = TextEditingController();
 
     await showDialog(
       context: context,
@@ -118,7 +115,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         return AlertDialog(
           title: const Text('Schreibe einen Kommentar'),
           content: TextField(
-            controller: _commentController,
+            controller: commentController,
             decoration: const InputDecoration(hintText: "Schreibe hier..."),
           ),
           actions: [
@@ -128,8 +125,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
             ),
             TextButton(
               onPressed: () {
-                if (_commentController.text.isNotEmpty) {
-                  _addComment(_commentController.text);
+                if (commentController.text.isNotEmpty) {
+                  _addComment(commentController.text);
                 }
                 Navigator.of(context).pop();
               },
@@ -181,7 +178,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$currentDate', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(currentDate, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   // Section for "Anzahl an Leuten" (People count for each hour)
@@ -206,8 +203,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCommentDialog,
-        child: const Icon(Icons.add_comment),
         tooltip: 'Kommentar hinzufügen',
+        child: const Icon(Icons.add_comment),  // Move 'child' to the last position
       ),
     );
   }
@@ -341,7 +338,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '${index} Uhr', // Display the hour
+                      '$index Uhr', // Display the hour
                       style: TextStyle(
                         fontSize: 14, // Slightly smaller font size for the hour label
                         color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
@@ -382,7 +379,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         width: screenWidth * 0.6,  // Full-width button
         child: TextButton(
           style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all(Colors.black),
+            backgroundColor: WidgetStateProperty.all(Colors.black),
           ),
           onPressed: () {
             // Placeholder action for user registration

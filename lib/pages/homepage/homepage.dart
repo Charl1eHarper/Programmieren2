@@ -219,7 +219,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showRatingDialog(String placeId) async {
-    // Variables to store ratings
     double ringRating = 3.0; // Default rating
     double netzRating = 3.0;
     double platzRating = 3.0;
@@ -299,20 +298,23 @@ class _HomePageState extends State<HomePage> {
                   child: const Text("Submit"),
                   onPressed: () async {
                     try {
-                      // Speichern der Bewertung in Firebase
+                      // Save the rating to Firebase
                       await _saveRatingToFirebase(placeId, ringRating, netzRating, platzRating);
 
-                      // Zeige eine Bestätigungsmeldung an, dass die Bewertung erfolgreich war
+                      // Refresh the marker ratings to update the InfoWindow
+                      await _refreshMarkerRatings(placeId);
+
+                      // Show success message
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Rating submitted successfully!')),
+                        const SnackBar(content: Text('Bewertung abgegeben!')),
                       );
 
-                      // Schließe den Dialog nach dem Speichern
+                      // Close the dialog
                       Navigator.of(context).pop();
                     } catch (e) {
-                      // Zeige eine Fehlermeldung an, falls etwas schiefgeht
+                      // Show error message
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to submit rating: $e')),
+                        const SnackBar(content: Text('Bewertung fehlerhaft')),
                       );
                     }
                   },
@@ -324,6 +326,30 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
+  Future<void> _refreshMarkerRatings(String placeId) async {
+    final DocumentSnapshot placeDoc = await FirebaseFirestore.instance
+        .collection('basketball_courts')
+        .doc(placeId)
+        .get();
+
+    Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
+
+    if (data != null) {
+      double ringRatingFB = data['ratings']?['ring']?['average'] ?? 0.0;
+      double netzRatingFB = data['ratings']?['netz']?['average'] ?? 0.0;
+      double platzRatingFB = data['ratings']?['platz']?['average'] ?? 0.0;
+
+      if (mounted) {
+        setState(() {
+          _ringRating = ringRatingFB;
+          _netzRating = netzRatingFB;
+          _platzRating = platzRatingFB;
+        });
+      }
+    }
+  }
+
 
   Future<void> _saveRatingToFirebase(
       String placeId, double ringRating, double netzRating, double platzRating) async {

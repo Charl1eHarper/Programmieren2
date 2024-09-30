@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date
+import 'package:cloud_firestore/cloud_firestore.dart'; // For Firebase integration
 
 class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
@@ -23,18 +24,19 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _nextHour; // Variable to hold the next full hour
+  List<Map<String, dynamic>> _comments = []; // List to store comments
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+    _fetchComments(); // Fetch comments from Firebase
 
     // Get the current time and calculate the next full hour
     DateTime now = DateTime.now();
     int currentHour = now.hour;
     int currentMinute = now.minute;
 
-    // If it's past the current hour (e.g., 20:41), set the next hour to 21
     setState(() {
       _nextHour = (currentMinute > 0) ? (currentHour + 1) % 24 : currentHour;
     });
@@ -46,22 +48,116 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
+  // Fetch comments from Firebase for the marker
+  Future<void> _fetchComments() async {
+    final firestore = FirebaseFirestore.instance;
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.markerName).get();
+
+    if (placeDoc.exists && placeDoc.data() != null) {
+      // Cast the data() to Map<String, dynamic>
+      final data = placeDoc.data() as Map<String, dynamic>;
+
+      // Prüfe, ob das comments-Feld existiert und lade die Kommentare
+      if (data.containsKey('comments')) {
+        setState(() {
+          _comments = List<Map<String, dynamic>>.from(data['comments']);
+        });
+      } else {
+        // Falls das comments-Feld nicht existiert, erstelle ein leeres Array
+        setState(() {
+          _comments = [];
+        });
+        await firestore.collection('basketball_courts').doc(widget.markerName).update({
+          'comments': [],
+        });
+      }
+    } else {
+      print("Dokument existiert nicht oder ist leer");
+    }
+  }
+
+  // Add new comment to Firebase
+  // Add new comment to Firebase
+  Future<void> _addComment(String commentText) async {
+    final firestore = FirebaseFirestore.instance;
+    final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.markerName);
+
+    final newComment = {
+      'username': 'DummyUser', // Placeholder for the username
+      'profile_image': 'https://via.placeholder.com/40', // Placeholder for the user image
+      'comment': commentText,
+      'timestamp': DateTime.now(), // Use local timestamp instead of serverTimestamp
+    };
+
+    try {
+      final DocumentSnapshot placeDoc = await placeDocRef.get();
+      if (placeDoc.exists) {
+        // Add new comment to existing comments if comments field exists
+        await placeDocRef.update({
+          'comments': FieldValue.arrayUnion([newComment]), // Adds the comment to the existing array
+        });
+      } else {
+        // Create new document with the comments array if it doesn't exist
+        await placeDocRef.set({
+          'comments': [newComment], // Initializes the comments field with the first comment
+        });
+      }
+
+      // Refresh the comment section after adding
+      setState(() {
+        _comments.add(newComment);
+      });
+
+      print('Kommentar erfolgreich hinzugefügt');
+    } catch (e) {
+      print('Fehler beim Hinzufügen des Kommentars: $e');
+    }
+  }
+
+
+  // Show a dialog to allow user to enter a new comment
+  Future<void> _showCommentDialog() async {
+    final TextEditingController _commentController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Schreibe einen Kommentar'),
+          content: TextField(
+            controller: _commentController,
+            decoration: const InputDecoration(hintText: "Schreibe hier..."),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Abbrechen'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_commentController.text.isNotEmpty) {
+                  _addComment(_commentController.text);
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Posten'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now()); // Get the current date
-
-    // Format the address to "Streetname Number, Postal Code City"
-    String formattedAddress = formatAddress(widget.markerAddress);
+    final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(
-            widget.markerName,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold) // Set the title text to white
-        ),
+        title: Text(widget.markerName, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -73,19 +169,17 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image carousel
+            // Image carousel (unchanged)
             SizedBox(
               height: screenHeight * 0.30,
               child: _buildImageCarousel(),
             ),
-            const SizedBox(height: 10), // Space between image and address
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                formattedAddress,
-                style: const TextStyle(
-                  fontSize: 17,
-                ),
+                widget.markerAddress,
+                style: const TextStyle(fontSize: 17),
               ),
             ),
             Padding(
@@ -93,11 +187,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Display current date
-                  Text(
-                    '$currentDate',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  Text('$currentDate', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
 
                   // Section for "Anzahl an Leuten" (People count for each hour)
@@ -105,15 +195,24 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                     height: screenHeight * 0.15,  // Reduced height for circles
                     child: _buildScrollableHourCircles(screenWidth),
                   ),
-                  const SizedBox(height: 12), // Reduced space between circles and button
+                  const SizedBox(height: 12),
 
                   // Registration button
                   _buildRegistrationSection(screenWidth),
 
-                  const SizedBox(height: 12), // Same space between button and comments
+                  const SizedBox(height: 12),
 
                   // Comment section
                   _buildCommentSection(),
+
+                  // Button to add a new comment
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _showCommentDialog,
+                      icon: const Icon(Icons.add_comment),
+                      label: const Text('Kommentar hinzufügen'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -123,20 +222,59 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Function to format the address
-  String formatAddress(String address) {
-    List<String> addressParts = address.split(',');
-
-    // If the address has more than 2 parts (e.g., Streetname Number, Postal Code City, Country)
-    // We remove the last part, assuming it's the country.
-    if (addressParts.length > 2) {
-      addressParts.removeLast(); // Remove the last part, which is the country.
-    }
-
-    // Join the remaining parts back into the desired format "Streetname Number, Postal Code City"
-    return addressParts.join(',').trim();
+  // Build the comment section
+  Widget _buildCommentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold)),
+        _comments.isEmpty
+            ? const Text('Noch keine Kommentare.') // Display this text if no comments
+            : SizedBox(
+          height: 200, // Limit height and make the comments scrollable
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _comments.length,
+            itemBuilder: (context, index) {
+              final comment = _comments[index];
+              return _buildComment(
+                comment['username'] ?? 'Anonym',
+                comment['comment'] ?? '',
+                comment['profile_image'] ?? 'https://via.placeholder.com/40',
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
+  // Build a single comment widget
+  Widget _buildComment(String username, String comment, String profileImage) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundImage: NetworkImage(profileImage),
+            radius: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(comment),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // The rest of the code remains the same...
   Widget _buildImageCarousel() {
     return Stack(
       alignment: Alignment.center,
@@ -248,51 +386,30 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-
-  // Updated Registration section with "Pressed" effect using WidgetStateProperty
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(
       child: SizedBox(
         width: screenWidth * 0.6,  // Full-width button
         child: TextButton(
           style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                  (Set<WidgetState> states) {
-                if (states.contains(WidgetState.pressed)) {
-                  return Colors.orange;  // Darker gray when pressed
-                }
-                return Colors.black;  // Default color
-              },
-            ),
-            padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 0, horizontal: 20)), // Set padding
-            shape: WidgetStateProperty.all(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30), // Rounded corners
-              ),
-            ),
+            backgroundColor: MaterialStateProperty.all(Colors.black),
           ),
           onPressed: () {
             // Placeholder action for user registration
             // In future, connect to database and allow user to select a time
           },
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 'Wann bist du da?',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: screenWidth * 0.045,  // Dynamically set font size based on screen width
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 8),  // Space between text and icon
-              Icon(
-                Icons.add_circle,
-                color: Colors.white,
-                size: screenWidth * 0.06, // Dynamically set icon size
-              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.add_circle, color: Colors.white),
             ],
           ),
         ),
@@ -300,41 +417,6 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-
-
-  Widget _buildCommentSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold)),
-        _buildComment('User1', 'Der Platz ist ok, aber nicht mehr!'),
-        _buildComment('User2', 'Nicht schlecht aber auch nicht krass'),
-      ],
-    );
-  }
-
-  Widget _buildComment(String username, String comment) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Row(
-        children: [
-          const Icon(Icons.account_circle, size: 40),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(comment),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Method to build arrow buttons for the carousel
   Widget _buildArrowButton({required IconData icon, required VoidCallback onPressed}) {
     return Container(
       decoration: BoxDecoration(

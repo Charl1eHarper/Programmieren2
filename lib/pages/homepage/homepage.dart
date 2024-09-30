@@ -199,9 +199,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Saving the place to Firebase
+  // Saving the place to Firebase using placeId as the unique identifier
   Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
-    final String placeId = placeData['placeId'];
+    final String placeId = placeData['placeId']; // Ensure placeId is used
     final firestore = FirebaseFirestore.instance;
 
     // Check if the place already exists in Firestore
@@ -210,6 +210,7 @@ class _HomePageState extends State<HomePage> {
     if (!placeDoc.exists) {
       // Save the place to Firebase if it doesn't exist
       await firestore.collection('basketball_courts').doc(placeId).set({
+        'placeId': placeId, // Explicitly store the placeId in the document
         'name': placeData['name'],
         'location': GeoPoint(placeData['latitude'], placeData['longitude']),
         'imageUrls': placeData['imageUrls'],
@@ -298,7 +299,7 @@ class _HomePageState extends State<HomePage> {
                   child: const Text("Submit"),
                   onPressed: () async {
                     try {
-                      // Save the rating to Firebase
+                      // Save the rating to Firebase using placeId
                       await _saveRatingToFirebase(placeId, ringRating, netzRating, platzRating);
 
                       // Refresh the marker ratings to update the InfoWindow
@@ -326,6 +327,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
 
   Future<void> _refreshMarkerRatings(String placeId) async {
     final DocumentSnapshot placeDoc = await FirebaseFirestore.instance

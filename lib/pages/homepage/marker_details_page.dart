@@ -48,22 +48,19 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
-  // Fetch comments from Firebase for the marker
+  // Fetch comments from Firebase for the marker using placeId
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.markerName).get();
 
     if (placeDoc.exists && placeDoc.data() != null) {
-      // Cast the data() to Map<String, dynamic>
       final data = placeDoc.data() as Map<String, dynamic>;
 
-      // Prüfe, ob das comments-Feld existiert und lade die Kommentare
       if (data.containsKey('comments')) {
         setState(() {
           _comments = List<Map<String, dynamic>>.from(data['comments']);
         });
       } else {
-        // Falls das comments-Feld nicht existiert, erstelle ein leeres Array
         setState(() {
           _comments = [];
         });
@@ -75,6 +72,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       print("Dokument existiert nicht oder ist leer");
     }
   }
+
 
   // Add new comment to Firebase
   // Add new comment to Firebase

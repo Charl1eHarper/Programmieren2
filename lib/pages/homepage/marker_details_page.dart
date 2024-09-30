@@ -198,20 +198,16 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
                   // Comment section
                   _buildCommentSection(),
-
-                  // Button to add a new comment
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: _showCommentDialog,
-                      icon: const Icon(Icons.add_comment),
-                      label: const Text('Kommentar hinzufügen'),
-                    ),
-                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCommentDialog,
+        child: const Icon(Icons.add_comment),
+        tooltip: 'Kommentar hinzufügen',
       ),
     );
   }
@@ -392,7 +388,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
             // Placeholder action for user registration
             // In future, connect to database and allow user to select a time
           },
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
@@ -402,8 +398,8 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.add_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Icon(Icons.add_circle, color: Colors.white),
             ],
           ),
         ),

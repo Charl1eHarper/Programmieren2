@@ -406,6 +406,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // In der _onMarkerTapped Funktion, placeId auch an MarkerDetailsPage übergeben
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -463,8 +464,9 @@ class _HomePageState extends State<HomePage> {
           _isInfoWindowVisible = true;
           _infoWindowPosition = infoWindowPosition;
           _imagesForDetailPage = imageUrls;
-          _selectedMarkerId = placeId;
+          _selectedMarkerId = placeId; // Set the selectedMarkerId to the placeId
 
+          // Update marker state
           _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
           _markers.add(
             Marker(
@@ -473,7 +475,7 @@ class _HomePageState extends State<HomePage> {
               icon: _selectedBasketballMarkerIcon!,
               onTap: () {
                 FocusScope.of(context).unfocus();
-                _onMarkerTapped(placeId, position);
+                _onMarkerTapped(placeId, position);  // Use the selected marker's placeId
               },
             ),
           );
@@ -481,6 +483,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+
 
   void _onCloseInfoWindow() {
     if (_selectedMarkerId != null) {
@@ -531,26 +534,29 @@ class _HomePageState extends State<HomePage> {
                   netzRating: _netzRating,
                   platzRating: _platzRating,
                   onShowMorePressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MarkerDetailsPage(
-                          markerName: _infoWindowTitle,
-                          markerAddress: _infoWindowAddress,
-                          images: _imagesForDetailPage,
-                          peoplePerHour: const {
-                            12: 4,
-                            13: 6,
-                            14: 3,
-                            15: 8,
-                            16: 5,
-                            17: 9,
-                            18: 4,
-                            19: 7,
-                          },
+                    if (_selectedMarkerId != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MarkerDetailsPage(
+                            markerName: _infoWindowTitle,
+                            markerAddress: _infoWindowAddress,
+                            images: _imagesForDetailPage,
+                            placeId: _selectedMarkerId!,  // Use _selectedMarkerId here
+                            peoplePerHour: const {
+                              12: 4,
+                              13: 6,
+                              14: 3,
+                              15: 8,
+                              16: 5,
+                              17: 9,
+                              18: 4,
+                              19: 7,
+                            },
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   },
                   onClosePressed: () {
                     setState(() {

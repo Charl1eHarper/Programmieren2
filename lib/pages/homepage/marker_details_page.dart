@@ -6,7 +6,8 @@ class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
   final String markerAddress;
   final List<String> images;
-  final Map<int, int> peoplePerHour; // Placeholder for people count per hour
+  final Map<int, int> peoplePerHour;
+  final String placeId;  // Neu: placeId wird übergeben
 
   const MarkerDetailsPage({
     super.key,
@@ -14,6 +15,7 @@ class MarkerDetailsPage extends StatefulWidget {
     required this.markerAddress,
     required this.images,
     required this.peoplePerHour,
+    required this.placeId,  // placeId hinzugefügt
   });
 
   @override
@@ -23,16 +25,15 @@ class MarkerDetailsPage extends StatefulWidget {
 class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
-  late int _nextHour; // Variable to hold the next full hour
-  List<Map<String, dynamic>> _comments = []; // List to store comments
+  late int _nextHour;
+  List<Map<String, dynamic>> _comments = [];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
-    _fetchComments(); // Fetch comments from Firebase
+    _fetchComments();
 
-    // Get the current time and calculate the next full hour
     DateTime now = DateTime.now();
     int currentHour = now.hour;
     int currentMinute = now.minute;
@@ -51,7 +52,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
   // Fetch comments from Firebase for the marker using placeId
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
-    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.markerName).get();
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get(); // Verwende placeId
 
     if (placeDoc.exists && placeDoc.data() != null) {
       final data = placeDoc.data() as Map<String, dynamic>;
@@ -64,7 +65,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
         setState(() {
           _comments = [];
         });
-        await firestore.collection('basketball_courts').doc(widget.markerName).update({
+        await firestore.collection('basketball_courts').doc(widget.placeId).update({ // Verwende placeId
           'comments': [],
         });
       }
@@ -73,35 +74,30 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-
-  // Add new comment to Firebase
   // Add new comment to Firebase
   Future<void> _addComment(String commentText) async {
     final firestore = FirebaseFirestore.instance;
-    final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.markerName);
+    final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId); // Verwende placeId
 
     final newComment = {
-      'username': 'DummyUser', // Placeholder for the username
-      'profile_image': 'https://via.placeholder.com/40', // Placeholder for the user image
+      'username': 'DummyUser',
+      'profile_image': 'https://via.placeholder.com/40',
       'comment': commentText,
-      'timestamp': DateTime.now(), // Use local timestamp instead of serverTimestamp
+      'timestamp': DateTime.now(),
     };
 
     try {
       final DocumentSnapshot placeDoc = await placeDocRef.get();
       if (placeDoc.exists) {
-        // Add new comment to existing comments if comments field exists
         await placeDocRef.update({
-          'comments': FieldValue.arrayUnion([newComment]), // Adds the comment to the existing array
+          'comments': FieldValue.arrayUnion([newComment]),
         });
       } else {
-        // Create new document with the comments array if it doesn't exist
         await placeDocRef.set({
-          'comments': [newComment], // Initializes the comments field with the first comment
+          'comments': [newComment],
         });
       }
 
-      // Refresh the comment section after adding
       setState(() {
         _comments.add(newComment);
       });
@@ -112,8 +108,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-
-  // Show a dialog to allow user to enter a new comment
+  // Zeige den Dialog zum Hinzufügen von Kommentaren
   Future<void> _showCommentDialog() async {
     final TextEditingController _commentController = TextEditingController();
 
@@ -145,6 +140,7 @@ class _MarkerDetailsPageState extends State<MarkerDetailsPage> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

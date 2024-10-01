@@ -58,21 +58,18 @@ class _AddCourtPageState extends State<AddCourtPage> {
   }
 
   // Function to get geolocation from address
-  Future<Map<String, dynamic>?> _getGeoLocation(String address) async {
+  Future<GeoPoint?> _getGeoLocation(String address) async {
     try {
       print('Getting location for address: $address');  // Debug-Ausgabe für die Adresse
       List<Location> locations = await locationFromAddress(address);
       if (locations.isNotEmpty) {
         final Location location = locations.first;
-        return {
-          'latitude': location.latitude,
-          'longitude': location.longitude,
-        };
+        return GeoPoint(location.latitude, location.longitude);  // Return GeoPoint
       }
     } catch (e) {
       print('Error getting location: $e');
     }
-    return null;  // Rückgabe von null, falls kein Standort gefunden wird
+    return null;  // Return null if location is not found
   }
 
   // Function to save the court information in Firestore
@@ -95,7 +92,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
     print('Full address: $fullAddress');  // Debug-Ausgabe der vollständigen Adresse
 
     // Get the geo location for the address
-    final Map<String, dynamic>? geoLocation = await _getGeoLocation(fullAddress);
+    final GeoPoint? geoLocation = await _getGeoLocation(fullAddress);
 
     if (geoLocation == null) {
       // Handle the case when geolocation fails
@@ -114,11 +111,11 @@ class _AddCourtPageState extends State<AddCourtPage> {
     // Generate a unique placeId
     final String placeId = _uuid.v4();
 
-    // Save data to Firestore without postal_code and created_at
+    // Save data to Firestore with GeoPoint
     await _firestore.collection('basketball_courts').doc(placeId).set({
       'name': name,
       'address': '$street, $city', // Save address without postal code
-      'location': geoLocation, // Store latitude and longitude
+      'location': geoLocation, // Store GeoPoint object
       'image_urls': imageUrl != null ? [imageUrl] : [], // Store image URL if available
       'placeId': placeId,
     });

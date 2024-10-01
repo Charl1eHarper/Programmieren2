@@ -1,7 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';  // Import the image picker package
+import 'dart:io';  // For using File class
 
-class AddCourtPage extends StatelessWidget {
+class AddCourtPage extends StatefulWidget {
   const AddCourtPage({super.key});
+
+  @override
+  State<AddCourtPage> createState() => _AddCourtPageState();
+}
+
+class _AddCourtPageState extends State<AddCourtPage> {
+  File? _selectedImage; // Variable to hold the selected image
+
+  // Function to pick an image from the gallery
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  // Function to remove the selected image
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,43 +64,92 @@ class AddCourtPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Bild-Platzhalter mit + Icon
-              Container(
-                height: screenHeight * 0.25,
-                width: screenWidth * 0.8,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300], // Grauer Hintergrund für den Platzhalter
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey[400]!,
-                    width: 2,
+              // Bild-Platzhalter mit + Icon oder ausgewähltes Bild
+              Stack(
+                children: [
+                  Container(
+                    height: screenHeight * 0.25,
+                    width: screenWidth * 0.8,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300], // Grauer Hintergrund für den Platzhalter
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey[400]!,
+                        width: 2,
+                      ),
+                    ),
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(
+                        _selectedImage!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    )
+                        : Center(
+                      child: IconButton(
+                        icon: const Icon(Icons.add_a_photo,
+                            size: 50, color: Colors.black),
+                        onPressed: _pickImage,  // Function to pick an image
+                      ),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: IconButton(
-                    icon: const Icon(Icons.add_a_photo,
-                        size: 50, color: Colors.black),
-                    onPressed: () {
-                      // Funktion zum Hinzufügen von Bildern
-                    },
-                  ),
-                ),
+                  if (_selectedImage != null)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: _removeImage,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               SizedBox(height: screenHeight * 0.03),
 
-              // Name TextField
+              // Platzname TextField
               TextFormField(
                 decoration: const InputDecoration(
-                  labelText: 'Name',
+                  labelText: 'Platzname',
                   border: OutlineInputBorder(),
                 ),
               ),
               SizedBox(height: screenHeight * 0.02),
 
-              // Adresse TextField
+              // Straße Hausnr. TextField
               TextFormField(
                 decoration: const InputDecoration(
-                  labelText: 'Adresse',
+                  labelText: 'Straße Hausnr.',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.02),
+
+              // Postleitzahl TextField
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Postleitzahl',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.02),
+
+              // Ort TextField
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Ort',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -99,8 +176,7 @@ class AddCourtPage extends StatelessWidget {
               SizedBox(height: screenHeight * 0.02),
 
               // Hinweistext
-              const Center(child: Text('Bitte füge nur existierende Plätze hinzu!')
-              ),
+              const Center(child: Text('Bitte füge nur existierende Plätze hinzu!')),
             ],
           ),
         ),

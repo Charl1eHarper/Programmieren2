@@ -24,6 +24,8 @@ class _AddCourtPageState extends State<AddCourtPage> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final _uuid = const Uuid(); // For generating unique placeId
 
+  bool _isClicked = false; // Variable to track button click
+
   // Function to pick an image from the gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -131,6 +133,21 @@ class _AddCourtPageState extends State<AddCourtPage> {
     _postalCodeController.clear();
     _cityController.clear();
     _removeImage();
+  }
+
+  // Handle button click animation
+  void _handleClick() {
+    setState(() {
+      _isClicked = true;
+    });
+
+    // Reset animation after a short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        _isClicked = false;
+      });
+      _saveCourt(); // Save court after animation
+    });
   }
 
   @override
@@ -261,19 +278,28 @@ class _AddCourtPageState extends State<AddCourtPage> {
               ),
               SizedBox(height: screenHeight * 0.04),
 
-              // Platz hinzufügen Button
+              // Platz hinzufügen Button with animation
               Center(
-                child: ElevatedButton(
-                  onPressed: _saveCourt,  // Call the function to save the court
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(
-                        vertical: screenHeight * 0.02,
-                        horizontal: screenWidth * 0.2),
-                  ),
-                  child: const Text(
-                    'Platz hinzufügen',
-                    style: TextStyle(color: Colors.white), // Weißer Text
+                child: GestureDetector(
+                  onTap: _handleClick, // Trigger animation and save court
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    width: _isClicked ? screenWidth * 0.5 : screenWidth * 0.6,
+                    height: screenHeight * 0.07,
+                    decoration: BoxDecoration(
+                      color: _isClicked ? Colors.orangeAccent : Colors.black, // Animate color change
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Platz hinzufügen',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),

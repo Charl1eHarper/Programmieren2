@@ -99,7 +99,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
     if (geoLocation == null) {
       // Handle the case when geolocation fails
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Fehler beim Abrufen der Geolocation!')),
+        const SnackBar(content: Text('Adresse nicht gefunden!')),
       );
       return;
     }

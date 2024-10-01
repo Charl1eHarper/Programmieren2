@@ -214,15 +214,26 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold)),
+        const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        const SizedBox(height: 8), // Space between the title and the divider
+        const Divider( // Add a thin black line below the title
+          color: Colors.black, // Line color
+          thickness: 1, // Line thickness
+          height: 1, // Space taken by the divider
+        ),
+        const SizedBox(height: 8), // Space between the divider and the comments
         _comments.isEmpty
             ? const Text('Noch keine Kommentare.') // Display this text if no comments
             : SizedBox(
           height: 200, // Limit height and make the comments scrollable
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: _comments.length,
+            itemCount: _comments.length + 1, // Increase itemCount by 1 for padding
             itemBuilder: (context, index) {
+              if (index == _comments.length) {
+                // Add extra padding at the bottom of the list
+                return const SizedBox(height: 60);  // Adjust the height of the padding
+              }
               final comment = _comments[index];
               return _buildComment(
                 comment['username'] ?? 'Anonym',
@@ -236,32 +247,36 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
+
+
   // Build a single comment widget
   Widget _buildComment(String username, String comment, String profileImage) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),  // Add vertical padding between comments
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,  // Align all items to the start (left)
         children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage(profileImage),
-            radius: 20,
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(profileImage),  // Profile image
+                radius: 20,
+              ),
+              const SizedBox(width: 10),  // Space between image and username
+              Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),  // Username
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(comment),
-              ],
-            ),
+          const SizedBox(height: 8),  // Space between username and comment
+          Text(
+            comment,
+            style: const TextStyle(fontSize: 14),
           ),
         ],
       ),
     );
   }
 
-  // The rest of the code remains the same...
+
   Widget _buildImageCarousel() {
     return Stack(
       alignment: Alignment.center,
@@ -316,9 +331,8 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.orange, width: 2.0), // Orange border with 2.0 width
-      ),
+      // Remove the border from the decoration
+      decoration: const BoxDecoration(), // No border now
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal, // Horizontal scrolling
         child: Padding(
@@ -340,14 +354,14 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                     Text(
                       '$index Uhr', // Display the hour
                       style: TextStyle(
-                        fontSize: 14, // Slightly smaller font size for the hour label
+                        fontSize: 16, // Slightly smaller font size for the hour label
                         color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
                       ),
                     ),
-                    const SizedBox(height: 4), // Adjusted space between text and circle
+                    const SizedBox(height: 5), // Adjusted space between text and circle
                     Container(
-                      width: screenWidth * 0.1, // Dynamically set the width based on screen size
-                      height: screenWidth * 0.1, // Same height as width for perfect circle
+                      width: screenWidth * 0.115, // Dynamically set the width based on screen size
+                      height: screenWidth * 0.115, // Same height as width for perfect circle
                       decoration: BoxDecoration(
                         color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
                         shape: BoxShape.circle, // Make it a circle
@@ -373,6 +387,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
+
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(
       child: SizedBox(
@@ -393,6 +408,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 17,
                 ),
               ),
               SizedBox(width: 8),

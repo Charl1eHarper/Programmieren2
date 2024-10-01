@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.hoophub"  // Update to your app's package ID
-        minSdk = 21
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName

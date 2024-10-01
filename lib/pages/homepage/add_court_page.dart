@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';  // Import the image picker package
 import 'dart:io';  // For using File class
+import 'package:firebase_storage/firebase_storage.dart'; // For file uploads
+import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
+import 'package:geocoding/geocoding.dart'; // For geocoding (getting location from address)
+import 'package:uuid/uuid.dart'; // For generating a unique placeId
 
 class AddCourtPage extends StatefulWidget {
   const AddCourtPage({super.key});
@@ -11,6 +15,14 @@ class AddCourtPage extends StatefulWidget {
 
 class _AddCourtPageState extends State<AddCourtPage> {
   File? _selectedImage; // Variable to hold the selected image
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final _uuid = const Uuid(); // For generating unique placeId
 
   // Function to pick an image from the gallery
   Future<void> _pickImage() async {
@@ -29,6 +41,99 @@ class _AddCourtPageState extends State<AddCourtPage> {
     setState(() {
       _selectedImage = null;
     });
+  }
+
+  // Function to upload the image to Firebase Storage
+  Future<String?> _uploadImage(File image) async {
+    try {
+      final String imageId = _uuid.v4();
+      final Reference storageRef = _storage.ref().child('basketball_courts/$imageId');
+      final UploadTask uploadTask = storageRef.putFile(image);
+      final TaskSnapshot snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  // Function to get geolocation from address
+  Future<Map<String, dynamic>?> _getGeoLocation(String address) async {
+    try {
+      print('Getting location for address: $address');  // Debug-Ausgabe für die Adresse
+      List<Location> locations = await locationFromAddress(address);
+      if (locations.isNotEmpty) {
+        final Location location = locations.first;
+        return {
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+        };
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+    }
+    return null;  // Rückgabe von null, falls kein Standort gefunden wird
+  }
+
+  // Function to save the court information in Firestore
+  Future<void> _saveCourt() async {
+    final String name = _nameController.text;
+    final String street = _streetController.text;
+    final String postalCode = _postalCodeController.text;
+    final String city = _cityController.text;
+
+    if (name.isEmpty || street.isEmpty || postalCode.isEmpty || city.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte alle Felder ausfüllen!')),
+      );
+      return;
+    }
+
+    // Generate the full address (including postal code for geolocation)
+    final String fullAddress = '$street, $postalCode, $city';
+
+    print('Full address: $fullAddress');  // Debug-Ausgabe der vollständigen Adresse
+
+    // Get the geo location for the address
+    final Map<String, dynamic>? geoLocation = await _getGeoLocation(fullAddress);
+
+    if (geoLocation == null) {
+      // Handle the case when geolocation fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fehler beim Abrufen der Geolocation!')),
+      );
+      return;
+    }
+
+    // Upload image if available
+    String? imageUrl;
+    if (_selectedImage != null) {
+      imageUrl = await _uploadImage(_selectedImage!);
+    }
+
+    // Generate a unique placeId
+    final String placeId = _uuid.v4();
+
+    // Save data to Firestore without postal_code and created_at
+    await _firestore.collection('basketball_courts').doc(placeId).set({
+      'name': name,
+      'address': '$street, $city', // Save address without postal code
+      'location': geoLocation, // Store latitude and longitude
+      'image_urls': imageUrl != null ? [imageUrl] : [], // Store image URL if available
+      'placeId': placeId,
+    });
+
+    // Show confirmation
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Platz erfolgreich hinzugefügt!')),
+    );
+
+    // Clear form
+    _nameController.clear();
+    _streetController.clear();
+    _postalCodeController.clear();
+    _cityController.clear();
+    _removeImage();
   }
 
   @override
@@ -121,6 +226,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
 
               // Platzname TextField
               TextFormField(
+                controller: _nameController,
                 decoration: const InputDecoration(
                   labelText: 'Platzname',
                   border: OutlineInputBorder(),
@@ -130,6 +236,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
 
               // Straße Hausnr. TextField
               TextFormField(
+                controller: _streetController,
                 decoration: const InputDecoration(
                   labelText: 'Straße Hausnr.',
                   border: OutlineInputBorder(),
@@ -139,6 +246,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
 
               // Postleitzahl TextField
               TextFormField(
+                controller: _postalCodeController,
                 decoration: const InputDecoration(
                   labelText: 'Postleitzahl',
                   border: OutlineInputBorder(),
@@ -148,6 +256,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
 
               // Ort TextField
               TextFormField(
+                controller: _cityController,
                 decoration: const InputDecoration(
                   labelText: 'Ort',
                   border: OutlineInputBorder(),
@@ -158,9 +267,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
               // Platz hinzufügen Button
               Center(
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Logik zum Hinzufügen eines Platzes
-                  },
+                  onPressed: _saveCourt,  // Call the function to save the court
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     padding: EdgeInsets.symmetric(

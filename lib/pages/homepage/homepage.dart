@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
@@ -155,18 +156,71 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Berechnung der Entfernung zwischen zwei Punkten (in Kilometern)
+  double _calculateDistance(LatLng start, LatLng end) {
+    const double earthRadiusKm = 6371.0;
+
+    final double dLat = _degreesToRadians(end.latitude - start.latitude);
+    final double dLng = _degreesToRadians(end.longitude - start.longitude);
+
+    final double lat1 = _degreesToRadians(start.latitude);
+    final double lat2 = _degreesToRadians(end.latitude);
+
+    final double a = (sin(dLat / 2) * sin(dLat / 2)) +
+        (sin(dLng / 2) * sin(dLng / 2) * cos(lat1) * cos(lat2));
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return earthRadiusKm * c;
+  }
+
+  // Hilfsfunktion zur Umrechnung von Grad in Radiant
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+
   Future<void> _findSportsPlaces(LatLng location) async {
+    // 1. Suche Orte in Google Maps API (bestehende Logik)
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000, // 5km radius
       keyword: "basketball",
     );
 
-    if (response.isOkay) {
+    // 2. Suche benutzerdefinierte Orte in Firestore innerhalb des 5km Radius
+    final firestore = FirebaseFirestore.instance;
+    final QuerySnapshot basketballCourtsSnapshot = await firestore.collection('basketball_courts').get();
+
+    // Filtere Orte innerhalb eines 5km-Radius und überprüfe den Typ des `location`-Felds
+    List<QueryDocumentSnapshot> nearbyBasketballCourts = basketballCourtsSnapshot.docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?; // Typcasting und Überprüfung auf null
+
+      // Überprüfen, ob data nicht null ist und ob das 'location'-Feld vorhanden ist
+      if (data != null && data.containsKey('location')) {
+        final dynamic locationField = data['location'];
+
+        // Prüfe, ob `location` ein GeoPoint ist und verarbeite es
+        if (locationField is GeoPoint) {
+          final LatLng courtLocation = LatLng(locationField.latitude, locationField.longitude);
+          return _calculateDistance(location, courtLocation) <= 5.0; // Distanz in Kilometern
+        } else {
+          // Füge eine Fehlerbehandlungsnachricht hinzu, falls das Feld kein GeoPoint ist
+          print('Fehler: location ist kein GeoPoint für Platz ${data['name']}');
+        }
+      }
+      return false; // Ignoriere Einträge ohne `location`-Feld oder wenn `data` null ist
+    }).toList();
+
+
+    print('Firestore Orte innerhalb von 5km: ${nearbyBasketballCourts.length} Orte.');
+
+    // 3. Bereite die Orte aus Firestore auf und füge sie als Marker hinzu
+    if (response.isOkay || nearbyBasketballCourts.isNotEmpty) {
       setState(() {
         _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
 
+        // Google Maps Ergebnisse
         for (var place in response.results) {
+          print('Google Place: ${place.name} wird als Marker hinzugefügt.');
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             var placeData = {
               'placeId': place.placeId,
@@ -179,10 +233,8 @@ class _HomePageState extends State<HomePage> {
                   : ['https://via.placeholder.com/400'],
             };
 
-            // Add place to Firebase if it doesn't already exist
             _savePlaceToFirebase(placeData);
 
-            // Add marker to the map
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
@@ -195,9 +247,28 @@ class _HomePageState extends State<HomePage> {
             );
           }
         }
+
+        // Firestore Orte
+        for (var doc in nearbyBasketballCourts) {
+          final GeoPoint geoPoint = doc['location'];
+          print('Firestore Ort: ${doc['name']} wird als Marker hinzugefügt.');
+          _markers.add(
+            Marker(
+              markerId: MarkerId(doc['placeId']),
+              position: LatLng(geoPoint.latitude, geoPoint.longitude),
+              icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
+              onTap: () {
+                _onMarkerTapped(doc['placeId'], LatLng(geoPoint.latitude, geoPoint.longitude));
+              },
+            ),
+          );
+        }
       });
     }
   }
+
+
+
 
   // Saving the place to Firebase using placeId as the unique identifier
   Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {

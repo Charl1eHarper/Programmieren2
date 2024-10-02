@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firebase integration
+import 'package:firebase_auth/firebase_auth.dart';  // Firebase Authentication
 
 class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
@@ -76,17 +77,54 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   // Add new comment to Firebase
   Future<void> _addComment(String commentText) async {
     final firestore = FirebaseFirestore.instance;
-    final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId); // Verwende placeId
+    final auth = FirebaseAuth.instance;
 
+    // Get the current user
+    final user = auth.currentUser;
+
+    // Check if the user is logged in
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte logge dich ein')),
+      );
+      return;
+    }
+
+    // Get user profile from the Firestore 'users' collection
+    final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
+
+    // Check if the profile exists and is complete
+    if (!userProfile.exists || userProfile.data() == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erstelle dein Profil')),
+      );
+      return;
+    }
+
+    final data = userProfile.data() as Map<String, dynamic>;
+    final String username = data['name'] ?? 'Anonym'; // Fallback to 'Anonym' if no name is provided
+    final String profileImage = data['profileImage'] ?? 'https://via.placeholder.com/40'; // Fallback to default image
+
+    if (data['name'] == null || data['profileImage'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erstelle dein Profil')),
+      );
+      return;
+    }
+
+    // Prepare the new comment
     final newComment = {
-      'username': 'DummyUser',
-      'profile_image': 'https://via.placeholder.com/40',
+      'username': username,
+      'profile_image': profileImage,
       'comment': commentText,
       'timestamp': DateTime.now(),
     };
 
     try {
+      // Update the comments in the basketball_courts collection
+      final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId);
       final DocumentSnapshot placeDoc = await placeDocRef.get();
+
       if (placeDoc.exists) {
         await placeDocRef.update({
           'comments': FieldValue.arrayUnion([newComment]),
@@ -102,13 +140,47 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       });
     } catch (e) {
       // Handle error if needed
+      print('Error adding comment: $e');
     }
   }
 
-  // Zeige den Dialog zum Hinzufügen von Kommentaren
+  // Dialog zum Schreiben eines Kommentars
   Future<void> _showCommentDialog() async {
     final TextEditingController commentController = TextEditingController();
+    final auth = FirebaseAuth.instance;
+    final user = auth.currentUser;
 
+    // Check if the user is logged in
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte logge dich ein')),
+      );
+      return;
+    }
+
+    // Get user profile from Firestore
+    final firestore = FirebaseFirestore.instance;
+    final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
+
+    // Check if the profile is complete
+    if (userProfile.exists && userProfile.data() != null) {
+      final userData = userProfile.data() as Map<String, dynamic>; // Cast to Map<String, dynamic>
+
+      if (userData['name'] == null || userData['profileImage'] == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erstelle dein Profil')),
+        );
+        return;
+      }
+
+      // Wenn alles okay ist, fortfahren
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erstelle dein Profil')),
+      );
+      return;
+    }
+    // If everything is valid, allow user to post a comment
     await showDialog(
       context: context,
       builder: (context) {
@@ -137,6 +209,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       },
     );
   }
+
 
 
   @override

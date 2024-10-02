@@ -179,7 +179,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _findSportsPlaces(LatLng location) async {
-    // 1. Suche Orte in Google Maps API (bestehende Logik)
+    // Erstelle ein Set für alle bereits geladenen placeIds
+    Set<String> loadedPlaceIds = {};
+
+    // 1. Suche Orte in Google Maps API
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000, // 5km radius
@@ -192,35 +195,27 @@ class _HomePageState extends State<HomePage> {
 
     // Filtere Orte innerhalb eines 5km-Radius und überprüfe den Typ des `location`-Felds
     List<QueryDocumentSnapshot> nearbyBasketballCourts = basketballCourtsSnapshot.docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>?; // Typcasting und Überprüfung auf null
+      final data = doc.data() as Map<String, dynamic>?;
 
-      // Überprüfen, ob data nicht null ist und ob das 'location'-Feld vorhanden ist
       if (data != null && data.containsKey('location')) {
         final dynamic locationField = data['location'];
 
-        // Prüfe, ob `location` ein GeoPoint ist und verarbeite es
         if (locationField is GeoPoint) {
           final LatLng courtLocation = LatLng(locationField.latitude, locationField.longitude);
-          return _calculateDistance(location, courtLocation) <= 5.0; // Distanz in Kilometern
-        } else {
-          // Füge eine Fehlerbehandlungsnachricht hinzu, falls das Feld kein GeoPoint ist
-          print('Fehler: location ist kein GeoPoint für Platz ${data['name']}');
+          return _calculateDistance(location, courtLocation) <= 5.0;
         }
       }
-      return false; // Ignoriere Einträge ohne `location`-Feld oder wenn `data` null ist
+      return false;
     }).toList();
 
-
-    print('Firestore Orte innerhalb von 5km: ${nearbyBasketballCourts.length} Orte.');
-
     // 3. Bereite die Orte aus Firestore auf und füge sie als Marker hinzu
-    if (response.isOkay || nearbyBasketballCourts.isNotEmpty) {
-      setState(() {
-        _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
 
-        // Google Maps Ergebnisse
-        for (var place in response.results) {
-          print('Google Place: ${place.name} wird als Marker hinzugefügt.');
+      // Google Maps Ergebnisse
+      for (var place in response.results) {
+        // Prüfe, ob die placeId bereits geladen wurde (entweder von Google Maps oder Firestore)
+        if (!loadedPlaceIds.contains(place.placeId)) {
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             var placeData = {
               'placeId': place.placeId,
@@ -233,8 +228,10 @@ class _HomePageState extends State<HomePage> {
                   : ['https://via.placeholder.com/400'],
             };
 
+            // Speichern des Ortes in Firestore
             _savePlaceToFirebase(placeData);
 
+            // Hinzufügen des Markers
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
@@ -245,29 +242,37 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             );
+
+            // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
+            loadedPlaceIds.add(place.placeId);
           }
         }
+      }
 
-        // Firestore Orte
-        for (var doc in nearbyBasketballCourts) {
-          final GeoPoint geoPoint = doc['location'];
-          print('Firestore Ort: ${doc['name']} wird als Marker hinzugefügt.');
+      // Firestore Orte
+      for (var doc in nearbyBasketballCourts) {
+        final GeoPoint geoPoint = doc['location'];
+        final String firestorePlaceId = doc['placeId'];
+
+        // Prüfe, ob die placeId bereits von Google Maps geladen wurde
+        if (!loadedPlaceIds.contains(firestorePlaceId)) {
           _markers.add(
             Marker(
-              markerId: MarkerId(doc['placeId']),
+              markerId: MarkerId(firestorePlaceId),
               position: LatLng(geoPoint.latitude, geoPoint.longitude),
               icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
               onTap: () {
-                _onMarkerTapped(doc['placeId'], LatLng(geoPoint.latitude, geoPoint.longitude));
+                _onMarkerTapped(firestorePlaceId, LatLng(geoPoint.latitude, geoPoint.longitude));
               },
             ),
           );
+
+          // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
+          loadedPlaceIds.add(firestorePlaceId);
         }
-      });
-    }
+      }
+    });
   }
-
-
 
 
   // Saving the place to Firebase using placeId as the unique identifier

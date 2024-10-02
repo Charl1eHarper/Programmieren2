@@ -26,10 +26,41 @@ class _AddCourtPageState extends State<AddCourtPage> {
 
   bool _isClicked = false; // Variable to track button click
 
-  // Function to pick an image from the gallery
-  Future<void> _pickImage() async {
+  // Function to show dialog to choose between camera and gallery
+  Future<void> _showImageSourceDialog() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Foto aufnehmen'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Aus Galerie auswählen'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Function to pick an image from the gallery or camera
+  Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       setState(() {
@@ -210,7 +241,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
                       child: IconButton(
                         icon: const Icon(Icons.add_a_photo,
                             size: 50, color: Colors.black),
-                        onPressed: _pickImage,  // Function to pick an image
+                        onPressed: _showImageSourceDialog,  // Show dialog to pick image source
                       ),
                     ),
                   ),

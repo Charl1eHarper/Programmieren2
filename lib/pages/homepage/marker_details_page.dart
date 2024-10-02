@@ -134,13 +134,22 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         });
       }
 
+      // Show "Kommentar hinzugefügt" message after successful addition
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kommentar hinzugefügt')),
+      );
+
       setState(() {
         _comments.add(newComment);
       });
     } catch (e) {
       // Handle error if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler beim Hinzufügen des Kommentars: $e')),
+      );
     }
   }
+
 
 // Dialog zum Schreiben eines Kommentars
   Future<void> _showCommentDialog() async {

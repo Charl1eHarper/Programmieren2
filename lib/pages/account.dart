@@ -38,13 +38,15 @@ class _AccountPageState extends State<AccountPage> {
         DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
         if (doc.exists) {
           var data = doc.data() as Map<String, dynamic>;
-          nameController.text = data['name'] ?? '';
-          ageController.text = data['age']?.toString() ?? '';
-          cityController.text = data['city'] ?? '';
-          heightController.text = data['height']?.toString() ?? '';
-          selectedPosition = positions.contains(data['position']) ? data['position'] : null;
-          selectedLevel = levels.contains(data['level']) ? data['level'] : null;
-          _profileImageUrl = data['profileImage'] ?? '';
+          setState(() {
+            nameController.text = data['name'] ?? '';
+            ageController.text = data['age']?.toString() ?? '';
+            cityController.text = data['city'] ?? '';
+            heightController.text = data['height']?.toString() ?? '';
+            selectedPosition = positions.contains(data['position']) ? data['position'] : null;
+            selectedLevel = levels.contains(data['level']) ? data['level'] : null;
+            _profileImageUrl = data['profileImage'] ?? '';
+          });
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,10 +167,10 @@ class _AccountPageState extends State<AccountPage> {
                               radius: 100,  // Profile picture size
                               backgroundColor: Colors.grey[400],
                               backgroundImage: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
-                                  ? NetworkImage(_profileImageUrl!)
+                                  ? NetworkImage(_profileImageUrl!)  // Load image from Firestore URL
                                   : null,
                               child: _profileImageUrl == null || _profileImageUrl!.isEmpty
-                                  ? Icon(Icons.person, size: 100, color: Colors.white)
+                                  ? Icon(Icons.person, size: 100, color: Colors.white)  // Default icon if no image
                                   : null,
                             ),
                             Positioned(

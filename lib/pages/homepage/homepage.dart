@@ -677,13 +677,6 @@ class _HomePageState extends State<HomePage> {
                   // Action when settings icon is pressed
                 },
               ),
-              IconButton(
-                icon: const Icon(Icons.bug_report, color: Colors.red),
-                iconSize: screenWidth * 0.1,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/test_firestore');
-                },
-              ),
             ],
           ),
         ),

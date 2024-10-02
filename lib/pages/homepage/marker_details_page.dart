@@ -74,7 +74,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-  // Add new comment to Firebase
+// Add new comment to Firebase
   Future<void> _addComment(String commentText) async {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
@@ -102,15 +102,14 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
 
     final data = userProfile.data() as Map<String, dynamic>;
-    final String username = data['name'] ?? 'Anonym'; // Fallback to 'Anonym' if no name is provided
-    final String profileImage = data['profileImage'] ?? 'https://via.placeholder.com/40'; // Fallback to default image
 
-    if (data['name'] == null || data['profileImage'] == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erstelle dein Profil')),
-      );
-      return;
-    }
+    // Check if the username is valid
+    final String username = (data['name'] != null && data['name'].toString().trim().isNotEmpty)
+        ? data['name']
+        : 'Anonym'; // Fallback to 'Anonym' if no valid name is provided
+
+    // Fallback to placeholder profile image if not present
+    final String profileImage = data['profileImage'] ?? 'https://via.placeholder.com/40'; // Default placeholder image
 
     // Prepare the new comment
     final newComment = {
@@ -140,11 +139,10 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       });
     } catch (e) {
       // Handle error if needed
-      print('Error adding comment: $e');
     }
   }
 
-  // Dialog zum Schreiben eines Kommentars
+// Dialog zum Schreiben eines Kommentars
   Future<void> _showCommentDialog() async {
     final TextEditingController commentController = TextEditingController();
     final auth = FirebaseAuth.instance;
@@ -164,22 +162,23 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
     // Check if the profile is complete
     if (userProfile.exists && userProfile.data() != null) {
-      final userData = userProfile.data() as Map<String, dynamic>; // Cast to Map<String, dynamic>
+      final userData = userProfile.data() as Map<String, dynamic>;
 
-      if (userData['name'] == null || userData['profileImage'] == null) {
+      // Check if the user has a valid name
+      if (userData['name'] == null || userData['name'].toString().trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erstelle dein Profil')),
+          const SnackBar(content: Text('Bitte gib deinen Namen ein')),
         );
         return;
       }
 
-      // Wenn alles okay ist, fortfahren
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erstelle dein Profil')),
       );
       return;
     }
+
     // If everything is valid, allow user to post a comment
     await showDialog(
       context: context,
@@ -209,6 +208,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       },
     );
   }
+
 
 
 

@@ -482,7 +482,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // In der _onMarkerTapped Funktion, placeId auch an MarkerDetailsPage übergeben
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -491,32 +490,23 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final detail = await places.getDetailsByPlaceId(placeId);
+    // Versuche, die Details entweder von Google Maps oder Firestore zu bekommen
+    DocumentSnapshot placeDoc = await FirebaseFirestore.instance
+        .collection('basketball_courts')
+        .doc(placeId)
+        .get();
 
-    if (detail.isOkay) {
-      final placeDetails = detail.result;
+    Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
 
-      final DocumentSnapshot placeDoc = await FirebaseFirestore.instance
-          .collection('basketball_courts')
-          .doc(placeId)
-          .get();
+    // Verwende Firestore-Daten, falls vorhanden
+    if (data != null) {
+      String name = data['name'] ?? 'Kein Name verfügbar';
+      String address = data['address'] ?? 'Keine Adresse verfügbar';
+      List<String> imageUrls = List<String>.from(data['imageUrls'] ?? ['https://via.placeholder.com/400']);
 
-      Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
-
-      double ringRatingFB = data?['ratings']?['ring']?['average'] ?? 0.0;
-      double netzRatingFB = data?['ratings']?['netz']?['average'] ?? 0.0;
-      double platzRatingFB = data?['ratings']?['platz']?['average'] ?? 0.0;
-
-      List<String> imageUrls = [];
-      if (placeDetails.photos.isNotEmpty) {
-        for (var photo in placeDetails.photos) {
-          final photoReference = photo.photoReference;
-          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
-          imageUrls.add(imageUrl);
-        }
-      } else {
-        imageUrls.add('https://via.placeholder.com/400');
-      }
+      double ringRatingFB = data['ratings']?['ring']?['average'] ?? 0.0;
+      double netzRatingFB = data['ratings']?['netz']?['average'] ?? 0.0;
+      double platzRatingFB = data['ratings']?['platz']?['average'] ?? 0.0;
 
       final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
@@ -526,8 +516,6 @@ class _HomePageState extends State<HomePage> {
 
       final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
 
-      _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
-
       if (mounted) {
         setState(() {
           _ringRating = ringRatingFB;
@@ -535,12 +523,13 @@ class _HomePageState extends State<HomePage> {
           _platzRating = platzRatingFB;
 
           _isSearchVisible = false;
-          _infoWindowTitle = placeDetails.name;
+          _infoWindowTitle = name;
           _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
+          _infoWindowAddress = address;
           _isInfoWindowVisible = true;
           _infoWindowPosition = infoWindowPosition;
           _imagesForDetailPage = imageUrls;
-          _selectedMarkerId = placeId; // Set the selectedMarkerId to the placeId
+          _selectedMarkerId = placeId;
 
           // Update marker state
           _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
@@ -551,7 +540,7 @@ class _HomePageState extends State<HomePage> {
               icon: _selectedBasketballMarkerIcon!,
               onTap: () {
                 FocusScope.of(context).unfocus();
-                _onMarkerTapped(placeId, position);  // Use the selected marker's placeId
+                _onMarkerTapped(placeId, position);
               },
             ),
           );
@@ -559,6 +548,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+
 
 
   void _onCloseInfoWindow() {

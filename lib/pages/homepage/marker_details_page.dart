@@ -189,7 +189,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
       if (userData['name'] == null || userData['name'].toString().trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bitte gib deinen Namen ein')),
+          const SnackBar(content: Text('Bitte gib deinen Namen im Profil ein')),
         );
         return;
       }
@@ -314,6 +314,27 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       return;
     }
 
+    // Get user profile from Firestore
+    final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
+
+    if (!userProfile.exists || userProfile.data() == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erstelle dein Profil')),
+      );
+      return;
+    }
+
+    final data = userProfile.data() as Map<String, dynamic>;
+    final String? username = data['name'];
+
+    // Check if username is null or empty
+    if (username == null || username.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte gib deinen Namen im Profil ein')),
+      );
+      return;
+    }
+
     try {
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId);
@@ -335,27 +356,24 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       bool alreadyRegisteredForAll = true;
 
       for (int hour = startHour; hour < endHour; hour++) {
-        // Ensure the data structure is correct, even if empty
         final hourData = todayCounts[hour.toString()] ?? {
           'count': 0,
-          'users': <String>[], // List of user IDs
+          'users': <String>[],
         };
 
         final List<String> userIds = List<String>.from(hourData['users']);
 
-        // Check if the user is already registered for this hour
         if (!userIds.contains(user.uid)) {
-          alreadyRegisteredForAll = false;  // There's at least one hour the user is not registered for
+          alreadyRegisteredForAll = false;
           break;
         }
       }
 
-      // If the user is already registered for all hours
       if (alreadyRegisteredForAll) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Für diesen Zeitraum hast du dich bereits vollständig registriert.')),
         );
-        return;  // Abort without creating a new registration
+        return;
       }
 
       // Register only for hours the user is not yet registered for
@@ -367,9 +385,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
         final List<String> userIds = List<String>.from(hourData['users']);
 
-        // Check if the user is already registered for this hour
         if (!userIds.contains(user.uid)) {
-          // Add user ID and increment the count
           userIds.add(user.uid);
           hourData['count'] = (hourData['count'] ?? 0) + 1;
           hourData['users'] = userIds;
@@ -377,17 +393,15 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         }
       }
 
-      // Update the Firestore document
       await placeDocRef.update({
         'peoplePerHour': {today: todayCounts}
       });
 
-      // Refresh the local state and UI immediately
       setState(() {
         _peoplePerHour = todayCounts.map((key, value) {
           return MapEntry(int.parse(key), {
             'count': value['count'] as int,
-            'users': List<String>.from(value['users'] ?? [])
+            'users': List<String>.from(value['users'] ?? []),
           });
         });
       });
@@ -499,14 +513,16 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           content: userNames.isEmpty
               ? const Text('Keine Nutzer angemeldet.')
               : SizedBox(
-            height: 200,
-            child: ListView.builder(
-              itemCount: userNames.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(userNames[index]),
-                );
-              },
+            height: 100, // Set the max height of the dialog content
+            child: Scrollbar( // Add a scrollbar for better UX
+              child: ListView.builder(
+                itemCount: userNames.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(userNames[index]),
+                  );
+                },
+              ),
             ),
           ),
           actions: [
@@ -521,6 +537,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       },
     );
   }
+
 
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(

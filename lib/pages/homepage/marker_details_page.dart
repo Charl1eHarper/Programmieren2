@@ -328,11 +328,37 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
       final todayCounts = Map<String, Map<String, dynamic>>.from(peoplePerHour[today] ?? {});
 
+      bool alreadyRegisteredForAll = true;
+
       for (int hour = startHour; hour < endHour; hour++) {
         // Hole die Daten für diese Stunde oder initialisiere sie
         final hourData = todayCounts[hour.toString()] ?? {
           'count': 0,
           'users': <String>[], // Liste von User-IDs
+        };
+
+        final List<String> userIds = List<String>.from(hourData['users']);
+
+        // Prüfen, ob der Nutzer bereits für diese Stunde eingetragen ist
+        if (!userIds.contains(user.uid)) {
+          alreadyRegisteredForAll = false;  // Es gibt mindestens eine Stunde, für die der Nutzer nicht registriert ist
+          break;
+        }
+      }
+
+      // Wenn der Nutzer für alle Stunden bereits registriert ist
+      if (alreadyRegisteredForAll) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Für diesen Zeitraum hast du dich bereits vollständig registriert.')),
+        );
+        return;  // Abbrechen, ohne eine neue Registrierung vorzunehmen
+      }
+
+      // Registrierung vornehmen, nur für Stunden, in denen der Nutzer noch nicht registriert ist
+      for (int hour = startHour; hour < endHour; hour++) {
+        final hourData = todayCounts[hour.toString()] ?? {
+          'count': 0,
+          'users': <String>[],
         };
 
         final List<String> userIds = List<String>.from(hourData['users']);
@@ -366,6 +392,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

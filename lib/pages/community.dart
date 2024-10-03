@@ -487,24 +487,37 @@ class _CommunityPageState extends State<CommunityPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Search Friends'),
+          backgroundColor: Colors.grey[850], // Set the background color to match the page
+          title: const Text(
+            'Search Friends',
+            style: TextStyle(color: Colors.white), // White text to fit the theme
+          ),
           content: TextField(
             controller: searchController,
-            decoration: const InputDecoration(hintText: 'Enter email or username'),
+            style: const TextStyle(color: Colors.white), // White text inside input
+            decoration: const InputDecoration(
+              hintText: 'Enter email or username',
+              hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+              filled: true,
+              fillColor: Colors.grey, // Dark background for input field
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+              ),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('CANCEL'),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
             ),
             TextButton(
               onPressed: () async {
                 await sendFriendRequest(searchController.text);
                 Navigator.pop(context);
               },
-              child: const Text('ADD'),
+              child: const Text('ADD', style: TextStyle(color: Colors.teal)),
             ),
           ],
         );
@@ -548,17 +561,30 @@ class _CommunityPageState extends State<CommunityPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Create Community'),
+              backgroundColor: Colors.grey[850], // Set the background color to match the page
+              title: const Text(
+                'Create Community',
+                style: TextStyle(color: Colors.white), // White text to fit the theme
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: groupNameController,
-                    decoration: const InputDecoration(hintText: 'Community Name'),
+                    style: const TextStyle(color: Colors.white), // White text inside input
+                    decoration: const InputDecoration(
+                      hintText: 'Community Name',
+                      hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+                      filled: true,
+                      fillColor: Colors.grey, // Dark background for input field
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                   Row(
                     children: [
-                      const Text('Private'),
+                      const Text('Private', style: TextStyle(color: Colors.white)),
                       Switch(
                         value: isPrivate,
                         onChanged: (value) {
@@ -575,7 +601,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   if (isPrivate)
                     Row(
                       children: [
-                        const Text('Allow Invites'),
+                        const Text('Allow Invites', style: TextStyle(color: Colors.white)),
                         Switch(
                           value: allowInvites,
                           onChanged: (value) {
@@ -593,7 +619,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('CANCEL'),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -605,7 +631,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       print('Group name cannot be empty');
                     }
                   },
-                  child: const Text('CREATE'),
+                  child: const Text('CREATE', style: TextStyle(color: Colors.teal)),
                 ),
               ],
             );

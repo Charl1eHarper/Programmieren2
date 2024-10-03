@@ -315,7 +315,8 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
 
     // Get user profile from Firestore
-    final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
+    final DocumentReference userDocRef = firestore.collection('users').doc(user.uid);
+    final DocumentSnapshot userProfile = await userDocRef.get();
 
     if (!userProfile.exists || userProfile.data() == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -324,8 +325,8 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       return;
     }
 
-    final data = userProfile.data() as Map<String, dynamic>;
-    final String? username = data['name'];
+    final userData = userProfile.data() as Map<String, dynamic>;
+    final String? username = userData['name'];
 
     // Check if username is null or empty
     if (username == null || username.trim().isEmpty) {
@@ -396,6 +397,25 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       await placeDocRef.update({
         'peoplePerHour': {today: todayCounts}
       });
+
+      // Update the user profile's last_courts field
+      List<dynamic> lastCourts = userData['last_courts'] ?? [];
+
+      // Check if the user is already registered for the current place and date
+      bool alreadyRegisteredForPlaceToday = lastCourts.any((court) {
+        return court['placeId'] == widget.placeId && court['date'] == today;
+      });
+
+      if (!alreadyRegisteredForPlaceToday) {
+        lastCourts.add({
+          'placeId': widget.placeId,
+          'date': today,
+        });
+
+        await userDocRef.update({
+          'last_courts': lastCourts,
+        });
+      }
 
       setState(() {
         _peoplePerHour = todayCounts.map((key, value) {

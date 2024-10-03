@@ -28,6 +28,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late int _currentHour; // Ändere das zu currentHour
   Map<int, Map<String, dynamic>> _peoplePerHour = {};
   List<Map<String, dynamic>> _comments = [];
+  bool _isClicked = false; // Initial state of the button (not clicked)
 
   @override
   void initState() {
@@ -671,13 +672,18 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(
-      child: SizedBox(
-        width: screenWidth * 0.6,
-        child: TextButton(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all(Colors.black),
+      child: GestureDetector(
+        onTap: _handleClick, // Trigger animation and show the dialog
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300), // Same duration for the animation
+          curve: Curves.easeInOut, // Smooth animation curve
+          width: _isClicked ? screenWidth * 0.55 : screenWidth * 0.6, // Adjust width during animation
+          height: 50.0, // Height remains constant
+          decoration: BoxDecoration(
+            color: _isClicked ? Colors.orangeAccent : Colors.black, // Color changes during animation
+            borderRadius: BorderRadius.circular(12), // Rounded corners
           ),
-          onPressed: _showHourSelectionDialog, // Dialog für Zeitraum-Auswahl öffnen
+          alignment: Alignment.center, // Center the text and icon
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -697,6 +703,22 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
+  // Handling the button click animation
+  void _handleClick() {
+    setState(() {
+      _isClicked = true;
+    });
+
+    // Reset animation after a short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        _isClicked = false;
+      });
+      _showHourSelectionDialog(); // Show the dialog after animation
+    });
+  }
+
 
   Widget _buildCommentSection() {
     return Column(

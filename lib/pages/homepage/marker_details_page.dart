@@ -84,14 +84,23 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
+          // Abruf der Daten für den heutigen Tag und Mapping auf das lokale _peoplePerHour
           final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
           setState(() {
-            _peoplePerHour = todayData.map((key, value) => MapEntry(int.parse(key), value['count'] as int));
+            // Mapping sicherstellen, dass count korrekt abgerufen wird
+            _peoplePerHour = todayData.map((key, value) {
+              if (value is Map<String, dynamic> && value.containsKey('count')) {
+                return MapEntry(int.parse(key), value['count'] as int);
+              } else {
+                return MapEntry(int.parse(key), 0);
+              }
+            });
           });
         }
       }
     }
   }
+
 
 
 
@@ -455,6 +464,47 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
+  // Dialog zum Anzeigen der Benutzer für eine bestimmte Stunde
+  void _showUsersDialog(int hour) {
+    List<String> userIds = [];
+
+    // Überprüfen, ob die Stunde in _peoplePerHour vorhanden ist und die Datenstruktur stimmt
+    if (_peoplePerHour.containsKey(hour) && _peoplePerHour[hour] is Map<String, dynamic>) {
+      final hourData = _peoplePerHour[hour] as Map<String, dynamic>;
+      userIds = List<String>.from(hourData['users'] ?? []);
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Angemeldete Nutzer für $hour:00 Uhr'),
+          content: userIds.isEmpty
+              ? const Text('Keine Nutzer angemeldet.')
+              : SizedBox(
+            height: 200,
+            child: ListView.builder(
+              itemCount: userIds.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(userIds[index]),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Schließen'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(
       decoration: const BoxDecoration(),
@@ -465,43 +515,51 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: List.generate(24, (index) {
-              final int peopleCount = _peoplePerHour[index] ?? 0;  // Zeige 0 an, falls keine Daten
+              // Sicherstellen, dass _peoplePerHour[index] eine Map ist, bevor auf 'count' zugegriffen wird
+              final int peopleCount = (_peoplePerHour.containsKey(index))
+                  ? _peoplePerHour[index] ?? 0
+                  : 0;
 
               final bool isCurrentHour = index == _currentHour;
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$index Uhr',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isCurrentHour ? Colors.orange : Colors.black,
+              return GestureDetector(
+                onTap: () {
+                  _showUsersDialog(index);  // Öffne Dialog bei Klick auf einen Kreis
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$index Uhr',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isCurrentHour ? Colors.orange : Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Container(
-                      width: screenWidth * 0.115,
-                      height: screenWidth * 0.115,
-                      decoration: BoxDecoration(
-                        color: isCurrentHour ? Colors.orange : Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$peopleCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 5),
+                      Container(
+                        width: screenWidth * 0.115,
+                        height: screenWidth * 0.115,
+                        decoration: BoxDecoration(
+                          color: isCurrentHour ? Colors.orange : Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$peopleCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
@@ -510,6 +568,9 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
+
+
 
 
 

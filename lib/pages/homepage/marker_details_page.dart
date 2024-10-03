@@ -507,7 +507,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   }
 
 
-// Dialog to display users for a specific hour
   Future<void> _showUsersDialog(int hour) async {
     List<String> userIds = [];
 
@@ -536,31 +535,66 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Angemeldete Nutzer für $hour:00 Uhr'),
-          content: userNames.isEmpty
-              ? const Text('Keine Nutzer angemeldet.')
-              : SizedBox(
-            height: 100, // Set the max height of the dialog content
-            child: Scrollbar( // Add a scrollbar for better UX
-              child: ListView.builder(
-                itemCount: userNames.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(userNames[index]),
-                  );
-                },
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.6,  // Maximal 80% der Bildschirmbreite
+              maxHeight: MediaQuery.of(context).size.height * 0.3, // Begrenze die Höhe des Dialogs auf 50% der Höhe
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Gleiches Padding links und rechts
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Platziere Überschrift oben und Button unten
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0), // Abstand von oben
+                    child: Text(
+                      'Angemeldete Nutzer für $hour:00 Uhr',
+                      style: TextStyle(
+                        fontSize: MediaQuery.of(context).size.width * 0.05,  // Dynamische Schriftgröße
+                      ),
+                      textAlign: TextAlign.center,  // Zentriere die Überschrift
+                    ),
+                  ),
+                  Expanded(
+                    child: userNames.isEmpty
+                        ? const Center(
+                      child: Text('Keine Nutzer angemeldet.'),
+                    )
+                        : Scrollbar(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: userNames.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              userNames[index],
+                              overflow: TextOverflow.ellipsis,  // Textüberlauf verhindern
+                              style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.045),  // Schriftgröße anpassen
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0), // Abstand von unten
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          'Schließen',
+                          style: TextStyle(color: Colors.blue),  // Blau für bessere Sichtbarkeit
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Schließen'),
-            ),
-          ],
         );
       },
     );

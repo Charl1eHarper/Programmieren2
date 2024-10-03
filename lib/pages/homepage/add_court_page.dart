@@ -183,9 +183,6 @@ class _AddCourtPageState extends State<AddCourtPage> {
     _postalCodeController.clear();  // Clear postal code as well
     _cityController.clear();
     _removeImage();  // Clear the selected image
-
-    // Navigate back to the HomePage and center map on user's location
-    Navigator.of(context).pop();  // Go back to the HomePage
   }
 
 

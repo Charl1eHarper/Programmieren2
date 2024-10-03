@@ -67,15 +67,6 @@ class _HomePageState extends State<HomePage> {
     _trackLocationChanges();
   }
 
-  // This method will be called when returning to HomePage from AddCourtPage
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Trigger user location when the user returns to HomePage
-    _getUserLocation();
-  }
-
   @override
   void dispose() {
     _positionStream?.cancel();

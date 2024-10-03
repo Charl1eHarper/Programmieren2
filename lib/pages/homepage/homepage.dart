@@ -490,62 +490,107 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Versuche, die Details entweder von Google Maps oder Firestore zu bekommen
-    DocumentSnapshot placeDoc = await FirebaseFirestore.instance
-        .collection('basketball_courts')
-        .doc(placeId)
-        .get();
+    List<String> imageUrls = [];
+    String name = '';
+    String address = '';
+    double ringRating = 0.0;
+    double netzRating = 0.0;
+    double platzRating = 0.0;
 
-    Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
+    bool isGoogleDataLoaded = false;
 
-    // Verwende Firestore-Daten, falls vorhanden
-    if (data != null) {
-      String name = data['name'] ?? 'Kein Name verfügbar';
-      String address = data['address'] ?? 'Keine Adresse verfügbar';
-      List<String> imageUrls = List<String>.from(data['imageUrls'] ?? ['https://via.placeholder.com/400']);
+    // Schritt 1: Versuche, die Daten von Google Places zu laden
+    try {
+      final placeDetails = await places.getDetailsByPlaceId(placeId);
 
-      double ringRatingFB = data['ratings']?['ring']?['average'] ?? 0.0;
-      double netzRatingFB = data['ratings']?['netz']?['average'] ?? 0.0;
-      double platzRatingFB = data['ratings']?['platz']?['average'] ?? 0.0;
+      if (placeDetails.isOkay && placeDetails.result.photos.isNotEmpty) {
+        name = placeDetails.result.name;
+        address = placeDetails.result.formattedAddress ?? "Keine Adresse verfügbar";
 
-      final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
+        // Lade die Bilder von Google Places
+        for (var photo in placeDetails.result.photos) {
+          final photoReference = photo.photoReference;
+          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
+          imageUrls.add(imageUrl);
+        }
 
-      await _mapController.animateCamera(
-        CameraUpdate.newLatLngZoom(adjustedPosition, 16),
-      );
-
-      final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
-
-      if (mounted) {
-        setState(() {
-          _ringRating = ringRatingFB;
-          _netzRating = netzRatingFB;
-          _platzRating = platzRatingFB;
-
-          _isSearchVisible = false;
-          _infoWindowTitle = name;
-          _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
-          _infoWindowAddress = address;
-          _isInfoWindowVisible = true;
-          _infoWindowPosition = infoWindowPosition;
-          _imagesForDetailPage = imageUrls;
-          _selectedMarkerId = placeId;
-
-          // Update marker state
-          _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
-          _markers.add(
-            Marker(
-              markerId: MarkerId(placeId),
-              position: position,
-              icon: _selectedBasketballMarkerIcon!,
-              onTap: () {
-                FocusScope.of(context).unfocus();
-                _onMarkerTapped(placeId, position);
-              },
-            ),
-          );
-        });
+        isGoogleDataLoaded = true; // Setze das Flag, dass Google-Daten geladen wurden
       }
+    } catch (e) {
+      // Fehlerbehandlung bei Google Places Datenabruf
+    }
+
+    // Schritt 2: Falls keine Google-Daten oder Bilder gefunden wurden, lade Firestore-Daten
+    if (!isGoogleDataLoaded) {
+      try {
+        DocumentSnapshot placeDoc = await FirebaseFirestore.instance
+            .collection('basketball_courts')
+            .doc(placeId)
+            .get();
+
+        Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
+
+        if (data != null) {
+          name = data['name'] ?? 'Kein Name verfügbar';
+          address = data['address'] ?? 'Keine Adresse verfügbar';
+
+          // Verwende die Firestore-URL, wenn verfügbar
+          imageUrls = List<String>.from(data['image_urls'] ?? ['https://via.placeholder.com/400']);
+
+          ringRating = data['ratings']?['ring']?['average'] ?? 0.0;
+          netzRating = data['ratings']?['netz']?['average'] ?? 0.0;
+          platzRating = data['ratings']?['platz']?['average'] ?? 0.0;
+        } else {
+          imageUrls.add('https://via.placeholder.com/400');
+        }
+      } catch (e) {
+        // Fehlerbehandlung bei Firestore-Datenabruf
+        imageUrls.add('https://via.placeholder.com/400');
+      }
+    }
+
+    // Falls keine Bilder vorhanden sind, füge einen Platzhalter hinzu
+    if (imageUrls.isEmpty) {
+      imageUrls.add('https://via.placeholder.com/400');
+    }
+
+    final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
+
+    await _mapController.animateCamera(
+      CameraUpdate.newLatLngZoom(adjustedPosition, 16),
+    );
+
+    final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
+
+    if (mounted) {
+      setState(() {
+        _ringRating = ringRating;
+        _netzRating = netzRating;
+        _platzRating = platzRating;
+
+        _isSearchVisible = false;
+        _infoWindowTitle = name;
+        _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
+        _infoWindowAddress = address;
+        _isInfoWindowVisible = true;
+        _infoWindowPosition = infoWindowPosition;
+        _imagesForDetailPage = imageUrls;
+        _selectedMarkerId = placeId;
+
+        // Update marker state
+        _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
+        _markers.add(
+          Marker(
+            markerId: MarkerId(placeId),
+            position: position,
+            icon: _selectedBasketballMarkerIcon!,
+            onTap: () {
+              FocusScope.of(context).unfocus();
+              _onMarkerTapped(placeId, position);
+            },
+          ),
+        );
+      });
     }
   }
 

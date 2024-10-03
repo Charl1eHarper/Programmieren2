@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'communitypage/inbox.dart'; // Import the inbox page
+import 'communitypage/friendPopUp.dart'; // Import the friend popup page
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -180,8 +181,11 @@ class _CommunityPageState extends State<CommunityPage> {
             return ListTile(
               title: Text(friend['friendName'], style: const TextStyle(color: Colors.white)),
               onTap: () {
-                // Handle friend item tap
-                print('Tapped on ${friend['friendName']}');
+                // Open the FriendProfilePopup when a friend is tapped
+                showDialog(
+                  context: context,
+                  builder: (context) => FriendProfilePopup(friendId: friend.id),
+                );
               },
             );
           },
@@ -517,6 +521,7 @@ class _CommunityPageState extends State<CommunityPage> {
     print('Group "$groupName" created successfully');
   }
 }
+
 
 
 

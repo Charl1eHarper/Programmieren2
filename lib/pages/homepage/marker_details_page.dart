@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firebase integration
 import 'package:firebase_auth/firebase_auth.dart';  // Firebase Authentication
+import 'package:intl/date_symbol_data_local.dart';  // For locale initialization
 
 class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
@@ -18,28 +19,34 @@ class MarkerDetailsPage extends StatefulWidget {
   });
 
   @override
-  MarkerDetailsPageState createState() => MarkerDetailsPageState(); // Removed the underscore
+  MarkerDetailsPageState createState() => MarkerDetailsPageState();
 }
 
 class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _currentHour; // Ändere das zu currentHour
-  Map<int, Map<String, dynamic>> _peoplePerHour = {}; // peoplePerHour wird hier initialisiert
+  Map<int, Map<String, dynamic>> _peoplePerHour = {};
   List<Map<String, dynamic>> _comments = [];
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
-    _fetchComments();
-    _fetchPeoplePerHour(); // Neue Methode zum Abrufen von peoplePerHour
+
+    // Initialize the locale for the date in German (de)
+    initializeDateFormatting('de', null).then((_) {
+      setState(() {
+        _fetchComments();
+        _fetchPeoplePerHour();
+      });
+    });
 
     DateTime now = DateTime.now();
-    int currentHour = now.hour; // Verwende die aktuelle Stunde
+    int currentHour = now.hour;
 
     setState(() {
-      _currentHour = currentHour; // Setze currentHour als _currentHour
+      _currentHour = currentHour;
     });
   }
 
@@ -49,7 +56,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
-  // Fetch comments from Firebase for the marker using placeId (unverändert)
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
@@ -84,7 +90,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
-          // Fetch today's data and map it to the local _peoplePerHour
           final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
           setState(() {
             _peoplePerHour = todayData.map((key, value) {
@@ -441,7 +446,9 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now());
+
+    // Verwende das deutsche Datumsformat mit einem Punkt nach dem Wochentag
+    final currentDate = DateFormat('EEEE, dd. MMMM yyyy', 'de').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -498,6 +505,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
 
 // Dialog to display users for a specific hour
   Future<void> _showUsersDialog(int hour) async {

@@ -72,7 +72,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-  // Neue Methode zum Abrufen von peoplePerHour aus Firestore
   Future<void> _fetchPeoplePerHour() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
@@ -85,15 +84,15 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
+          final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
           setState(() {
-            // Abruf der Einträge für den heutigen Tag und sichere Umwandlung der Daten
-            final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
-            _peoplePerHour = todayData.map((key, value) => MapEntry(int.parse(key), value as int));
+            _peoplePerHour = todayData.map((key, value) => MapEntry(int.parse(key), value['count'] as int));
           });
         }
       }
     }
   }
+
 
 
   // Kommentar-Funktion unverändert
@@ -511,6 +510,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
 
 
   Widget _buildRegistrationSection(double screenWidth) {

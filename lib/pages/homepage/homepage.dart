@@ -11,12 +11,18 @@ import 'package:hoophub/pages/homepage/info_window_widget.dart';
 import 'package:hoophub/pages/homepage/add_court_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
+}
+
+bool _isGuestUser() {
+  User? user = FirebaseAuth.instance.currentUser;
+  return user != null && user.isAnonymous;
 }
 
 class _HomePageState extends State<HomePage> {
@@ -615,6 +621,37 @@ class _HomePageState extends State<HomePage> {
       _selectedMarkerId = null;
     }
   }
+  void _showRestrictedAccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Access Restricted'),
+          content: const Text('Please create an account to access this feature.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Navigate to the LandingPage with showSignUpPopup set to true
+                Navigator.pushNamed(
+                  context,
+                  '/landing',
+                );
+              },
+              child: const Text('Create Account'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -708,19 +745,31 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(Icons.people, color: Colors.black),
+                              icon:
+                              const Icon(Icons.people, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
-                                Navigator.pushNamed(context, '/community');
+                                // Modify here
+                                if (_isGuestUser()) {
+                                  _showRestrictedAccessDialog();
+                                } else {
+                                  Navigator.pushNamed(context, '/community');
+                                }
                               },
                             ),
                           ),
                           Center(
                             child: IconButton(
-                              icon: const Icon(Icons.account_circle, color: Colors.black),
+                              icon: const Icon(Icons.account_circle,
+                                  color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
-                                Navigator.pushNamed(context, '/account');
+                                // Modify here
+                                if (_isGuestUser()) {
+                                  _showRestrictedAccessDialog();
+                                } else {
+                                  Navigator.pushNamed(context, '/account');
+                                }
                               },
                             ),
                           ),

@@ -75,17 +75,48 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Guest login logic
+  // Guest login logic (allowing any user to sign in anonymously)
   Future<void> _loginAsGuest() async {
     try {
-      await FirebaseAuth.instance.signInAnonymously();
-      Navigator.pushReplacementNamed(context, '/home');
+      // Use Firebase's anonymous authentication method
+      UserCredential userCredential = await FirebaseAuth.instance.signInAnonymously();
+
+      // Ensure the user is correctly signed in
+      if (userCredential.user != null && userCredential.user!.isAnonymous) {
+        // Redirect to the home page after successful anonymous login
+        Navigator.pushReplacementNamed(context, '/home');
+
+        // Show the guest limitation dialog once user is on the home page
+        _showGuestLimitationsDialog();
+      }
     } catch (e) {
+      // Show error message in case of failure
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Guest login failed: ${e.toString()}')));
     }
   }
 
-// Function to show the sign-up pop-up
+  // Function to show the guest limitations pop-up
+  void _showGuestLimitationsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Guest Access'),
+          content: Text('You are using the app as a guest. Please note that some features like account settings and community access are restricted.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to display the sign-up popup
   void _showSignUpPopup(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
     final TextEditingController confirmEmailController = TextEditingController();
@@ -131,15 +162,15 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF), // White background
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: TextField(
                           controller: emailController,
                           decoration: const InputDecoration(
-                            hintText: 'Email', // Moved the field name inside
+                            hintText: 'Email',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide.none, // No border to match background
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
@@ -151,15 +182,15 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF), // White background
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: TextField(
                           controller: confirmEmailController,
                           decoration: const InputDecoration(
-                            hintText: 'Confirm Email', // Moved the field name inside
+                            hintText: 'Confirm Email',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide.none, // No border to match background
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
@@ -171,16 +202,16 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF), // White background
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: TextField(
                           controller: passwordController,
                           obscureText: true,
                           decoration: const InputDecoration(
-                            hintText: 'Password', // Moved the field name inside
+                            hintText: 'Password',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide.none, // No border to match background
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
@@ -192,16 +223,16 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF), // White background
+                          color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: TextField(
                           controller: confirmPasswordController,
                           obscureText: true,
                           decoration: const InputDecoration(
-                            hintText: 'Confirm Password', // Moved the field name inside
+                            hintText: 'Confirm Password',
                             border: OutlineInputBorder(
-                              borderSide: BorderSide.none, // No border to match background
+                              borderSide: BorderSide.none,
                             ),
                           ),
                         ),
@@ -235,7 +266,7 @@ class _LandingPageState extends State<LandingPage> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             minimumSize: const Size.fromHeight(50),
-                            backgroundColor: Colors.black, // Dark button style similar to login
+                            backgroundColor: Colors.black,
                           ),
                           child: const Text(
                             'Create Account',
@@ -275,7 +306,7 @@ class _LandingPageState extends State<LandingPage> {
 
           // Triangle at the top
           CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.5), // 50% of screen height
+            size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.5),
             painter: EvenWiderTrianglePainter(),
           ),
 
@@ -292,12 +323,12 @@ class _LandingPageState extends State<LandingPage> {
                       Container(
                         child: Image.asset(
                           'assets/HoopHub.png',
-                          height: 200, // Adjust height as needed
-                          width: 200,  // Adjust width as needed
+                          height: 200,
+                          width: 200,
                           fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: 5), // Reduced height to bring text closer to the logo
+                      const SizedBox(height: 5),
                       const Text(
                         'Connect with the game',
                         style: TextStyle(fontSize: 16, color: Colors.white54),
@@ -313,35 +344,35 @@ class _LandingPageState extends State<LandingPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFFFFF), // White background
+                            color: const Color(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: TextField(
                             controller: _emailController,
                             decoration: const InputDecoration(
-                              hintText: 'Email', // Moved the field name inside
+                              hintText: 'Email',
                               border: OutlineInputBorder(
-                                borderSide: BorderSide.none, // No border to match background
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 5), // Reduced the space between the email and password box
+                      const SizedBox(height: 5),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFFFFF), // White background
+                            color: const Color(0xFFFFFFFF),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: TextField(
                             controller: _passwordController,
                             obscureText: true,
                             decoration: const InputDecoration(
-                              hintText: 'Password', // Moved the field name inside
+                              hintText: 'Password',
                               border: const OutlineInputBorder(
-                                borderSide: BorderSide.none, // No border to match background
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
@@ -353,14 +384,14 @@ class _LandingPageState extends State<LandingPage> {
 
                   // Log In Button
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16), // Same horizontal padding as the input fields
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: ElevatedButton(
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        minimumSize: const Size.fromHeight(50), // Maintain height
-                        backgroundColor: Colors.black, // Dark button style
+                        minimumSize: const Size.fromHeight(50),
+                        backgroundColor: Colors.black,
                       ),
                       child: const Text(
                         'Log In',
@@ -380,7 +411,7 @@ class _LandingPageState extends State<LandingPage> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: _loginWithGoogle,
-                        icon: const Icon(Icons.account_circle, color: Colors.red), // Google icon
+                        icon: const Icon(Icons.account_circle, color: Colors.red),
                         label: const Text('Google'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -395,7 +426,7 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       ElevatedButton.icon(
                         onPressed: _loginAsGuest, // Guest login now replaces Facebook option
-                        icon: const Icon(Icons.person, color: Colors.blue), // Character icon
+                        icon: const Icon(Icons.person, color: Colors.blue),
                         label: const Text('Guest'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -451,6 +482,7 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
 
 
 

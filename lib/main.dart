@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/login': (context) => const LandingPage(),
         '/account': (context) => AccountPage(),
+        '/landing': (context) => const LandingPage(),  // Define the landing page route
       },
     );
   }

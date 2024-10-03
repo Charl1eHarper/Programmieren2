@@ -226,9 +226,8 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Neuer Dialog zur Auswahl des Zeitraums (Start- und Endzeit)
   Future<void> _showHourSelectionDialog() async {
-    final List<int> hours = List.generate(24, (index) => index);
+    final List<int> hours = List.generate(25, (index) => index); // Bis 24 Uhr hinzufügen
     int startHour = _currentHour; // Startzeit auf die aktuelle Stunde setzen
     int endHour = startHour + 1;  // Standardmäßig eine Stunde später
 
@@ -245,7 +244,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   const Text('Startzeit'),
                   DropdownButton<int>(
                     value: startHour,
-                    items: hours.where((hour) => hour >= _currentHour).map((hour) { // Nur Stunden nach der aktuellen Stunde zulassen
+                    items: hours.where((hour) => hour >= _currentHour && hour < 24).map((hour) { // Nur Stunden nach der aktuellen Stunde zulassen, außer 24
                       return DropdownMenuItem(
                         value: hour,
                         child: Text('$hour:00 Uhr'),
@@ -264,10 +263,10 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   const Text('Endzeit'),
                   DropdownButton<int>(
                     value: endHour,
-                    items: hours.where((hour) => hour > startHour).map((hour) { // Endzeiten nur nach der Startzeit
+                    items: hours.where((hour) => hour > startHour).map((hour) { // Endzeiten nur nach der Startzeit und inklusive 24 Uhr
                       return DropdownMenuItem(
                         value: hour,
-                        child: Text('$hour:00 Uhr'),
+                        child: Text(hour == 24 ? '24:00 Uhr' : '$hour:00 Uhr'), // 24 Uhr anzeigen
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -297,6 +296,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       },
     );
   }
+
 
   // Anpassung der Registrierung für einen Zeitraum
   Future<void> _registerForTimeRange(int startHour, int endHour) async {

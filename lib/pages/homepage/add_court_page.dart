@@ -105,7 +105,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
     }
   }
 
-// Function to check if an address already exists in Firestore
+  // Function to check if an address already exists in Firestore
   Future<bool> _checkIfCourtExists(String street, String city) async {
     final String fullAddress = '$street, $city';
 
@@ -118,15 +118,15 @@ class _AddCourtPageState extends State<AddCourtPage> {
     return result.docs.isNotEmpty;
   }
 
-// Function to save the court information in Firestore
+  // Function to save the court information in Firestore
   Future<void> _saveCourt() async {
     final String name = _nameController.text;
     final String street = _streetController.text;
     final String city = _cityController.text;
 
-    if (name.isEmpty || street.isEmpty || city.isEmpty) {
+    if (name.isEmpty || street.isEmpty || city.isEmpty || _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bitte alle Felder ausfüllen!')),
+        const SnackBar(content: Text('Bitte alle Felder ausfüllen und ein Bild hinzufügen!')),
       );
       return;
     }
@@ -180,11 +180,10 @@ class _AddCourtPageState extends State<AddCourtPage> {
     // Clear form
     _nameController.clear();
     _streetController.clear();
+    _postalCodeController.clear();  // Clear postal code as well
     _cityController.clear();
-    _removeImage();
+    _removeImage();  // Clear the selected image
   }
-
-
 
   // Handle button click animation
   void _handleClick() {

@@ -298,7 +298,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   }
 
 
-  // Anpassung der Registrierung für einen Zeitraum
   Future<void> _registerForTimeRange(int startHour, int endHour) async {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
@@ -327,10 +326,25 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         peoplePerHour[today] = {};
       }
 
-      final todayCounts = Map<String, int>.from(peoplePerHour[today] ?? {});
+      final todayCounts = Map<String, Map<String, dynamic>>.from(peoplePerHour[today] ?? {});
 
       for (int hour = startHour; hour < endHour; hour++) {
-        todayCounts[hour.toString()] = (todayCounts[hour.toString()] ?? 0) + 1;
+        // Hole die Daten für diese Stunde oder initialisiere sie
+        final hourData = todayCounts[hour.toString()] ?? {
+          'count': 0,
+          'users': <String>[], // Liste von User-IDs
+        };
+
+        final List<String> userIds = List<String>.from(hourData['users']);
+
+        // Prüfen, ob der Nutzer bereits für diese Stunde eingetragen ist
+        if (!userIds.contains(user.uid)) {
+          // Nutzer-ID hinzufügen und Zähler inkrementieren
+          userIds.add(user.uid);
+          hourData['count'] = (hourData['count'] ?? 0) + 1;
+          hourData['users'] = userIds;
+          todayCounts[hour.toString()] = hourData;
+        }
       }
 
       await placeDocRef.update({
@@ -339,7 +353,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
       setState(() {
         for (int hour = startHour; hour < endHour; hour++) {
-          _peoplePerHour[hour] = todayCounts[hour.toString()] ?? 0;
+          _peoplePerHour[hour] = todayCounts[hour.toString()]?['count'] ?? 0;
         }
       });
 

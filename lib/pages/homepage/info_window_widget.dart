@@ -7,9 +7,9 @@ class InfoWindowWidget extends StatelessWidget {
   final double ringRating;  // Average rating for Ring
   final double netzRating;  // Average rating for Netz
   final double platzRating; // Average rating for Platz
-  final VoidCallback onShowMorePressed;
-  final VoidCallback onClosePressed;
-  final VoidCallback onAddRatingPressed;
+  final VoidCallback onShowMorePressed; // Callback for "Show More" action
+  final VoidCallback onClosePressed; // Callback for closing the info window
+  final VoidCallback onAddRatingPressed; // Callback for adding a rating
 
   const InfoWindowWidget({
     super.key,
@@ -23,37 +23,37 @@ class InfoWindowWidget extends StatelessWidget {
     required this.onAddRatingPressed,
   });
 
-  // Helper method to build the rating section with right-aligned text and left padding
+  // Helper method to build the rating section for each category
   Widget _buildRatingSection(String category, double rating) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),  // Adjust spacing between rows
+      padding: const EdgeInsets.symmetric(vertical: 2.0),  // Add vertical spacing between rating rows
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,  // Ensure vertical alignment
-        mainAxisAlignment: MainAxisAlignment.center,  // Center the whole row
+        crossAxisAlignment: CrossAxisAlignment.center,  // Align content vertically
+        mainAxisAlignment: MainAxisAlignment.center,  // Center content horizontally
         children: [
           SizedBox(
-            width: 50,
+            width: 50, // Fixed width for category label
             child: Text(
-              "$category:",  // The label (e.g., "Ring:", "Netz:", "Platz:")
+              "$category:",  // Category label (e.g., "Ring:", "Netz:", "Platz:")
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.right, // Align text to the right
             ),
           ),
-          const SizedBox(width: 5),  // Space between the label and the rating stars
+          const SizedBox(width: 5),  // Space between label and rating stars
 
-          // Rating bar indicator showing the average rating for each category
+          // Rating bar showing average rating for the category
           RatingBarIndicator(
             rating: rating,
             itemBuilder: (context, index) => const Icon(
               Icons.star,
               color: Colors.amber,
             ),
-            itemCount: 5,
-            itemSize: 16.0,
-            direction: Axis.horizontal,
+            itemCount: 5,  // Maximum 5 stars
+            itemSize: 16.0, // Size of each star
+            direction: Axis.horizontal, // Display stars horizontally
           ),
         ],
       ),
@@ -62,75 +62,74 @@ class InfoWindowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return ClipRRect(
-      borderRadius: const BorderRadius.all(Radius.circular(10)),
+      borderRadius: const BorderRadius.all(Radius.circular(10)),  // Rounded corners for the container
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.5,
-          minWidth: 200,
-          maxWidth: 200,
+          maxHeight: MediaQuery.of(context).size.height * 0.5,  // Limit max height to half the screen
+          minWidth: 200,  // Minimum width for the container
+          maxWidth: 200,  // Maximum width for the container
         ),
         decoration: const BoxDecoration(
-          color: Colors.white,
+          color: Colors.white,  // White background for the container
           boxShadow: [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: Offset(0, 2),
+              color: Colors.black26,  // Shadow color
+              blurRadius: 10,  // Blur effect for the shadow
+              offset: Offset(0, 2),  // Vertical offset for the shadow
             ),
           ],
         ),
         child: Stack(
           children: [
             Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,  // Align all content in the center
+              mainAxisSize: MainAxisSize.min,  // Minimize the size of the column to its content
               children: [
-                // Image at the top
+                // Display image at the top
                 Image.network(
                   imageUrl,
-                  width: double.infinity,
-                  height: 125,
-                  fit: BoxFit.cover,
+                  width: double.infinity,  // Image should take up full width
+                  height: 125,  // Fixed height for the image
+                  fit: BoxFit.cover,  // Cover the entire area without distorting the image
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image_not_supported);
+                    return const Icon(Icons.image_not_supported);  // Fallback if image fails to load
                   },
                 ),
-                const Divider(thickness: 1, height: 0),  // Divider after image
+                const Divider(thickness: 1, height: 0),  // Divider between image and title
 
-                // Title with padding on the left and right
+                // Title of the marker (e.g., court name)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    title,
+                    title,  // Display the title text
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
-                    textAlign: TextAlign.center,
+                    textAlign: TextAlign.center,  // Center-align the title
                   ),
                 ),
-                const Divider(thickness: 1, height: 0),
+                const Divider(thickness: 1, height: 0),  // Divider between title and ratings
 
-                // Rating sections for Ring, Netz, and Platz
+                // Display ratings for Ring, Netz, and Platz categories
                 _buildRatingSection("Ring", ringRating),   // Ring rating
                 _buildRatingSection("Netz", netzRating),   // Netz rating
                 _buildRatingSection("Platz", platzRating), // Platz rating
 
-                // Combined Rate Button with Icon and Text
+                // Button to add a rating
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0, top: 0),
                   child: TextButton.icon(
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(60, 30),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.zero,  // Remove default padding
+                      minimumSize: const Size(60, 30),  // Set minimum size for the button
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,  // Reduce touch target size
                     ),
-                    onPressed: onAddRatingPressed,  // Callback to add rating
-                    icon: const Icon(Icons.star, color: Colors.orange),
+                    onPressed: onAddRatingPressed,  // Trigger callback when pressed
+                    icon: const Icon(Icons.star, color: Colors.orange),  // Star icon next to the text
                     label: const Text(
-                      "Bewerte!",
+                      "Bewerte!",  // Label text for the button
                       style: TextStyle(
                         color: Colors.orange,
                         fontWeight: FontWeight.bold,
@@ -139,39 +138,39 @@ class InfoWindowWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Divider(thickness: 1, height: 0),  // Divider after "Rate!" button
+                const Divider(thickness: 1, height: 0),  // Divider below the rating button
 
-                // Show More Button
+                // Show More Button (for viewing more details)
                 GestureDetector(
-                  onTap: onShowMorePressed,
+                  onTap: onShowMorePressed,  // Trigger callback when pressed
                   child: const Padding(
                     padding: EdgeInsets.only(bottom: 5, top: 5),
                     child: Text(
-                      'Mehr anzeigen',
+                      'Mehr anzeigen',  // "Show More" text
                       style: TextStyle(
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,
                       ),
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.center,  // Center-align the text
                     ),
                   ),
                 ),
               ],
             ),
-            // Close Button
+            // Close button at the top-right corner
             Positioned(
               right: 8,
               top: 8,
               child: GestureDetector(
-                onTap: onClosePressed,
+                onTap: onClosePressed,  // Trigger callback when pressed
                 child: Container(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.7),
+                    shape: BoxShape.circle,  // Circular shape for the close button
+                    color: Colors.white.withOpacity(0.7),  // Semi-transparent background
                   ),
-                  padding: const EdgeInsets.all(5),
+                  padding: const EdgeInsets.all(5),  // Padding inside the close button
                   child: const Icon(
-                    Icons.close,
+                    Icons.close,  // Close icon
                     color: Colors.black,
                     size: 20,
                   ),

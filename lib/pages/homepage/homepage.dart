@@ -20,39 +20,41 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+// Check if the user is logged in as a guest
 bool _isGuestUser() {
   User? user = FirebaseAuth.instance.currentUser;
   return user != null && user.isAnonymous;
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isSearchVisible = false;
-  bool _isInfoWindowVisible = false;
+  bool _isSearchVisible = false; // Toggle for showing search bar
+  bool _isInfoWindowVisible = false; // Toggle for showing info window
   double _ringRating = 0.0;
   double _netzRating = 0.0;
   double _platzRating = 0.0;
 
-  late String _infoWindowTitle;
-  late String _infoWindowImage;
-  late String _infoWindowAddress;
-  Offset? _infoWindowPosition;
+  late String _infoWindowTitle; // Info window title for markers
+  late String _infoWindowImage; // Info window image URL
+  late String _infoWindowAddress; // Info window address
+  Offset? _infoWindowPosition; // Position for the info window
 
-  List<String> _imagesForDetailPage = [];
-  final Set<Marker> _markers = {};
+  List<String> _imagesForDetailPage = []; // Store images for detail page
+  final Set<Marker> _markers = {}; // Set of map markers
   late GoogleMapController _mapController;
   GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
-  final FocusNode _searchFocusNode = FocusNode();
-  StreamSubscription<Position>? _positionStream;
+  final FocusNode _searchFocusNode = FocusNode(); // Focus node for search bar
+  StreamSubscription<Position>? _positionStream; // Stream to track location changes
 
-  BitmapDescriptor? _userLocationIcon;
-  BitmapDescriptor? _basketballMarkerIcon;
-  BitmapDescriptor? _selectedBasketballMarkerIcon;
-  String? _selectedMarkerId;
+  BitmapDescriptor? _userLocationIcon; // Custom icon for user location
+  BitmapDescriptor? _basketballMarkerIcon; // Custom icon for basketball court
+  BitmapDescriptor? _selectedBasketballMarkerIcon; // Custom icon for selected marker
+  String? _selectedMarkerId; // Track the selected marker
 
   @override
   void initState() {
     super.initState();
 
+    // Hide the info window when search bar is focused
     _searchFocusNode.addListener(() {
       if (_searchFocusNode.hasFocus) {
         setState(() {
@@ -62,29 +64,32 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
+    // Load custom marker icons and get the user's initial location
     _loadCustomMarkers();
     _getUserLocation(initial: true);
-    _trackLocationChanges();
+    _trackLocationChanges(); // Start tracking user location
   }
 
   @override
   void dispose() {
-    _positionStream?.cancel();
-    _searchFocusNode.dispose();
+    _positionStream?.cancel(); // Stop location stream when widget is disposed
+    _searchFocusNode.dispose(); // Dispose search focus node
     super.dispose();
   }
 
-  // Hier definierst du _onMapCreated und _onSearchIconPressed
+  // Handle Google Map creation
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
   }
 
+  // Toggle the visibility of the search bar
   void _onSearchIconPressed() {
     setState(() {
       _isSearchVisible = !_isSearchVisible;
     });
   }
 
+  // Load custom icons for map markers
   Future<void> _loadCustomMarkers() async {
     _userLocationIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(64, 64)),
@@ -102,15 +107,18 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Get the user's current location
   Future<void> _getUserLocation({bool initial = false}) async {
     bool serviceEnabled;
     LocationPermission permission;
 
+    // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return;
     }
 
+    // Request necessary location permissions
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -119,35 +127,40 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
+    // Fetch current user location
     Position position = await Geolocator.getCurrentPosition();
     LatLng userLocation = LatLng(position.latitude, position.longitude);
 
+    // Move the camera to the user's location
     _mapController.animateCamera(
       CameraUpdate.newLatLngZoom(userLocation, 15),
     );
 
+    // Add a marker for the user's location
     _updateUserLocationMarker(userLocation);
 
     setState(() {
-      _isInfoWindowVisible = false;
+      _isInfoWindowVisible = false; // Hide the info window after updating location
     });
 
-    _findSportsPlaces(userLocation);
+    _findSportsPlaces(userLocation); // Find nearby basketball courts
   }
 
+  // Track changes in the user's location
   void _trackLocationChanges() {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
+        distanceFilter: 10, // Update location when moved more than 10 meters
       ),
     ).listen((Position position) {
       LatLng newLocation = LatLng(position.latitude, position.longitude);
       _updateUserLocationMarker(newLocation);
-      _findSportsPlaces(newLocation);
+      _findSportsPlaces(newLocation); // Refresh nearby courts when location changes
     });
   }
 
+  // Add or update a marker for the user's current location
   void _updateUserLocationMarker(LatLng location) {
     setState(() {
       _markers.removeWhere((marker) => marker.markerId == const MarkerId('user_location'));
@@ -162,7 +175,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Berechnung der Entfernung zwischen zwei Punkten (in Kilometern)
+  // Calculate distance between two locations in kilometers
   double _calculateDistance(LatLng start, LatLng end) {
     const double earthRadiusKm = 6371.0;
 
@@ -179,27 +192,27 @@ class _HomePageState extends State<HomePage> {
     return earthRadiusKm * c;
   }
 
-  // Hilfsfunktion zur Umrechnung von Grad in Radiant
+  // Convert degrees to radians
   double _degreesToRadians(double degrees) {
     return degrees * pi / 180;
   }
 
+  // Find nearby basketball courts using Google Places API and Firestore
   Future<void> _findSportsPlaces(LatLng location) async {
-    // Erstelle ein Set für alle bereits geladenen placeIds
-    Set<String> loadedPlaceIds = {};
+    Set<String> loadedPlaceIds = {}; // Set to avoid duplicate markers
 
-    // 1. Suche Orte in Google Maps API
+    // Fetch places using Google Maps API (within 5km radius)
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000, // 5km radius
       keyword: "basketball",
     );
 
-    // 2. Suche benutzerdefinierte Orte in Firestore innerhalb des 5km Radius
+    // Fetch custom places from Firestore
     final firestore = FirebaseFirestore.instance;
     final QuerySnapshot basketballCourtsSnapshot = await firestore.collection('basketball_courts').get();
 
-    // Filtere Orte innerhalb eines 5km-Radius und überprüfe den Typ des `location`-Felds
+    // Filter Firestore results within 5km radius
     List<QueryDocumentSnapshot> nearbyBasketballCourts = basketballCourtsSnapshot.docs.where((doc) {
       final data = doc.data() as Map<String, dynamic>?;
 
@@ -214,13 +227,12 @@ class _HomePageState extends State<HomePage> {
       return false;
     }).toList();
 
-    // 3. Bereite die Orte aus Firestore auf und füge sie als Marker hinzu
+    // Add markers to the map
     setState(() {
       _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
 
-      // Google Maps Ergebnisse
+      // Add Google Maps API results as markers
       for (var place in response.results) {
-        // Prüfe, ob die placeId bereits geladen wurde (entweder von Google Maps oder Firestore)
         if (!loadedPlaceIds.contains(place.placeId)) {
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             var placeData = {
@@ -234,10 +246,9 @@ class _HomePageState extends State<HomePage> {
                   : ['https://via.placeholder.com/400'],
             };
 
-            // Speichern des Ortes in Firestore
-            _savePlaceToFirebase(placeData);
+            _savePlaceToFirebase(placeData); // Save to Firestore
 
-            // Hinzufügen des Markers
+            // Add marker for the place
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
@@ -249,18 +260,16 @@ class _HomePageState extends State<HomePage> {
               ),
             );
 
-            // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
-            loadedPlaceIds.add(place.placeId);
+            loadedPlaceIds.add(place.placeId); // Prevent duplicate markers
           }
         }
       }
 
-      // Firestore Orte
+      // Add Firestore results as markers
       for (var doc in nearbyBasketballCourts) {
         final GeoPoint geoPoint = doc['location'];
         final String firestorePlaceId = doc['placeId'];
 
-        // Prüfe, ob die placeId bereits von Google Maps geladen wurde
         if (!loadedPlaceIds.contains(firestorePlaceId)) {
           _markers.add(
             Marker(
@@ -273,26 +282,24 @@ class _HomePageState extends State<HomePage> {
             ),
           );
 
-          // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
           loadedPlaceIds.add(firestorePlaceId);
         }
       }
     });
   }
 
-
-  // Saving the place to Firebase using placeId as the unique identifier
+  // Save place data to Firestore if it doesn't already exist
   Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
-    final String placeId = placeData['placeId']; // Ensure placeId is used
+    final String placeId = placeData['placeId'];
     final firestore = FirebaseFirestore.instance;
 
-    // Check if the place already exists in Firestore
+    // Check if the place exists in Firestore
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(placeId).get();
 
     if (!placeDoc.exists) {
-      // Save the place to Firebase if it doesn't exist
+      // Save place to Firestore
       await firestore.collection('basketball_courts').doc(placeId).set({
-        'placeId': placeId, // Explicitly store the placeId in the document
+        'placeId': placeId,
         'name': placeData['name'],
         'location': GeoPoint(placeData['latitude'], placeData['longitude']),
         'imageUrls': placeData['imageUrls'],
@@ -301,8 +308,9 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Show rating dialog for a specific place
   Future<void> _showRatingDialog(String placeId) async {
-    double ringRating = 3.0; // Default rating
+    double ringRating = 3.0;
     double netzRating = 3.0;
     double platzRating = 3.0;
 
@@ -329,7 +337,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       onRatingUpdate: (rating) {
                         setState(() {
-                          ringRating = rating; // Update Ring rating
+                          ringRating = rating;
                         });
                       },
                     ),
@@ -346,7 +354,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       onRatingUpdate: (rating) {
                         setState(() {
-                          netzRating = rating; // Update Netz rating
+                          netzRating = rating;
                         });
                       },
                     ),
@@ -363,7 +371,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       onRatingUpdate: (rating) {
                         setState(() {
-                          platzRating = rating; // Update Platz rating
+                          platzRating = rating;
                         });
                       },
                     ),
@@ -374,17 +382,17 @@ class _HomePageState extends State<HomePage> {
                 TextButton(
                   child: const Text("Abbrechen"),
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog without submitting
+                    Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
                   child: const Text("Submit"),
                   onPressed: () async {
                     try {
-                      // Save the rating to Firebase using placeId
+                      // Save the rating to Firebase
                       await _saveRatingToFirebase(placeId, ringRating, netzRating, platzRating);
 
-                      // Refresh the marker ratings to update the InfoWindow
+                      // Refresh marker ratings
                       await _refreshMarkerRatings(placeId);
 
                       // Show success message
@@ -392,7 +400,6 @@ class _HomePageState extends State<HomePage> {
                         const SnackBar(content: Text('Bewertung abgegeben!')),
                       );
 
-                      // Close the dialog
                       Navigator.of(context).pop();
                     } catch (e) {
                       // Show error message
@@ -410,7 +417,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
+  // Refresh marker ratings from Firestore
   Future<void> _refreshMarkerRatings(String placeId) async {
     final DocumentSnapshot placeDoc = await FirebaseFirestore.instance
         .collection('basketball_courts')
@@ -434,7 +441,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
+  // Save rating data to Firestore
   Future<void> _saveRatingToFirebase(
       String placeId, double ringRating, double netzRating, double platzRating) async {
     final firestore = FirebaseFirestore.instance;
@@ -452,22 +459,22 @@ class _HomePageState extends State<HomePage> {
         };
       }
 
-      // Berechnungen für die Kategorie "Ring"
+      // Update ring rating
       double newRingSum = (data['ratings']['ring']['sum_of_ratings'] ?? 0.0) + ringRating;
       int newRingCount = (data['ratings']['ring']['total_ratings'] ?? 0) + 1;
       double newRingAverage = newRingSum / newRingCount;
 
-      // Berechnungen für die Kategorie "Netz"
+      // Update netz rating
       double newNetzSum = (data['ratings']['netz']['sum_of_ratings'] ?? 0.0) + netzRating;
       int newNetzCount = (data['ratings']['netz']['total_ratings'] ?? 0) + 1;
       double newNetzAverage = newNetzSum / newNetzCount;
 
-      // Berechnungen für die Kategorie "Platz"
+      // Update platz rating
       double newPlatzSum = (data['ratings']['platz']['sum_of_ratings'] ?? 0.0) + platzRating;
       int newPlatzCount = (data['ratings']['platz']['total_ratings'] ?? 0) + 1;
       double newPlatzAverage = newPlatzSum / newPlatzCount;
 
-      // Aktualisiere die Firestore-Dokumente mit den neuen Bewertungen
+      // Save updated ratings to Firestore
       await placeDocRef.update({
         'ratings.ring': {
           'total_ratings': newRingCount,
@@ -488,6 +495,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Handle marker tap and show detailed information
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -505,7 +513,7 @@ class _HomePageState extends State<HomePage> {
 
     bool isGoogleDataLoaded = false;
 
-    // Schritt 1: Versuche, die Daten von Google Places zu laden
+    // Try loading data from Google Places
     try {
       final placeDetails = await places.getDetailsByPlaceId(placeId);
 
@@ -513,20 +521,20 @@ class _HomePageState extends State<HomePage> {
         name = placeDetails.result.name;
         address = placeDetails.result.formattedAddress ?? "Keine Adresse verfügbar";
 
-        // Lade die Bilder von Google Places
+        // Load images from Google Places
         for (var photo in placeDetails.result.photos) {
           final photoReference = photo.photoReference;
           final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
           imageUrls.add(imageUrl);
         }
 
-        isGoogleDataLoaded = true; // Setze das Flag, dass Google-Daten geladen wurden
+        isGoogleDataLoaded = true;
       }
     } catch (e) {
-      // Fehlerbehandlung bei Google Places Datenabruf
+      // Handle Google Places errors
     }
 
-    // Schritt 2: Falls keine Google-Daten oder Bilder gefunden wurden, lade Firestore-Daten
+    // If no Google data, load from Firestore
     if (!isGoogleDataLoaded) {
       try {
         DocumentSnapshot placeDoc = await FirebaseFirestore.instance
@@ -540,7 +548,7 @@ class _HomePageState extends State<HomePage> {
           name = data['name'] ?? 'Kein Name verfügbar';
           address = data['address'] ?? 'Keine Adresse verfügbar';
 
-          // Verwende die Firestore-URL, wenn verfügbar
+          // Use Firestore image URLs
           imageUrls = List<String>.from(data['image_urls'] ?? ['https://via.placeholder.com/400']);
 
           ringRating = data['ratings']?['ring']?['average'] ?? 0.0;
@@ -550,16 +558,17 @@ class _HomePageState extends State<HomePage> {
           imageUrls.add('https://via.placeholder.com/400');
         }
       } catch (e) {
-        // Fehlerbehandlung bei Firestore-Datenabruf
+        // Handle Firestore errors
         imageUrls.add('https://via.placeholder.com/400');
       }
     }
 
-    // Falls keine Bilder vorhanden sind, füge einen Platzhalter hinzu
+    // Add placeholder if no images are available
     if (imageUrls.isEmpty) {
       imageUrls.add('https://via.placeholder.com/400');
     }
 
+    // Adjust the position of the map camera to show info window
     final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
     await _mapController.animateCamera(
@@ -583,7 +592,7 @@ class _HomePageState extends State<HomePage> {
         _imagesForDetailPage = imageUrls;
         _selectedMarkerId = placeId;
 
-        // Update marker state
+        // Change marker appearance when selected
         _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
         _markers.add(
           Marker(
@@ -600,8 +609,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
+  // Close the info window and reset the marker appearance
   void _onCloseInfoWindow() {
     if (_selectedMarkerId != null) {
       final updatedMarkers = _markers.map((marker) {
@@ -621,6 +629,8 @@ class _HomePageState extends State<HomePage> {
       _selectedMarkerId = null;
     }
   }
+
+  // Show dialog to inform users about restricted access for guests
   void _showRestrictedAccessDialog() {
     showDialog(
       context: context,
@@ -638,7 +648,6 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Navigate to the LandingPage with showSignUpPopup set to true
                 Navigator.pushNamed(
                   context,
                   '/landing',
@@ -651,7 +660,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -690,7 +698,7 @@ class _HomePageState extends State<HomePage> {
                             markerName: _infoWindowTitle,
                             markerAddress: _infoWindowAddress,
                             images: _imagesForDetailPage,
-                            placeId: _selectedMarkerId!,  // Verwende nur die placeId, keine peoplePerHour mehr
+                            placeId: _selectedMarkerId!,
                           ),
                         ),
                       );
@@ -704,7 +712,7 @@ class _HomePageState extends State<HomePage> {
                     });
                   },
                   onAddRatingPressed: () {
-                    _showRatingDialog(_selectedMarkerId!);  // Show rating dialog
+                    _showRatingDialog(_selectedMarkerId!); // Show rating dialog
                   },
                 ),
               ),
@@ -739,7 +747,7 @@ class _HomePageState extends State<HomePage> {
                               const Icon(Icons.people, color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
-                                // Modify here
+                                // Handle guest user access restriction
                                 if (_isGuestUser()) {
                                   _showRestrictedAccessDialog();
                                 } else {
@@ -754,7 +762,6 @@ class _HomePageState extends State<HomePage> {
                                   color: Colors.black),
                               iconSize: screenWidth * 0.1,
                               onPressed: () {
-                                // Modify here
                                 if (_isGuestUser()) {
                                   _showRestrictedAccessDialog();
                                 } else {

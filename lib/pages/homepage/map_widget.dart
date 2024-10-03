@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapWidget extends StatefulWidget {
-  final Function(GoogleMapController) onMapCreated;
-  final Set<Marker> markers; // Füge das Markerset hinzu
+  final Function(GoogleMapController) onMapCreated; // Callback when the map is created
+  final Set<Marker> markers; // Set of markers to be displayed on the map
 
   const MapWidget({super.key, required this.onMapCreated, required this.markers});
 
@@ -12,17 +12,17 @@ class MapWidget extends StatefulWidget {
 }
 
 class _MapWidgetState extends State<MapWidget> {
-  final LatLng _center = const LatLng(45.521563, -122.677433);
+  final LatLng _center = const LatLng(45.521563, -122.677433); // Default center position for the map
 
   @override
   Widget build(BuildContext context) {
     return GoogleMap(
-      onMapCreated: widget.onMapCreated,
+      onMapCreated: widget.onMapCreated, // Trigger the callback when the map is initialized
       initialCameraPosition: CameraPosition(
-        target: _center,
-        zoom: 11.0,
+        target: _center, // Set the initial camera position on the map
+        zoom: 11.0, // Initial zoom level
       ),
-      markers: widget.markers, // Übergebe die Marker hier
+      markers: widget.markers, // Display the markers passed from the parent widget
     );
   }
 }

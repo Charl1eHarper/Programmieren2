@@ -7,7 +7,7 @@ class SearchWidget extends StatefulWidget {
   final VoidCallback onSearchIconPressed;
   final GoogleMapController mapController;
   final Function(LatLng) onPlaceSelected;
-  final FocusNode focusNode; // FocusNode hinzufügen
+  final FocusNode focusNode; // Focus node for handling search bar focus
 
   const SearchWidget({
     super.key,
@@ -15,7 +15,7 @@ class SearchWidget extends StatefulWidget {
     required this.onSearchIconPressed,
     required this.mapController,
     required this.onPlaceSelected,
-    required this.focusNode, // FocusNode Parameter
+    required this.focusNode, // Initialize focus node
   });
 
   @override
@@ -23,13 +23,14 @@ class SearchWidget extends StatefulWidget {
 }
 
 class _SearchWidgetState extends State<SearchWidget> {
-  final TextEditingController _searchController = TextEditingController();
-  List<Prediction> _placesList = [];
+  final TextEditingController _searchController = TextEditingController(); // Controller for managing search input
+  List<Prediction> _placesList = []; // Holds the search results
 
+  // Search for places using the Google Places API
   Future<void> _searchPlaces(String query) async {
     if (query.isEmpty) {
       setState(() {
-        _placesList.clear();
+        _placesList.clear(); // Clear results if query is empty
       });
       return;
     }
@@ -39,15 +40,16 @@ class _SearchWidgetState extends State<SearchWidget> {
 
     if (response.isOkay) {
       setState(() {
-        _placesList = response.predictions;
+        _placesList = response.predictions; // Display the search results
       });
     } else {
       setState(() {
-        _placesList.clear();
+        _placesList.clear(); // Clear results if the response is not OK
       });
     }
   }
 
+  // Move the camera to the selected place and clear search results
   Future<void> _moveCameraToPlace(String placeId) async {
     GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: 'AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o');
     PlacesDetailsResponse detail = await places.getDetailsByPlaceId(placeId);
@@ -59,11 +61,11 @@ class _SearchWidgetState extends State<SearchWidget> {
         widget.mapController.animateCamera(CameraUpdate.newLatLng(selectedLocation));
 
         setState(() {
-          _searchController.text = detail.result.name; // Display the selected place in the search bar
-          _placesList.clear(); // Clear the search results after moving the camera
+          _searchController.text = detail.result.name; // Set the selected place name in the search bar
+          _placesList.clear(); // Clear the search list after selection
         });
 
-        widget.onPlaceSelected(selectedLocation); // Trigger the callback to search for nearby sports places
+        widget.onPlaceSelected(selectedLocation); // Callback to indicate the selected place
       }
     }
   }
@@ -72,7 +74,7 @@ class _SearchWidgetState extends State<SearchWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (widget.isSearchVisible)
+        if (widget.isSearchVisible) // Show the search bar only when it's visible
           Container(
             height: 50,
             margin: const EdgeInsets.only(top: 0),
@@ -83,46 +85,49 @@ class _SearchWidgetState extends State<SearchWidget> {
             ),
             child: Row(
               children: [
+                // Search input field
                 Expanded(
                   child: TextField(
-                    controller: _searchController,
-                    focusNode: widget.focusNode, // FocusNode verwenden
-                    onChanged: _searchPlaces,
+                    controller: _searchController, // Link the input to the controller
+                    focusNode: widget.focusNode, // Handle the focus state
+                    onChanged: _searchPlaces, // Trigger search when text changes
                     decoration: const InputDecoration(
-                      hintText: 'Search for courts...',
-                      border: InputBorder.none
+                      hintText: 'Search for courts...', // Placeholder text
+                      border: InputBorder.none, // No border for the input field
                     ),
                   ),
                 ),
+                // Clear button
                 IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
-                    _searchController.clear();
-                    _searchPlaces('');
-                    widget.onSearchIconPressed(); // Close the search bar when cleared
+                    _searchController.clear(); // Clear the input
+                    _searchPlaces(''); // Reset the search results
+                    widget.onSearchIconPressed(); // Close the search bar
                   },
                 ),
               ],
             ),
           ),
-        if (widget.isSearchVisible && _placesList.isNotEmpty)
+        if (widget.isSearchVisible && _placesList.isNotEmpty) // Display results if there are places found
           Container(
             margin: const EdgeInsets.only(top: 5),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.25,
+              maxHeight: MediaQuery.of(context).size.height * 0.25, // Limit the result box height
             ),
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(10),
               color: Colors.white,
+              // Show search results as a list
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: _placesList.length,
                 itemBuilder: (context, index) {
-                  final place = _placesList[index];
+                  final place = _placesList[index]; // Get the current place
                   return ListTile(
-                    title: Text(place.description!),
+                    title: Text(place.description!), // Display the place description
                     onTap: () {
                       _moveCameraToPlace(place.placeId!); // Move the camera to the selected place
                     },

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
@@ -155,18 +156,66 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Berechnung der Entfernung zwischen zwei Punkten (in Kilometern)
+  double _calculateDistance(LatLng start, LatLng end) {
+    const double earthRadiusKm = 6371.0;
+
+    final double dLat = _degreesToRadians(end.latitude - start.latitude);
+    final double dLng = _degreesToRadians(end.longitude - start.longitude);
+
+    final double lat1 = _degreesToRadians(start.latitude);
+    final double lat2 = _degreesToRadians(end.latitude);
+
+    final double a = (sin(dLat / 2) * sin(dLat / 2)) +
+        (sin(dLng / 2) * sin(dLng / 2) * cos(lat1) * cos(lat2));
+    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return earthRadiusKm * c;
+  }
+
+  // Hilfsfunktion zur Umrechnung von Grad in Radiant
+  double _degreesToRadians(double degrees) {
+    return degrees * pi / 180;
+  }
+
   Future<void> _findSportsPlaces(LatLng location) async {
+    // Erstelle ein Set für alle bereits geladenen placeIds
+    Set<String> loadedPlaceIds = {};
+
+    // 1. Suche Orte in Google Maps API
     final response = await places.searchNearbyWithRadius(
       Location(lat: location.latitude, lng: location.longitude),
       5000, // 5km radius
       keyword: "basketball",
     );
 
-    if (response.isOkay) {
-      setState(() {
-        _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
+    // 2. Suche benutzerdefinierte Orte in Firestore innerhalb des 5km Radius
+    final firestore = FirebaseFirestore.instance;
+    final QuerySnapshot basketballCourtsSnapshot = await firestore.collection('basketball_courts').get();
 
-        for (var place in response.results) {
+    // Filtere Orte innerhalb eines 5km-Radius und überprüfe den Typ des `location`-Felds
+    List<QueryDocumentSnapshot> nearbyBasketballCourts = basketballCourtsSnapshot.docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>?;
+
+      if (data != null && data.containsKey('location')) {
+        final dynamic locationField = data['location'];
+
+        if (locationField is GeoPoint) {
+          final LatLng courtLocation = LatLng(locationField.latitude, locationField.longitude);
+          return _calculateDistance(location, courtLocation) <= 5.0;
+        }
+      }
+      return false;
+    }).toList();
+
+    // 3. Bereite die Orte aus Firestore auf und füge sie als Marker hinzu
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId != const MarkerId('user_location'));
+
+      // Google Maps Ergebnisse
+      for (var place in response.results) {
+        // Prüfe, ob die placeId bereits geladen wurde (entweder von Google Maps oder Firestore)
+        if (!loadedPlaceIds.contains(place.placeId)) {
           if (!place.types.contains("store") && !place.types.contains("gym")) {
             var placeData = {
               'placeId': place.placeId,
@@ -179,10 +228,10 @@ class _HomePageState extends State<HomePage> {
                   : ['https://via.placeholder.com/400'],
             };
 
-            // Add place to Firebase if it doesn't already exist
+            // Speichern des Ortes in Firestore
             _savePlaceToFirebase(placeData);
 
-            // Add marker to the map
+            // Hinzufügen des Markers
             _markers.add(
               Marker(
                 markerId: MarkerId(place.placeId),
@@ -193,11 +242,38 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             );
+
+            // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
+            loadedPlaceIds.add(place.placeId);
           }
         }
-      });
-    }
+      }
+
+      // Firestore Orte
+      for (var doc in nearbyBasketballCourts) {
+        final GeoPoint geoPoint = doc['location'];
+        final String firestorePlaceId = doc['placeId'];
+
+        // Prüfe, ob die placeId bereits von Google Maps geladen wurde
+        if (!loadedPlaceIds.contains(firestorePlaceId)) {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(firestorePlaceId),
+              position: LatLng(geoPoint.latitude, geoPoint.longitude),
+              icon: _basketballMarkerIcon ?? BitmapDescriptor.defaultMarker,
+              onTap: () {
+                _onMarkerTapped(firestorePlaceId, LatLng(geoPoint.latitude, geoPoint.longitude));
+              },
+            ),
+          );
+
+          // Füge die placeId dem Set hinzu, um doppelte Marker zu verhindern
+          loadedPlaceIds.add(firestorePlaceId);
+        }
+      }
+    });
   }
+
 
   // Saving the place to Firebase using placeId as the unique identifier
   Future<void> _savePlaceToFirebase(Map<String, dynamic> placeData) async {
@@ -406,7 +482,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // In der _onMarkerTapped Funktion, placeId auch an MarkerDetailsPage übergeben
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -415,32 +490,23 @@ class _HomePageState extends State<HomePage> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final detail = await places.getDetailsByPlaceId(placeId);
+    // Versuche, die Details entweder von Google Maps oder Firestore zu bekommen
+    DocumentSnapshot placeDoc = await FirebaseFirestore.instance
+        .collection('basketball_courts')
+        .doc(placeId)
+        .get();
 
-    if (detail.isOkay) {
-      final placeDetails = detail.result;
+    Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
 
-      final DocumentSnapshot placeDoc = await FirebaseFirestore.instance
-          .collection('basketball_courts')
-          .doc(placeId)
-          .get();
+    // Verwende Firestore-Daten, falls vorhanden
+    if (data != null) {
+      String name = data['name'] ?? 'Kein Name verfügbar';
+      String address = data['address'] ?? 'Keine Adresse verfügbar';
+      List<String> imageUrls = List<String>.from(data['imageUrls'] ?? ['https://via.placeholder.com/400']);
 
-      Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
-
-      double ringRatingFB = data?['ratings']?['ring']?['average'] ?? 0.0;
-      double netzRatingFB = data?['ratings']?['netz']?['average'] ?? 0.0;
-      double platzRatingFB = data?['ratings']?['platz']?['average'] ?? 0.0;
-
-      List<String> imageUrls = [];
-      if (placeDetails.photos.isNotEmpty) {
-        for (var photo in placeDetails.photos) {
-          final photoReference = photo.photoReference;
-          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
-          imageUrls.add(imageUrl);
-        }
-      } else {
-        imageUrls.add('https://via.placeholder.com/400');
-      }
+      double ringRatingFB = data['ratings']?['ring']?['average'] ?? 0.0;
+      double netzRatingFB = data['ratings']?['netz']?['average'] ?? 0.0;
+      double platzRatingFB = data['ratings']?['platz']?['average'] ?? 0.0;
 
       final adjustedPosition = LatLng(position.latitude + 0.0028, position.longitude + 0.0015);
 
@@ -450,8 +516,6 @@ class _HomePageState extends State<HomePage> {
 
       final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
 
-      _infoWindowAddress = placeDetails.formattedAddress ?? "Adresse nicht verfügbar";
-
       if (mounted) {
         setState(() {
           _ringRating = ringRatingFB;
@@ -459,12 +523,13 @@ class _HomePageState extends State<HomePage> {
           _platzRating = platzRatingFB;
 
           _isSearchVisible = false;
-          _infoWindowTitle = placeDetails.name;
+          _infoWindowTitle = name;
           _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
+          _infoWindowAddress = address;
           _isInfoWindowVisible = true;
           _infoWindowPosition = infoWindowPosition;
           _imagesForDetailPage = imageUrls;
-          _selectedMarkerId = placeId; // Set the selectedMarkerId to the placeId
+          _selectedMarkerId = placeId;
 
           // Update marker state
           _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));
@@ -475,7 +540,7 @@ class _HomePageState extends State<HomePage> {
               icon: _selectedBasketballMarkerIcon!,
               onTap: () {
                 FocusScope.of(context).unfocus();
-                _onMarkerTapped(placeId, position);  // Use the selected marker's placeId
+                _onMarkerTapped(placeId, position);
               },
             ),
           );
@@ -483,6 +548,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
+
 
 
   void _onCloseInfoWindow() {

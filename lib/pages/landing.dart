@@ -85,9 +85,10 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Function to show the sign-up pop-up
+// Function to show the sign-up pop-up
   void _showSignUpPopup(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
+    final TextEditingController confirmEmailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
     final TextEditingController confirmPasswordController = TextEditingController();
 
@@ -96,80 +97,155 @@ class _LandingPageState extends State<LandingPage> {
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Welcome!',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Create your account',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Email input
-                  TextField(
-                    controller: emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Password input
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Confirm password input
-                  TextField(
-                    controller: confirmPasswordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Sign up button
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        String email = emailController.text.trim();
-                        String password = passwordController.text.trim();
-                        String confirmPassword = confirmPasswordController.text.trim();
-
-                        if (password == confirmPassword) {
-                          _register(email, password);
-                          Navigator.pop(context);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Passwords do not match!')));
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.black,
-                      ),
-                      child: const Text('Create Account'),
-                    ),
-                  ),
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black, // Same as the landing page
+                  Colors.grey,
                 ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Welcome!',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Create your account',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Email input
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF), // White background
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: emailController,
+                          decoration: const InputDecoration(
+                            hintText: 'Email', // Moved the field name inside
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none, // No border to match background
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Confirm email input
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF), // White background
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: confirmEmailController,
+                          decoration: const InputDecoration(
+                            hintText: 'Confirm Email', // Moved the field name inside
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none, // No border to match background
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Password input
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF), // White background
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            hintText: 'Password', // Moved the field name inside
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none, // No border to match background
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Confirm password input
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF), // White background
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: TextField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            hintText: 'Confirm Password', // Moved the field name inside
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none, // No border to match background
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Sign up button with same style as login button
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            String email = emailController.text.trim();
+                            String confirmEmail = confirmEmailController.text.trim();
+                            String password = passwordController.text.trim();
+                            String confirmPassword = confirmPasswordController.text.trim();
+
+                            if (email != confirmEmail) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Emails do not match!')));
+                            } else if (password != confirmPassword) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Passwords do not match!')));
+                            } else {
+                              _register(email, password);
+                              Navigator.pop(context);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            minimumSize: const Size.fromHeight(50),
+                            backgroundColor: Colors.black, // Dark button style similar to login
+                          ),
+                          child: const Text(
+                            'Create Account',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -243,7 +319,7 @@ class _LandingPageState extends State<LandingPage> {
                           child: TextField(
                             controller: _emailController,
                             decoration: const InputDecoration(
-                              labelText: 'Email',
+                              hintText: 'Email', // Moved the field name inside
                               border: OutlineInputBorder(
                                 borderSide: BorderSide.none, // No border to match background
                               ),
@@ -262,16 +338,10 @@ class _LandingPageState extends State<LandingPage> {
                           child: TextField(
                             controller: _passwordController,
                             obscureText: true,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
+                            decoration: const InputDecoration(
+                              hintText: 'Password', // Moved the field name inside
                               border: const OutlineInputBorder(
                                 borderSide: BorderSide.none, // No border to match background
-                              ),
-                              suffixIcon: TextButton(
-                                onPressed: () {
-                                  // Add forgot password logic here
-                                },
-                                child: const Text('Forgot?'),
                               ),
                             ),
                           ),
@@ -282,17 +352,20 @@ class _LandingPageState extends State<LandingPage> {
                   const SizedBox(height: 20),
 
                   // Log In Button
-                  ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      minimumSize: const Size.fromHeight(50),
-                      backgroundColor: Colors.black, // Dark button style
-                    ),
-                    child: const Text(
-                      'Log In',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16), // Same horizontal padding as the input fields
+                    child: ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        minimumSize: const Size.fromHeight(50), // Maintain height
+                        backgroundColor: Colors.black, // Dark button style
+                      ),
+                      child: const Text(
+                        'Log In',
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -378,6 +451,7 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
 
 
 

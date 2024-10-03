@@ -12,7 +12,7 @@ class MapWidget extends StatefulWidget {
 }
 
 class _MapWidgetState extends State<MapWidget> {
-  final LatLng _center = const LatLng(45.521563, -122.677433); // Default center position for the map
+  final LatLng _center = const LatLng(53.551086, 9.993682); // Default center position for the map (Hamburg)
 
   @override
   Widget build(BuildContext context) {

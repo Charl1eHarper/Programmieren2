@@ -14,6 +14,10 @@ class CommunityPage extends StatefulWidget {
 class _CommunityPageState extends State<CommunityPage> {
   bool showFriendsDropdown = false;
   bool showGroupsDropdown = false;
+  String searchQuery = ""; // Search query for public groups
+  List<DocumentSnapshot> searchResults = []; // Search results for public groups
+  bool isSearching = false; // To show a loading indicator during search
+  final currentUser = FirebaseAuth.instance.currentUser; // Current logged-in user
 
   @override
   Widget build(BuildContext context) {
@@ -45,45 +49,158 @@ class _CommunityPageState extends State<CommunityPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            buildSectionWithButtonAndDropdown(
-              icon: Icons.person_outline,
-              title: 'FREUNDESLISTE',
-              buttonText: 'ADD FRIEND',
-              showDropdown: showFriendsDropdown,
-              onButtonPressed: () {
-                _showFriendSearchPopup(context);
-              },
-              onDropdownToggle: () {
-                setState(() {
-                  showFriendsDropdown = !showFriendsDropdown;
-                });
-              },
-              titleFontSize: 16.0,
-              dropdownContent: buildFriendsDropdownContent(),
-            ),
+            buildSearchBar(), // Search bar for finding public groups
             const SizedBox(height: 16.0),
-            buildSectionWithButtonAndDropdown(
-              icon: Icons.group_outlined,
-              title: 'GRUPPEN',
-              buttonText: 'CREATE GROUP',
-              showDropdown: showGroupsDropdown,
-              onButtonPressed: () {
-                _showCreateCommunityPopup(context);
-              },
-              onDropdownToggle: () {
-                setState(() {
-                  showGroupsDropdown = !showGroupsDropdown;
-                });
-              },
-              titleFontSize: 16.0,
-              dropdownContent: buildGroupsDropdownContent(),
-            ),
+            if (searchResults.isNotEmpty) buildSearchResultsList(), // Show search results
+            if (isSearching) Center(child: CircularProgressIndicator()), // Show loading only during search
+            if (searchResults.isEmpty && !isSearching) ...[
+              buildSectionWithButtonAndDropdown(
+                icon: Icons.person_outline,
+                title: 'FREUNDESLISTE',
+                buttonText: 'ADD FRIEND',
+                showDropdown: showFriendsDropdown,
+                onButtonPressed: () {
+                  _showFriendSearchPopup(context);
+                },
+                onDropdownToggle: () {
+                  setState(() {
+                    showFriendsDropdown = !showFriendsDropdown;
+                  });
+                },
+                titleFontSize: 16.0,
+                dropdownContent: buildFriendsDropdownContent(),
+              ),
+              const SizedBox(height: 16.0),
+              buildSectionWithButtonAndDropdown(
+                icon: Icons.group_outlined,
+                title: 'GRUPPEN',
+                buttonText: 'CREATE GROUP',
+                showDropdown: showGroupsDropdown,
+                onButtonPressed: () {
+                  _showCreateCommunityPopup(context);
+                },
+                onDropdownToggle: () {
+                  setState(() {
+                    showGroupsDropdown = !showGroupsDropdown;
+                  });
+                },
+                titleFontSize: 16.0,
+                dropdownContent: buildGroupsDropdownContent(),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
+  // Build the search bar for public groups
+  Widget buildSearchBar() {
+    return TextField(
+      style: TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: 'Search for public groups...',
+        hintStyle: TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.grey[800],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        prefixIcon: Icon(Icons.search, color: Colors.white70),
+      ),
+      onChanged: (value) {
+        setState(() {
+          searchQuery = value.trim();
+        });
+        if (searchQuery.isNotEmpty) {
+          _searchForPublicGroups();
+        } else {
+          setState(() {
+            searchResults = [];
+          });
+        }
+      },
+    );
+  }
+
+  // Fetch public groups from Firestore that match the search query
+  Future<void> _searchForPublicGroups() async {
+    setState(() {
+      isSearching = true;
+    });
+
+    final firestore = FirebaseFirestore.instance;
+
+    QuerySnapshot querySnapshot = await firestore
+        .collection('groups')
+        .where('isPrivate', isEqualTo: false)
+        .where('groupName', isGreaterThanOrEqualTo: searchQuery)
+        .where('groupName', isLessThanOrEqualTo: searchQuery + '\uf8ff')
+        .get();
+
+    setState(() {
+      searchResults = querySnapshot.docs;
+      isSearching = false; // Stop showing the loading indicator
+    });
+  }
+
+  // Build the list of search results (public groups)
+  Widget buildSearchResultsList() {
+    return Expanded(
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: searchResults.length,
+        itemBuilder: (context, index) {
+          var group = searchResults[index];
+          List<dynamic> members = group['members'];
+
+          // Check if the current user is already a member of the group
+          bool isMember = members.contains(currentUser!.uid);
+
+          return ListTile(
+            title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
+            subtitle: const Text('Public Group', style: TextStyle(color: Colors.grey)),
+            trailing: isMember
+                ? const Text('Member', style: TextStyle(color: Colors.green)) // Show "Member" if already part of the group
+                : TextButton(
+              onPressed: () {
+                _joinGroup(group.id);
+              },
+              child: const Text('Join', style: TextStyle(color: Colors.teal)), // Show "Join" button otherwise
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Function to join a public group
+  Future<void> _joinGroup(String groupId) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      // Update the group to add the current user as a member
+      await firestore.collection('groups').doc(groupId).update({
+        'members': FieldValue.arrayUnion([currentUser!.uid]),
+      });
+
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully joined the group!')),
+      );
+
+      // Refresh search results to update the UI
+      _searchForPublicGroups();
+    } catch (e) {
+      // Handle error (if any)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to join the group: $e')),
+      );
+    }
+  }
+
+  // Build sections for friends and groups (existing code)
   Widget buildSectionWithButtonAndDropdown({
     required IconData icon,
     required String title,
@@ -152,7 +269,6 @@ class _CommunityPageState extends State<CommunityPage> {
 
   // Fetch friends from Firestore and display them
   Widget buildFriendsDropdownContent() {
-    final currentUser = FirebaseAuth.instance.currentUser;
     final firestore = FirebaseFirestore.instance;
 
     return StreamBuilder<QuerySnapshot>(
@@ -196,7 +312,6 @@ class _CommunityPageState extends State<CommunityPage> {
 
   // Fetch groups from Firestore and display them
   Widget buildGroupsDropdownContent() {
-    final currentUser = FirebaseAuth.instance.currentUser;
     final firestore = FirebaseFirestore.instance;
 
     return StreamBuilder<QuerySnapshot>(
@@ -521,6 +636,10 @@ class _CommunityPageState extends State<CommunityPage> {
     print('Group "$groupName" created successfully');
   }
 }
+
+
+
+
 
 
 

@@ -25,7 +25,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _currentHour; // Ändere das zu currentHour
-  Map<int, int> _peoplePerHour = {};  // peoplePerHour wird hier initialisiert
+  Map<int, Map<String, dynamic>> _peoplePerHour = {}; // peoplePerHour wird hier initialisiert
   List<Map<String, dynamic>> _comments = [];
 
   @override
@@ -84,24 +84,20 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
-          // Abruf der Daten für den heutigen Tag und Mapping auf das lokale _peoplePerHour
+          // Fetch today's data and map it to the local _peoplePerHour
           final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
           setState(() {
-            // Mapping sicherstellen, dass count korrekt abgerufen wird
             _peoplePerHour = todayData.map((key, value) {
-              if (value is Map<String, dynamic> && value.containsKey('count')) {
-                return MapEntry(int.parse(key), value['count'] as int);
-              } else {
-                return MapEntry(int.parse(key), 0);
-              }
+              return MapEntry(int.parse(key), {
+                'count': value['count'] as int,
+                'users': List<String>.from(value['users'] ?? [])
+              });
             });
           });
         }
       }
     }
   }
-
-
 
 
   // Kommentar-Funktion unverändert
@@ -339,30 +335,30 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       bool alreadyRegisteredForAll = true;
 
       for (int hour = startHour; hour < endHour; hour++) {
-        // Hole die Daten für diese Stunde oder initialisiere sie
+        // Ensure the data structure is correct, even if empty
         final hourData = todayCounts[hour.toString()] ?? {
           'count': 0,
-          'users': <String>[], // Liste von User-IDs
+          'users': <String>[], // List of user IDs
         };
 
         final List<String> userIds = List<String>.from(hourData['users']);
 
-        // Prüfen, ob der Nutzer bereits für diese Stunde eingetragen ist
+        // Check if the user is already registered for this hour
         if (!userIds.contains(user.uid)) {
-          alreadyRegisteredForAll = false;  // Es gibt mindestens eine Stunde, für die der Nutzer nicht registriert ist
+          alreadyRegisteredForAll = false;  // There's at least one hour the user is not registered for
           break;
         }
       }
 
-      // Wenn der Nutzer für alle Stunden bereits registriert ist
+      // If the user is already registered for all hours
       if (alreadyRegisteredForAll) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Für diesen Zeitraum hast du dich bereits vollständig registriert.')),
         );
-        return;  // Abbrechen, ohne eine neue Registrierung vorzunehmen
+        return;  // Abort without creating a new registration
       }
 
-      // Registrierung vornehmen, nur für Stunden, in denen der Nutzer noch nicht registriert ist
+      // Register only for hours the user is not yet registered for
       for (int hour = startHour; hour < endHour; hour++) {
         final hourData = todayCounts[hour.toString()] ?? {
           'count': 0,
@@ -371,9 +367,9 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
         final List<String> userIds = List<String>.from(hourData['users']);
 
-        // Prüfen, ob der Nutzer bereits für diese Stunde eingetragen ist
+        // Check if the user is already registered for this hour
         if (!userIds.contains(user.uid)) {
-          // Nutzer-ID hinzufügen und Zähler inkrementieren
+          // Add user ID and increment the count
           userIds.add(user.uid);
           hourData['count'] = (hourData['count'] ?? 0) + 1;
           hourData['users'] = userIds;
@@ -381,14 +377,19 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         }
       }
 
+      // Update the Firestore document
       await placeDocRef.update({
         'peoplePerHour': {today: todayCounts}
       });
 
+      // Refresh the local state and UI immediately
       setState(() {
-        for (int hour = startHour; hour < endHour; hour++) {
-          _peoplePerHour[hour] = todayCounts[hour.toString()]?['count'] ?? 0;
-        }
+        _peoplePerHour = todayCounts.map((key, value) {
+          return MapEntry(int.parse(key), {
+            'count': value['count'] as int,
+            'users': List<String>.from(value['users'] ?? [])
+          });
+        });
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -464,14 +465,30 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-  // Dialog zum Anzeigen der Benutzer für eine bestimmte Stunde
-  void _showUsersDialog(int hour) {
+// Dialog to display users for a specific hour
+  Future<void> _showUsersDialog(int hour) async {
     List<String> userIds = [];
 
-    // Überprüfen, ob die Stunde in _peoplePerHour vorhanden ist und die Datenstruktur stimmt
-    if (_peoplePerHour.containsKey(hour) && _peoplePerHour[hour] is Map<String, dynamic>) {
-      final hourData = _peoplePerHour[hour] as Map<String, dynamic>;
-      userIds = List<String>.from(hourData['users'] ?? []);
+    // Ensure the hour data is available and structured correctly
+    if (_peoplePerHour.containsKey(hour)) {
+      final hourData = _peoplePerHour[hour];
+
+      if (hourData != null && hourData.containsKey('users')) {
+        userIds = List<String>.from(hourData['users'] ?? []);
+      }
+    }
+
+    // Fetch usernames from Firestore based on userIds
+    List<String> userNames = [];
+    for (String userId in userIds) {
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final String userName = userData['name'] ?? 'Unbekannt';
+        userNames.add(userName);
+      } else {
+        userNames.add('Unbekannt');
+      }
     }
 
     showDialog(
@@ -479,15 +496,15 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       builder: (context) {
         return AlertDialog(
           title: Text('Angemeldete Nutzer für $hour:00 Uhr'),
-          content: userIds.isEmpty
+          content: userNames.isEmpty
               ? const Text('Keine Nutzer angemeldet.')
               : SizedBox(
             height: 200,
             child: ListView.builder(
-              itemCount: userIds.length,
+              itemCount: userNames.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(userIds[index]),
+                  title: Text(userNames[index]),
                 );
               },
             ),
@@ -515,16 +532,19 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: List.generate(24, (index) {
-              // Sicherstellen, dass _peoplePerHour[index] eine Map ist, bevor auf 'count' zugegriffen wird
-              final int peopleCount = (_peoplePerHour.containsKey(index))
-                  ? _peoplePerHour[index] ?? 0
+              // Ensure that _peoplePerHour contains a valid entry for this hour
+              final Map<String, dynamic>? hourData = _peoplePerHour[index];
+
+              // Safely access the count
+              final int peopleCount = (hourData != null && hourData.containsKey('count'))
+                  ? hourData['count'] as int
                   : 0;
 
               final bool isCurrentHour = index == _currentHour;
 
               return GestureDetector(
                 onTap: () {
-                  _showUsersDialog(index);  // Öffne Dialog bei Klick auf einen Kreis
+                  _showUsersDialog(index);  // Open dialog on circle tap
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -568,10 +588,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
-
-
-
-
 
 
   Widget _buildRegistrationSection(double screenWidth) {

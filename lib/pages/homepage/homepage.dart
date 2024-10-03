@@ -690,17 +690,7 @@ class _HomePageState extends State<HomePage> {
                             markerName: _infoWindowTitle,
                             markerAddress: _infoWindowAddress,
                             images: _imagesForDetailPage,
-                            placeId: _selectedMarkerId!,  // Use _selectedMarkerId here
-                            peoplePerHour: const {
-                              12: 4,
-                              13: 6,
-                              14: 3,
-                              15: 8,
-                              16: 5,
-                              17: 9,
-                              18: 4,
-                              19: 7,
-                            },
+                            placeId: _selectedMarkerId!,  // Verwende nur die placeId, keine peoplePerHour mehr
                           ),
                         ),
                       );

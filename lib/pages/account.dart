@@ -21,10 +21,10 @@ class _AccountPageState extends State<AccountPage> {
   String? _profileImageUrl;
 
   String? selectedPosition;
-  String? selectedLevel;
+  String? selectedSkillLevel;
 
   final List<String> positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-  final List<String> levels = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'];
+  final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Pro']; // Updated skill levels
 
   @override
   void initState() {
@@ -44,7 +44,7 @@ class _AccountPageState extends State<AccountPage> {
             cityController.text = data['city'] ?? '';
             heightController.text = data['height']?.toString() ?? '';
             selectedPosition = positions.contains(data['position']) ? data['position'] : null;
-            selectedLevel = levels.contains(data['level']) ? data['level'] : null;
+            selectedSkillLevel = skillLevels.contains(data['skillLevel']) ? data['skillLevel'] : null; // Skill level
             _profileImageUrl = data['profileImage'] ?? '';
           });
         }
@@ -78,7 +78,7 @@ class _AccountPageState extends State<AccountPage> {
           'city': cityController.text,
           'height': height,
           'position': selectedPosition ?? positions[0],
-          'level': selectedLevel ?? levels[0],
+          'skillLevel': selectedSkillLevel ?? skillLevels[0], // Save the selected skill level
           'profileImage': _profileImageUrl ?? '',
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,12 +204,18 @@ class _AccountPageState extends State<AccountPage> {
                                   SizedBox(height: 20),
                                   _buildTextField(label: 'City', controller: cityController),
                                   SizedBox(height: 20),
-                                  _buildDropdownField(
-                                      label: 'Position', items: positions, value: selectedPosition, onChanged: (newValue) {
-                                    setState(() {
-                                      selectedPosition = newValue;
-                                    });
-                                  }),
+                                  Expanded(  // Wrap the Position Dropdown inside Expanded
+                                    child: _buildDropdownField(
+                                      label: 'Position',
+                                      items: positions,
+                                      value: selectedPosition,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          selectedPosition = newValue;
+                                        });
+                                      },
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -225,12 +231,19 @@ class _AccountPageState extends State<AccountPage> {
                                   SizedBox(height: 20),
                                   _buildTextField(label: 'Height (cm)', controller: heightController, keyboardType: TextInputType.number),
                                   SizedBox(height: 20),
-                                  _buildDropdownField(
-                                      label: 'Level', items: levels, value: selectedLevel, onChanged: (newValue) {
-                                    setState(() {
-                                      selectedLevel = newValue;
-                                    });
-                                  }),
+                                  Expanded(  // Wrap the Skill Level Dropdown inside Expanded
+                                    child: _buildDropdownField(
+                                      label: 'Skill Level',
+                                      items: skillLevels,
+                                      value: selectedSkillLevel,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          selectedSkillLevel = newValue;
+                                        });
+                                      },
+                                      isExpanded: true,  // Ensure it uses full width
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -317,7 +330,7 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildDropdownField({required String label, required List<String> items, String? value, required ValueChanged<String?> onChanged}) {
+  Widget _buildDropdownField({required String label, required List<String> items, String? value, required ValueChanged<String?> onChanged, bool isExpanded = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -330,6 +343,7 @@ class _AccountPageState extends State<AccountPage> {
           SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: value,
+            isExpanded: isExpanded,  // Allow the dropdown to take full width
             dropdownColor: Colors.grey[850],
             icon: Icon(Icons.arrow_drop_down, color: Colors.white),
             decoration: InputDecoration(
@@ -383,6 +397,9 @@ class _AccountPageState extends State<AccountPage> {
         });
   }
 }
+
+
+
 
 
 

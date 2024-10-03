@@ -24,7 +24,7 @@ class MarkerDetailsPage extends StatefulWidget {
 class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
-  late int _nextHour;
+  late int _currentHour; // Ändere das zu currentHour
   Map<int, int> _peoplePerHour = {};  // peoplePerHour wird hier initialisiert
   List<Map<String, dynamic>> _comments = [];
 
@@ -36,11 +36,10 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     _fetchPeoplePerHour(); // Neue Methode zum Abrufen von peoplePerHour
 
     DateTime now = DateTime.now();
-    int currentHour = now.hour;
-    int currentMinute = now.minute;
+    int currentHour = now.hour; // Verwende die aktuelle Stunde
 
     setState(() {
-      _nextHour = (currentMinute > 0) ? (currentHour + 1) % 24 : currentHour;
+      _currentHour = currentHour; // Setze currentHour als _currentHour
     });
   }
 
@@ -82,17 +81,20 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       final data = placeDoc.data() as Map<String, dynamic>;
 
       if (data.containsKey('peoplePerHour')) {
-        final Map<String, dynamic> fetchedPeoplePerHour = data['peoplePerHour'];
+        final Map<String, dynamic> fetchedPeoplePerHour = Map<String, dynamic>.from(data['peoplePerHour']);
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
           setState(() {
-            _peoplePerHour = Map<int, int>.from(fetchedPeoplePerHour[today]);
+            // Abruf der Einträge für den heutigen Tag und sichere Umwandlung der Daten
+            final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
+            _peoplePerHour = todayData.map((key, value) => MapEntry(int.parse(key), value as int));
           });
         }
       }
     }
   }
+
 
   // Kommentar-Funktion unverändert
   Future<void> _addComment(String commentText) async {
@@ -227,8 +229,8 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   // Neuer Dialog zur Auswahl des Zeitraums (Start- und Endzeit)
   Future<void> _showHourSelectionDialog() async {
     final List<int> hours = List.generate(24, (index) => index);
-    int startHour = 12; // Default start time
-    int endHour = 13;   // Default end time
+    int startHour = _currentHour; // Startzeit auf die aktuelle Stunde setzen
+    int endHour = startHour + 1;  // Standardmäßig eine Stunde später
 
     await showDialog(
       context: context,
@@ -243,7 +245,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   const Text('Startzeit'),
                   DropdownButton<int>(
                     value: startHour,
-                    items: hours.map((hour) {
+                    items: hours.where((hour) => hour >= _currentHour).map((hour) { // Nur Stunden nach der aktuellen Stunde zulassen
                       return DropdownMenuItem(
                         value: hour,
                         child: Text('$hour:00 Uhr'),
@@ -252,6 +254,9 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                     onChanged: (value) {
                       setState(() {
                         startHour = value!;
+                        if (endHour <= startHour) {
+                          endHour = startHour + 1; // Endzeit anpassen, falls sie vor der Startzeit liegt
+                        }
                       });
                     },
                   ),
@@ -259,7 +264,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                   const Text('Endzeit'),
                   DropdownButton<int>(
                     value: endHour,
-                    items: hours.where((hour) => hour > startHour).map((hour) {
+                    items: hours.where((hour) => hour > startHour).map((hour) { // Endzeiten nur nach der Startzeit
                       return DropdownMenuItem(
                         value: hour,
                         child: Text('$hour:00 Uhr'),
@@ -420,9 +425,9 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: List.generate(24, (index) {
-              final int peopleCount = _peoplePerHour[index] ?? 0;
+              final int peopleCount = _peoplePerHour[index] ?? 0;  // Zeige 0 an, falls keine Daten
 
-              final bool isNextHour = index == _nextHour;
+              final bool isCurrentHour = index == _currentHour;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -434,7 +439,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                       '$index Uhr',
                       style: TextStyle(
                         fontSize: 16,
-                        color: isNextHour ? Colors.orange : Colors.black,
+                        color: isCurrentHour ? Colors.orange : Colors.black,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -442,7 +447,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                       width: screenWidth * 0.115,
                       height: screenWidth * 0.115,
                       decoration: BoxDecoration(
-                        color: isNextHour ? Colors.orange : Colors.black,
+                        color: isCurrentHour ? Colors.orange : Colors.black,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -465,6 +470,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
 
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(

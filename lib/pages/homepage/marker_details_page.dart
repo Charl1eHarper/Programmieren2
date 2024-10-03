@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // For formatting the date
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firebase integration
 import 'package:firebase_auth/firebase_auth.dart';  // Firebase Authentication
+import 'package:intl/date_symbol_data_local.dart';  // For locale initialization
 
 class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
@@ -18,28 +19,35 @@ class MarkerDetailsPage extends StatefulWidget {
   });
 
   @override
-  MarkerDetailsPageState createState() => MarkerDetailsPageState(); // Removed the underscore
+  MarkerDetailsPageState createState() => MarkerDetailsPageState();
 }
 
 class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _currentHour; // Ändere das zu currentHour
-  Map<int, int> _peoplePerHour = {};  // peoplePerHour wird hier initialisiert
+  Map<int, Map<String, dynamic>> _peoplePerHour = {};
   List<Map<String, dynamic>> _comments = [];
+  bool _isClicked = false; // Initial state of the button (not clicked)
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
-    _fetchComments();
-    _fetchPeoplePerHour(); // Neue Methode zum Abrufen von peoplePerHour
+
+    // Initialize the locale for the date in German (de)
+    initializeDateFormatting('de', null).then((_) {
+      setState(() {
+        _fetchComments();
+        _fetchPeoplePerHour();
+      });
+    });
 
     DateTime now = DateTime.now();
-    int currentHour = now.hour; // Verwende die aktuelle Stunde
+    int currentHour = now.hour;
 
     setState(() {
-      _currentHour = currentHour; // Setze currentHour als _currentHour
+      _currentHour = currentHour;
     });
   }
 
@@ -49,7 +57,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
-  // Fetch comments from Firebase for the marker using placeId (unverändert)
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
@@ -72,7 +79,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-  // Neue Methode zum Abrufen von peoplePerHour aus Firestore
   Future<void> _fetchPeoplePerHour() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
@@ -85,10 +91,14 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
         if (fetchedPeoplePerHour.containsKey(today)) {
+          final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
           setState(() {
-            // Abruf der Einträge für den heutigen Tag und sichere Umwandlung der Daten
-            final Map<String, dynamic> todayData = Map<String, dynamic>.from(fetchedPeoplePerHour[today]);
-            _peoplePerHour = todayData.map((key, value) => MapEntry(int.parse(key), value as int));
+            _peoplePerHour = todayData.map((key, value) {
+              return MapEntry(int.parse(key), {
+                'count': value['count'] as int,
+                'users': List<String>.from(value['users'] ?? [])
+              });
+            });
           });
         }
       }
@@ -185,7 +195,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
       if (userData['name'] == null || userData['name'].toString().trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bitte gib deinen Namen ein')),
+          const SnackBar(content: Text('Bitte gib deinen Namen im Profil ein')),
         );
         return;
       }
@@ -298,7 +308,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   }
 
 
-  // Anpassung der Registrierung für einen Zeitraum
   Future<void> _registerForTimeRange(int startHour, int endHour) async {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
@@ -307,6 +316,28 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bitte logge dich ein')),
+      );
+      return;
+    }
+
+    // Get user profile from Firestore
+    final DocumentReference userDocRef = firestore.collection('users').doc(user.uid);
+    final DocumentSnapshot userProfile = await userDocRef.get();
+
+    if (!userProfile.exists || userProfile.data() == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erstelle dein Profil')),
+      );
+      return;
+    }
+
+    final userData = userProfile.data() as Map<String, dynamic>;
+    final String? username = userData['name'];
+
+    // Check if username is null or empty
+    if (username == null || username.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte gib deinen Namen im Profil ein')),
       );
       return;
     }
@@ -327,20 +358,78 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         peoplePerHour[today] = {};
       }
 
-      final todayCounts = Map<String, int>.from(peoplePerHour[today] ?? {});
+      final todayCounts = Map<String, Map<String, dynamic>>.from(peoplePerHour[today] ?? {});
+
+      bool alreadyRegisteredForAll = true;
 
       for (int hour = startHour; hour < endHour; hour++) {
-        todayCounts[hour.toString()] = (todayCounts[hour.toString()] ?? 0) + 1;
+        final hourData = todayCounts[hour.toString()] ?? {
+          'count': 0,
+          'users': <String>[],
+        };
+
+        final List<String> userIds = List<String>.from(hourData['users']);
+
+        if (!userIds.contains(user.uid)) {
+          alreadyRegisteredForAll = false;
+          break;
+        }
+      }
+
+      if (alreadyRegisteredForAll) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Für diesen Zeitraum hast du dich bereits vollständig registriert.')),
+        );
+        return;
+      }
+
+      // Register only for hours the user is not yet registered for
+      for (int hour = startHour; hour < endHour; hour++) {
+        final hourData = todayCounts[hour.toString()] ?? {
+          'count': 0,
+          'users': <String>[],
+        };
+
+        final List<String> userIds = List<String>.from(hourData['users']);
+
+        if (!userIds.contains(user.uid)) {
+          userIds.add(user.uid);
+          hourData['count'] = (hourData['count'] ?? 0) + 1;
+          hourData['users'] = userIds;
+          todayCounts[hour.toString()] = hourData;
+        }
       }
 
       await placeDocRef.update({
         'peoplePerHour': {today: todayCounts}
       });
 
+      // Update the user profile's last_courts field
+      List<dynamic> lastCourts = userData['last_courts'] ?? [];
+
+      // Check if the user is already registered for the current place and date
+      bool alreadyRegisteredForPlaceToday = lastCourts.any((court) {
+        return court['placeId'] == widget.placeId && court['date'] == today;
+      });
+
+      if (!alreadyRegisteredForPlaceToday) {
+        lastCourts.add({
+          'placeId': widget.placeId,
+          'date': today,
+        });
+
+        await userDocRef.update({
+          'last_courts': lastCourts,
+        });
+      }
+
       setState(() {
-        for (int hour = startHour; hour < endHour; hour++) {
-          _peoplePerHour[hour] = todayCounts[hour.toString()] ?? 0;
-        }
+        _peoplePerHour = todayCounts.map((key, value) {
+          return MapEntry(int.parse(key), {
+            'count': value['count'] as int,
+            'users': List<String>.from(value['users'] ?? []),
+          });
+        });
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -353,11 +442,14 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final currentDate = DateFormat('EEEE, dd MMM yyyy').format(DateTime.now());
+
+    // Verwende das deutsche Datumsformat mit einem Punkt nach dem Wochentag
+    final currentDate = DateFormat('EEEE, dd. MMMM yyyy', 'de').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -415,6 +507,101 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
+
+  Future<void> _showUsersDialog(int hour) async {
+    List<String> userIds = [];
+
+    // Ensure the hour data is available and structured correctly
+    if (_peoplePerHour.containsKey(hour)) {
+      final hourData = _peoplePerHour[hour];
+
+      if (hourData != null && hourData.containsKey('users')) {
+        userIds = List<String>.from(hourData['users'] ?? []);
+      }
+    }
+
+    // Fetch usernames from Firestore based on userIds
+    List<String> userNames = [];
+    for (String userId in userIds) {
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final userData = userDoc.data() as Map<String, dynamic>;
+        final String userName = userData['name'] ?? 'Unbekannt';
+        userNames.add(userName);
+      } else {
+        userNames.add('Unbekannt');
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.6,  // Maximal 80% der Bildschirmbreite
+              maxHeight: MediaQuery.of(context).size.height * 0.3, // Begrenze die Höhe des Dialogs auf 50% der Höhe
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Gleiches Padding links und rechts
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Platziere Überschrift oben und Button unten
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0), // Abstand von oben
+                    child: Text(
+                      'Angemeldete Nutzer für $hour:00 Uhr',
+                      style: TextStyle(
+                        fontSize: MediaQuery.of(context).size.width * 0.05,  // Dynamische Schriftgröße
+                      ),
+                      textAlign: TextAlign.center,  // Zentriere die Überschrift
+                    ),
+                  ),
+                  Expanded(
+                    child: userNames.isEmpty
+                        ? const Center(
+                      child: Text('Keine Nutzer angemeldet.'),
+                    )
+                        : Scrollbar(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: userNames.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              userNames[index],
+                              overflow: TextOverflow.ellipsis,  // Textüberlauf verhindern
+                              style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.045),  // Schriftgröße anpassen
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0), // Abstand von unten
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          'Schließen',
+                          style: TextStyle(color: Colors.blue),  // Blau für bessere Sichtbarkeit
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
   Widget _buildScrollableHourCircles(double screenWidth) {
     return Container(
       decoration: const BoxDecoration(),
@@ -425,43 +612,54 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: List.generate(24, (index) {
-              final int peopleCount = _peoplePerHour[index] ?? 0;  // Zeige 0 an, falls keine Daten
+              // Ensure that _peoplePerHour contains a valid entry for this hour
+              final Map<String, dynamic>? hourData = _peoplePerHour[index];
+
+              // Safely access the count
+              final int peopleCount = (hourData != null && hourData.containsKey('count'))
+                  ? hourData['count'] as int
+                  : 0;
 
               final bool isCurrentHour = index == _currentHour;
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$index Uhr',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: isCurrentHour ? Colors.orange : Colors.black,
+              return GestureDetector(
+                onTap: () {
+                  _showUsersDialog(index);  // Open dialog on circle tap
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$index Uhr',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isCurrentHour ? Colors.orange : Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Container(
-                      width: screenWidth * 0.115,
-                      height: screenWidth * 0.115,
-                      decoration: BoxDecoration(
-                        color: isCurrentHour ? Colors.orange : Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$peopleCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 5),
+                      Container(
+                        width: screenWidth * 0.115,
+                        height: screenWidth * 0.115,
+                        decoration: BoxDecoration(
+                          color: isCurrentHour ? Colors.orange : Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$peopleCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
@@ -474,13 +672,18 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
   Widget _buildRegistrationSection(double screenWidth) {
     return Center(
-      child: SizedBox(
-        width: screenWidth * 0.6,
-        child: TextButton(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all(Colors.black),
+      child: GestureDetector(
+        onTap: _handleClick, // Trigger animation and show the dialog
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300), // Same duration for the animation
+          curve: Curves.easeInOut, // Smooth animation curve
+          width: _isClicked ? screenWidth * 0.55 : screenWidth * 0.6, // Adjust width during animation
+          height: 50.0, // Height remains constant
+          decoration: BoxDecoration(
+            color: _isClicked ? Colors.orangeAccent : Colors.black, // Color changes during animation
+            borderRadius: BorderRadius.circular(12), // Rounded corners
           ),
-          onPressed: _showHourSelectionDialog, // Dialog für Zeitraum-Auswahl öffnen
+          alignment: Alignment.center, // Center the text and icon
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -500,6 +703,22 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
+
+  // Handling the button click animation
+  void _handleClick() {
+    setState(() {
+      _isClicked = true;
+    });
+
+    // Reset animation after a short delay
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        _isClicked = false;
+      });
+      _showHourSelectionDialog(); // Show the dialog after animation
+    });
+  }
+
 
   Widget _buildCommentSection() {
     return Column(

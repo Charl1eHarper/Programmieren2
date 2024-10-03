@@ -130,7 +130,7 @@ class InfoWindowWidget extends StatelessWidget {
                     onPressed: onAddRatingPressed,  // Callback to add rating
                     icon: const Icon(Icons.star, color: Colors.orange),
                     label: const Text(
-                      "Rate!",
+                      "Bewerte!",
                       style: TextStyle(
                         color: Colors.orange,
                         fontWeight: FontWeight.bold,
@@ -147,7 +147,7 @@ class InfoWindowWidget extends StatelessWidget {
                   child: const Padding(
                     padding: EdgeInsets.only(bottom: 5, top: 5),
                     child: Text(
-                      'Show More',
+                      'Mehr anzeigen',
                       style: TextStyle(
                         color: Colors.blue,
                         fontWeight: FontWeight.bold,

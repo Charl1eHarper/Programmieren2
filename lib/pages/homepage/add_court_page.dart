@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart'; // For file uploads
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore
 import 'package:geocoding/geocoding.dart'; // For geocoding (getting location from address)
 import 'package:uuid/uuid.dart'; // For generating a unique placeId
+import 'package:flutter/services.dart';  // Import for FilteringTextInputFormatter
 
 class AddCourtPage extends StatefulWidget {
   const AddCourtPage({super.key});
@@ -85,7 +86,6 @@ class _AddCourtPageState extends State<AddCourtPage> {
       final TaskSnapshot snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading image: $e');
       return null;
     }
   }
@@ -93,36 +93,55 @@ class _AddCourtPageState extends State<AddCourtPage> {
   // Function to get geolocation from address
   Future<GeoPoint?> _getGeoLocation(String address) async {
     try {
-      print('Getting location for address: $address');  // Debug-Ausgabe für die Adresse
       List<Location> locations = await locationFromAddress(address);
       if (locations.isNotEmpty) {
         final Location location = locations.first;
         return GeoPoint(location.latitude, location.longitude);  // Return GeoPoint
+      } else {
+        return null;  // Explicitly return null if no locations are found
       }
     } catch (e) {
-      print('Error getting location: $e');
+      return null;  // Return null if an exception occurs
     }
-    return null;  // Return null if location is not found
+  }
+
+  // Function to check if an address already exists in Firestore
+  Future<bool> _checkIfCourtExists(String street, String city) async {
+    final String fullAddress = '$street, $city';
+
+    final QuerySnapshot result = await _firestore
+        .collection('basketball_courts')
+        .where('address', isEqualTo: fullAddress)
+        .limit(1)
+        .get();
+
+    return result.docs.isNotEmpty;
   }
 
   // Function to save the court information in Firestore
   Future<void> _saveCourt() async {
     final String name = _nameController.text;
     final String street = _streetController.text;
-    final String postalCode = _postalCodeController.text;
     final String city = _cityController.text;
 
-    if (name.isEmpty || street.isEmpty || postalCode.isEmpty || city.isEmpty) {
+    if (name.isEmpty || street.isEmpty || city.isEmpty || _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bitte alle Felder ausfüllen!')),
+        const SnackBar(content: Text('Bitte alle Felder ausfüllen und ein Bild hinzufügen!')),
       );
       return;
     }
 
-    // Generate the full address (including postal code for geolocation)
-    final String fullAddress = '$street, $postalCode, $city';
+    // Generate the full address
+    final String fullAddress = '$street, $city';
 
-    print('Full address: $fullAddress');  // Debug-Ausgabe der vollständigen Adresse
+    // Check if court with the same address already exists
+    bool exists = await _checkIfCourtExists(street, city);
+    if (exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Dieser Platz existiert bereits!')),
+      );
+      return;
+    }
 
     // Get the geo location for the address
     final GeoPoint? geoLocation = await _getGeoLocation(fullAddress);
@@ -147,7 +166,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
     // Save data to Firestore with GeoPoint
     await _firestore.collection('basketball_courts').doc(placeId).set({
       'name': name,
-      'address': '$street, $city', // Save address without postal code
+      'address': fullAddress, // Save the full address
       'location': geoLocation, // Store GeoPoint object
       'image_urls': imageUrl != null ? [imageUrl] : [], // Store image URL if available
       'placeId': placeId,
@@ -161,10 +180,11 @@ class _AddCourtPageState extends State<AddCourtPage> {
     // Clear form
     _nameController.clear();
     _streetController.clear();
-    _postalCodeController.clear();
+    _postalCodeController.clear();  // Clear postal code as well
     _cityController.clear();
-    _removeImage();
+    _removeImage();  // Clear the selected image
   }
+
 
   // Handle button click animation
   void _handleClick() {
@@ -296,6 +316,11 @@ class _AddCourtPageState extends State<AddCourtPage> {
                   labelText: 'Postleitzahl',
                   border: OutlineInputBorder(),
                 ),
+                keyboardType: TextInputType.number, // Set keyboard type to number
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(5), // Limit to 5 digits
+                ], // Allow only digits and limit to 5
               ),
               SizedBox(height: screenHeight * 0.02),
 

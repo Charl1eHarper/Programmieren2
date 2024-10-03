@@ -7,15 +7,13 @@ class MarkerDetailsPage extends StatefulWidget {
   final String markerName;
   final String markerAddress;
   final List<String> images;
-  final Map<int, int> peoplePerHour;
-  final String placeId;  // Neu: placeId wird übergeben
+  final String placeId;  // placeId wird übergeben
 
   const MarkerDetailsPage({
     super.key,
     required this.markerName,
     required this.markerAddress,
     required this.images,
-    required this.peoplePerHour,
     required this.placeId,  // placeId hinzugefügt
   });
 
@@ -23,11 +21,11 @@ class MarkerDetailsPage extends StatefulWidget {
   MarkerDetailsPageState createState() => MarkerDetailsPageState(); // Removed the underscore
 }
 
-// Renamed _MarkerDetailsPageState to MarkerDetailsPageState
 class MarkerDetailsPageState extends State<MarkerDetailsPage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late int _nextHour;
+  Map<int, int> _peoplePerHour = {};  // peoplePerHour wird hier initialisiert
   List<Map<String, dynamic>> _comments = [];
 
   @override
@@ -35,6 +33,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
     _fetchComments();
+    _fetchPeoplePerHour(); // Neue Methode zum Abrufen von peoplePerHour
 
     DateTime now = DateTime.now();
     int currentHour = now.hour;
@@ -51,10 +50,10 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
-  // Fetch comments from Firebase for the marker using placeId
+  // Fetch comments from Firebase for the marker using placeId (unverändert)
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
-    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get(); // Verwende placeId
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
 
     if (placeDoc.exists && placeDoc.data() != null) {
       final data = placeDoc.data() as Map<String, dynamic>;
@@ -67,14 +66,35 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         setState(() {
           _comments = [];
         });
-        await firestore.collection('basketball_courts').doc(widget.placeId).update({ // Verwende placeId
+        await firestore.collection('basketball_courts').doc(widget.placeId).update({
           'comments': [],
         });
       }
     }
   }
 
-// Add new comment to Firebase
+  // Neue Methode zum Abrufen von peoplePerHour aus Firestore
+  Future<void> _fetchPeoplePerHour() async {
+    final firestore = FirebaseFirestore.instance;
+    final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
+
+    if (placeDoc.exists && placeDoc.data() != null) {
+      final data = placeDoc.data() as Map<String, dynamic>;
+
+      if (data.containsKey('peoplePerHour')) {
+        final Map<String, dynamic> fetchedPeoplePerHour = data['peoplePerHour'];
+        String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+        if (fetchedPeoplePerHour.containsKey(today)) {
+          setState(() {
+            _peoplePerHour = Map<int, int>.from(fetchedPeoplePerHour[today]);
+          });
+        }
+      }
+    }
+  }
+
+  // Kommentar-Funktion unverändert
   Future<void> _addComment(String commentText) async {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
@@ -82,7 +102,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     // Get the current user
     final user = auth.currentUser;
 
-    // Check if the user is logged in
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bitte logge dich ein')),
@@ -93,7 +112,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     // Get user profile from the Firestore 'users' collection
     final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
 
-    // Check if the profile exists and is complete
     if (!userProfile.exists || userProfile.data() == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erstelle dein Profil')),
@@ -103,15 +121,12 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
 
     final data = userProfile.data() as Map<String, dynamic>;
 
-    // Check if the username is valid
     final String username = (data['name'] != null && data['name'].toString().trim().isNotEmpty)
         ? data['name']
-        : 'Anonym'; // Fallback to 'Anonym' if no valid name is provided
+        : 'Anonym';
 
-    // Fallback to placeholder profile image if not present
-    final String profileImage = data['profileImage'] ?? 'https://via.placeholder.com/40'; // Default placeholder image
+    final String profileImage = data['profileImage'] ?? 'https://via.placeholder.com/40';
 
-    // Prepare the new comment
     final newComment = {
       'username': username,
       'profile_image': profileImage,
@@ -120,7 +135,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     };
 
     try {
-      // Update the comments in the basketball_courts collection
       final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId);
       final DocumentSnapshot placeDoc = await placeDocRef.get();
 
@@ -134,7 +148,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         });
       }
 
-      // Show "Kommentar hinzugefügt" message after successful addition
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kommentar hinzugefügt')),
       );
@@ -143,21 +156,18 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         _comments.add(newComment);
       });
     } catch (e) {
-      // Handle error if needed
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Fehler beim Hinzufügen des Kommentars: $e')),
       );
     }
   }
 
-
-// Dialog zum Schreiben eines Kommentars
+  // Dialog zum Schreiben eines Kommentars (unverändert)
   Future<void> _showCommentDialog() async {
     final TextEditingController commentController = TextEditingController();
     final auth = FirebaseAuth.instance;
     final user = auth.currentUser;
 
-    // Check if the user is logged in
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Bitte logge dich ein')),
@@ -165,15 +175,12 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       return;
     }
 
-    // Get user profile from Firestore
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
 
-    // Check if the profile is complete
     if (userProfile.exists && userProfile.data() != null) {
       final userData = userProfile.data() as Map<String, dynamic>;
 
-      // Check if the user has a valid name
       if (userData['name'] == null || userData['name'].toString().trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bitte gib deinen Namen ein')),
@@ -188,7 +195,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       return;
     }
 
-    // If everything is valid, allow user to post a comment
     await showDialog(
       context: context,
       builder: (context) {
@@ -218,8 +224,129 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
+  // Neuer Dialog zur Auswahl des Zeitraums (Start- und Endzeit)
+  Future<void> _showHourSelectionDialog() async {
+    final List<int> hours = List.generate(24, (index) => index);
+    int startHour = 12; // Default start time
+    int endHour = 13;   // Default end time
 
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Wähle eine Zeitspanne'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Startzeit'),
+                  DropdownButton<int>(
+                    value: startHour,
+                    items: hours.map((hour) {
+                      return DropdownMenuItem(
+                        value: hour,
+                        child: Text('$hour:00 Uhr'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        startHour = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Endzeit'),
+                  DropdownButton<int>(
+                    value: endHour,
+                    items: hours.where((hour) => hour > startHour).map((hour) {
+                      return DropdownMenuItem(
+                        value: hour,
+                        child: Text('$hour:00 Uhr'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        endHour = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Abbrechen'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _registerForTimeRange(startHour, endHour);  // Anmelde-Logik für Zeitspanne
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Bestätigen'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
+  // Anpassung der Registrierung für einen Zeitraum
+  Future<void> _registerForTimeRange(int startHour, int endHour) async {
+    final firestore = FirebaseFirestore.instance;
+    final auth = FirebaseAuth.instance;
+    final user = auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte logge dich ein')),
+      );
+      return;
+    }
+
+    try {
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final DocumentReference placeDocRef = firestore.collection('basketball_courts').doc(widget.placeId);
+      final DocumentSnapshot placeDoc = await placeDocRef.get();
+
+      Map<String, dynamic> peoplePerHour = {};
+
+      if (placeDoc.exists && placeDoc.data() != null) {
+        final data = placeDoc.data() as Map<String, dynamic>;
+        peoplePerHour = Map<String, dynamic>.from(data['peoplePerHour'] ?? {});
+      }
+
+      if (!peoplePerHour.containsKey(today)) {
+        peoplePerHour[today] = {};
+      }
+
+      final todayCounts = Map<String, int>.from(peoplePerHour[today] ?? {});
+
+      for (int hour = startHour; hour < endHour; hour++) {
+        todayCounts[hour.toString()] = (todayCounts[hour.toString()] ?? 0) + 1;
+      }
+
+      await placeDocRef.update({
+        'peoplePerHour': {today: todayCounts}
+      });
+
+      setState(() {
+        for (int hour = startHour; hour < endHour; hour++) {
+          _peoplePerHour[hour] = todayCounts[hour.toString()] ?? 0;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Du hast dich erfolgreich für die Zeitspanne angemeldet.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fehler bei der Registrierung: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -242,7 +369,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image carousel (unchanged)
             SizedBox(
               height: screenHeight * 0.30,
               child: _buildImageCarousel(),
@@ -262,20 +388,13 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
                 children: [
                   Text(currentDate, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-
-                  // Section for "Anzahl an Leuten" (People count for each hour)
                   SizedBox(
-                    height: screenHeight * 0.15,  // Reduced height for circles
+                    height: screenHeight * 0.15,
                     child: _buildScrollableHourCircles(screenWidth),
                   ),
                   const SizedBox(height: 12),
-
-                  // Registration button
                   _buildRegistrationSection(screenWidth),
-
                   const SizedBox(height: 12),
-
-                  // Comment section
                   _buildCommentSection(),
                 ],
               ),
@@ -286,35 +405,118 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showCommentDialog,
         tooltip: 'Kommentar hinzufügen',
-        child: const Icon(Icons.add_comment),  // Move 'child' to the last position
+        child: const Icon(Icons.add_comment),
       ),
     );
   }
 
-  // Build the comment section
+  Widget _buildScrollableHourCircles(double screenWidth) {
+    return Container(
+      decoration: const BoxDecoration(),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: List.generate(24, (index) {
+              final int peopleCount = _peoplePerHour[index] ?? 0;
+
+              final bool isNextHour = index == _nextHour;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$index Uhr',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isNextHour ? Colors.orange : Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      width: screenWidth * 0.115,
+                      height: screenWidth * 0.115,
+                      decoration: BoxDecoration(
+                        color: isNextHour ? Colors.orange : Colors.black,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$peopleCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegistrationSection(double screenWidth) {
+    return Center(
+      child: SizedBox(
+        width: screenWidth * 0.6,
+        child: TextButton(
+          style: ButtonStyle(
+            backgroundColor: WidgetStateProperty.all(Colors.black),
+          ),
+          onPressed: _showHourSelectionDialog, // Dialog für Zeitraum-Auswahl öffnen
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Wann bist du da?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.add_circle, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCommentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Kommentare', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        const SizedBox(height: 8), // Space between the title and the divider
-        const Divider( // Add a thin black line below the title
-          color: Colors.black, // Line color
-          thickness: 1, // Line thickness
-          height: 1, // Space taken by the divider
+        const SizedBox(height: 8),
+        const Divider(
+          color: Colors.black,
+          thickness: 1,
+          height: 1,
         ),
-        const SizedBox(height: 8), // Space between the divider and the comments
+        const SizedBox(height: 8),
         _comments.isEmpty
-            ? const Text('Noch keine Kommentare.') // Display this text if no comments
+            ? const Text('Noch keine Kommentare.')
             : SizedBox(
-          height: 200, // Limit height and make the comments scrollable
+          height: 200,
           child: ListView.builder(
             shrinkWrap: true,
-            itemCount: _comments.length + 1, // Increase itemCount by 1 for padding
+            itemCount: _comments.length + 1,
             itemBuilder: (context, index) {
               if (index == _comments.length) {
-                // Add extra padding at the bottom of the list
-                return const SizedBox(height: 60);  // Adjust the height of the padding
+                return const SizedBox(height: 60);
               }
               final comment = _comments[index];
               return _buildComment(
@@ -329,26 +531,23 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     );
   }
 
-
-
-  // Build a single comment widget
   Widget _buildComment(String username, String comment, String profileImage) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),  // Add vertical padding between comments
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,  // Align all items to the start (left)
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               CircleAvatar(
-                backgroundImage: NetworkImage(profileImage),  // Profile image
+                backgroundImage: NetworkImage(profileImage),
                 radius: 20,
               ),
-              const SizedBox(width: 10),  // Space between image and username
-              Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),  // Username
+              const SizedBox(width: 10),
+              Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 8),  // Space between username and comment
+          const SizedBox(height: 8),
           Text(
             comment,
             style: const TextStyle(fontSize: 14),
@@ -357,7 +556,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       ),
     );
   }
-
 
   Widget _buildImageCarousel() {
     return Stack(
@@ -408,97 +606,6 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildScrollableHourCircles(double screenWidth) {
-    return Container(
-      // Remove the border from the decoration
-      decoration: const BoxDecoration(), // No border now
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal, // Horizontal scrolling
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0), // Vertical padding for better alignment
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
-            children: List.generate(24, (index) {
-              final int peopleCount = widget.peoplePerHour[index] ?? 0; // Default to 0 if no data
-
-              // Determine if this is the next hour, and set the color accordingly
-              final bool isNextHour = index == _nextHour;
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0), // Horizontal padding for spacing
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // Minimize vertical space
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$index Uhr', // Display the hour
-                      style: TextStyle(
-                        fontSize: 16, // Slightly smaller font size for the hour label
-                        color: isNextHour ? Colors.orange : Colors.black, // Mark the next hour in orange
-                      ),
-                    ),
-                    const SizedBox(height: 5), // Adjusted space between text and circle
-                    Container(
-                      width: screenWidth * 0.115, // Dynamically set the width based on screen size
-                      height: screenWidth * 0.115, // Same height as width for perfect circle
-                      decoration: BoxDecoration(
-                        color: isNextHour ? Colors.orange : Colors.black, // Change circle color for the next hour
-                        shape: BoxShape.circle, // Make it a circle
-                      ),
-                      child: Center(
-                        child: Text(
-                          '$peopleCount', // Display the people count
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildRegistrationSection(double screenWidth) {
-    return Center(
-      child: SizedBox(
-        width: screenWidth * 0.6,  // Full-width button
-        child: TextButton(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all(Colors.black),
-          ),
-          onPressed: () {
-            // Placeholder action for user registration
-            // In future, connect to database and allow user to select a time
-          },
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Wann bist du da?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              SizedBox(width: 8),
-              Icon(Icons.add_circle, color: Colors.white),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

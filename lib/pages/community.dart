@@ -16,7 +16,7 @@ class _CommunityPageState extends State<CommunityPage> {
   bool showGroupsDropdown = false;
   String searchQuery = ""; // Search query for public groups
   List<DocumentSnapshot> searchResults = []; // Search results for public groups
-  bool isSearching = false; // To show a loading indicator during search
+  bool isSearching = false; // To track if search is ongoing in the background
   final currentUser = FirebaseAuth.instance.currentUser; // Current logged-in user
 
   @override
@@ -51,43 +51,69 @@ class _CommunityPageState extends State<CommunityPage> {
           children: [
             buildSearchBar(), // Search bar for finding public groups
             const SizedBox(height: 16.0),
-            if (searchResults.isNotEmpty) buildSearchResultsList(), // Show search results
-            if (isSearching) Center(child: CircularProgressIndicator()), // Show loading only during search
-            if (searchResults.isEmpty && !isSearching) ...[
-              buildSectionWithButtonAndDropdown(
-                icon: Icons.person_outline,
-                title: 'FREUNDESLISTE',
-                buttonText: 'ADD FRIEND',
-                showDropdown: showFriendsDropdown,
-                onButtonPressed: () {
-                  _showFriendSearchPopup(context);
-                },
-                onDropdownToggle: () {
-                  setState(() {
-                    showFriendsDropdown = !showFriendsDropdown;
-                  });
-                },
-                titleFontSize: 16.0,
-                dropdownContent: buildFriendsDropdownContent(),
+            // Dynamically sized search results below the search bar
+            if (searchResults.isNotEmpty)
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: searchResults.length,
+                  itemBuilder: (context, index) {
+                    var group = searchResults[index];
+                    List<dynamic> members = group['members'];
+
+                    // Check if the current user is already a member of the group
+                    bool isMember = members.contains(currentUser!.uid);
+
+                    return ListTile(
+                      title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
+                      subtitle: const Text('Public Group', style: TextStyle(color: Colors.grey)),
+                      trailing: isMember
+                          ? const Text('Member', style: TextStyle(color: Colors.green)) // Show "Member" if already part of the group
+                          : TextButton(
+                        onPressed: () {
+                          _joinGroup(group.id);
+                        },
+                        child: const Text('Join', style: TextStyle(color: Colors.teal)), // Show "Join" button otherwise
+                      ),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 16.0),
-              buildSectionWithButtonAndDropdown(
-                icon: Icons.group_outlined,
-                title: 'GRUPPEN',
-                buttonText: 'CREATE GROUP',
-                showDropdown: showGroupsDropdown,
-                onButtonPressed: () {
-                  _showCreateCommunityPopup(context);
-                },
-                onDropdownToggle: () {
-                  setState(() {
-                    showGroupsDropdown = !showGroupsDropdown;
-                  });
-                },
-                titleFontSize: 16.0,
-                dropdownContent: buildGroupsDropdownContent(),
-              ),
-            ],
+            const SizedBox(height: 16.0),
+            // The friend list and group sections are always displayed after search results
+            buildSectionWithButtonAndDropdown(
+              icon: Icons.person_outline,
+              title: 'FREUNDESLISTE',
+              buttonText: 'ADD FRIEND',
+              showDropdown: showFriendsDropdown,
+              onButtonPressed: () {
+                _showFriendSearchPopup(context);
+              },
+              onDropdownToggle: () {
+                setState(() {
+                  showFriendsDropdown = !showFriendsDropdown;
+                });
+              },
+              titleFontSize: 16.0,
+              dropdownContent: buildFriendsDropdownContent(),
+            ),
+            const SizedBox(height: 16.0),
+            buildSectionWithButtonAndDropdown(
+              icon: Icons.group_outlined,
+              title: 'GRUPPEN',
+              buttonText: 'CREATE GROUP',
+              showDropdown: showGroupsDropdown,
+              onButtonPressed: () {
+                _showCreateCommunityPopup(context);
+              },
+              onDropdownToggle: () {
+                setState(() {
+                  showGroupsDropdown = !showGroupsDropdown;
+                });
+              },
+              titleFontSize: 16.0,
+              dropdownContent: buildGroupsDropdownContent(),
+            ),
           ],
         ),
       ),
@@ -97,24 +123,24 @@ class _CommunityPageState extends State<CommunityPage> {
   // Build the search bar for public groups
   Widget buildSearchBar() {
     return TextField(
-      style: TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: 'Search for public groups...',
-        hintStyle: TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: Colors.white70),
         filled: true,
         fillColor: Colors.grey[800],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
-        prefixIcon: Icon(Icons.search, color: Colors.white70),
+        prefixIcon: const Icon(Icons.search, color: Colors.white70),
       ),
       onChanged: (value) {
         setState(() {
           searchQuery = value.trim();
         });
         if (searchQuery.isNotEmpty) {
-          _searchForPublicGroups();
+          _searchForPublicGroups(); // Perform search when there's input
         } else {
           setState(() {
             searchResults = [];
@@ -127,7 +153,7 @@ class _CommunityPageState extends State<CommunityPage> {
   // Fetch public groups from Firestore that match the search query
   Future<void> _searchForPublicGroups() async {
     setState(() {
-      isSearching = true;
+      isSearching = true; // Mark as searching in the background
     });
 
     final firestore = FirebaseFirestore.instance;
@@ -141,38 +167,8 @@ class _CommunityPageState extends State<CommunityPage> {
 
     setState(() {
       searchResults = querySnapshot.docs;
-      isSearching = false; // Stop showing the loading indicator
+      isSearching = false; // Stop searching in the background
     });
-  }
-
-  // Build the list of search results (public groups)
-  Widget buildSearchResultsList() {
-    return Expanded(
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: searchResults.length,
-        itemBuilder: (context, index) {
-          var group = searchResults[index];
-          List<dynamic> members = group['members'];
-
-          // Check if the current user is already a member of the group
-          bool isMember = members.contains(currentUser!.uid);
-
-          return ListTile(
-            title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
-            subtitle: const Text('Public Group', style: TextStyle(color: Colors.grey)),
-            trailing: isMember
-                ? const Text('Member', style: TextStyle(color: Colors.green)) // Show "Member" if already part of the group
-                : TextButton(
-              onPressed: () {
-                _joinGroup(group.id);
-              },
-              child: const Text('Join', style: TextStyle(color: Colors.teal)), // Show "Join" button otherwise
-            ),
-          );
-        },
-      ),
-    );
   }
 
   // Function to join a public group
@@ -290,7 +286,7 @@ class _CommunityPageState extends State<CommunityPage> {
         final friendsDocs = snapshot.data!.docs;
         return ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: friendsDocs.length,
           itemBuilder: (context, index) {
             var friend = friendsDocs[index];
@@ -318,7 +314,7 @@ class _CommunityPageState extends State<CommunityPage> {
       stream: firestore.collection('groups').where('members', arrayContains: currentUser!.uid).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Padding(
@@ -333,7 +329,7 @@ class _CommunityPageState extends State<CommunityPage> {
         final groupsDocs = snapshot.data!.docs;
         return ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: groupsDocs.length,
           itemBuilder: (context, index) {
             var group = groupsDocs[index];
@@ -343,7 +339,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   ? const Text('Private Group', style: TextStyle(color: Colors.grey))
                   : const Text('Public Group', style: TextStyle(color: Colors.grey)),
               trailing: IconButton(
-                icon: Icon(Icons.settings, color: Colors.white),
+                icon: const Icon(Icons.settings, color: Colors.white),
                 onPressed: () {
                   // Open group options when the settings icon is clicked
                   _showGroupOptionsPopup(context, group);
@@ -405,7 +401,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                   TextField(
                     controller: inviteController,
-                    decoration: InputDecoration(hintText: 'Invite user by email'),
+                    decoration: const InputDecoration(hintText: 'Invite user by email'),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -491,24 +487,37 @@ class _CommunityPageState extends State<CommunityPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Search Friends'),
+          backgroundColor: Colors.grey[850], // Set the background color to match the page
+          title: const Text(
+            'Search Friends',
+            style: TextStyle(color: Colors.white), // White text to fit the theme
+          ),
           content: TextField(
             controller: searchController,
-            decoration: const InputDecoration(hintText: 'Enter email or username'),
+            style: const TextStyle(color: Colors.white), // White text inside input
+            decoration: const InputDecoration(
+              hintText: 'Enter email or username',
+              hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+              filled: true,
+              fillColor: Colors.grey, // Dark background for input field
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+              ),
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('CANCEL'),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
             ),
             TextButton(
               onPressed: () async {
                 await sendFriendRequest(searchController.text);
                 Navigator.pop(context);
               },
-              child: const Text('ADD'),
+              child: const Text('ADD', style: TextStyle(color: Colors.teal)),
             ),
           ],
         );
@@ -552,17 +561,30 @@ class _CommunityPageState extends State<CommunityPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Create Community'),
+              backgroundColor: Colors.grey[850], // Set the background color to match the page
+              title: const Text(
+                'Create Community',
+                style: TextStyle(color: Colors.white), // White text to fit the theme
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: groupNameController,
-                    decoration: const InputDecoration(hintText: 'Community Name'),
+                    style: const TextStyle(color: Colors.white), // White text inside input
+                    decoration: const InputDecoration(
+                      hintText: 'Community Name',
+                      hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+                      filled: true,
+                      fillColor: Colors.grey, // Dark background for input field
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                   Row(
                     children: [
-                      const Text('Private'),
+                      const Text('Private', style: TextStyle(color: Colors.white)),
                       Switch(
                         value: isPrivate,
                         onChanged: (value) {
@@ -579,7 +601,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   if (isPrivate)
                     Row(
                       children: [
-                        const Text('Allow Invites'),
+                        const Text('Allow Invites', style: TextStyle(color: Colors.white)),
                         Switch(
                           value: allowInvites,
                           onChanged: (value) {
@@ -597,7 +619,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('CANCEL'),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -609,7 +631,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       print('Group name cannot be empty');
                     }
                   },
-                  child: const Text('CREATE'),
+                  child: const Text('CREATE', style: TextStyle(color: Colors.teal)),
                 ),
               ],
             );
@@ -636,6 +658,10 @@ class _CommunityPageState extends State<CommunityPage> {
     print('Group "$groupName" created successfully');
   }
 }
+
+
+
+
 
 
 

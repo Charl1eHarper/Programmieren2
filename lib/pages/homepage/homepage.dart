@@ -495,7 +495,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Handle marker tap and show detailed information
   Future<void> _onMarkerTapped(String placeId, LatLng position) async {
     if (_selectedMarkerId != null && _selectedMarkerId != placeId) {
       _onCloseInfoWindow();
@@ -507,35 +506,36 @@ class _HomePageState extends State<HomePage> {
     List<String> imageUrls = [];
     String name = '';
     String address = '';
-    double ringRating = 0.0;
-    double netzRating = 0.0;
-    double platzRating = 0.0;
 
     bool isGoogleDataLoaded = false;
 
-    // Try loading data from Google Places
+    // Step 1: Try loading data from Google Places
     try {
       final placeDetails = await places.getDetailsByPlaceId(placeId);
 
-      if (placeDetails.isOkay && placeDetails.result.photos.isNotEmpty) {
+      if (placeDetails.isOkay) {
         name = placeDetails.result.name;
         address = placeDetails.result.formattedAddress ?? "Keine Adresse verfügbar";
 
-        // Load images from Google Places
-        for (var photo in placeDetails.result.photos) {
-          final photoReference = photo.photoReference;
-          final imageUrl = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
-          imageUrls.add(imageUrl);
+        // Check if Google Places has any images
+        if (placeDetails.result.photos.isNotEmpty) {
+          for (var photo in placeDetails.result.photos) {
+            final photoReference = photo.photoReference;
+            final imageUrl =
+                "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=AIzaSyB-Auv39s_lM1kjpfOBySaQwxTMq5kfY-o";
+            imageUrls.add(imageUrl);
+          }
         }
 
         isGoogleDataLoaded = true;
       }
     } catch (e) {
       // Handle Google Places errors
+      print("Error fetching from Google Places: $e");
     }
 
-    // If no Google data, load from Firestore
-    if (!isGoogleDataLoaded) {
+    // Step 2: If no Google data is available, load from Firestore
+    if (!isGoogleDataLoaded || imageUrls.isEmpty) {
       try {
         DocumentSnapshot placeDoc = await FirebaseFirestore.instance
             .collection('basketball_courts')
@@ -545,25 +545,22 @@ class _HomePageState extends State<HomePage> {
         Map<String, dynamic>? data = placeDoc.data() as Map<String, dynamic>?;
 
         if (data != null) {
+          // Load images from Firestore if available
+          if (data.containsKey('image_urls')) {
+            imageUrls = List<String>.from(data['image_urls']);
+          }
+
+          // Load name and address from Firestore
           name = data['name'] ?? 'Kein Name verfügbar';
           address = data['address'] ?? 'Keine Adresse verfügbar';
-
-          // Use Firestore image URLs
-          imageUrls = List<String>.from(data['image_urls'] ?? ['https://via.placeholder.com/400']);
-
-          ringRating = data['ratings']?['ring']?['average'] ?? 0.0;
-          netzRating = data['ratings']?['netz']?['average'] ?? 0.0;
-          platzRating = data['ratings']?['platz']?['average'] ?? 0.0;
-        } else {
-          imageUrls.add('https://via.placeholder.com/400');
         }
       } catch (e) {
         // Handle Firestore errors
-        imageUrls.add('https://via.placeholder.com/400');
+        print("Error fetching from Firestore: $e");
       }
     }
 
-    // Add placeholder if no images are available
+    // Step 3: If no images are available, add a placeholder image
     if (imageUrls.isEmpty) {
       imageUrls.add('https://via.placeholder.com/400');
     }
@@ -577,13 +574,11 @@ class _HomePageState extends State<HomePage> {
 
     final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
 
+    // Step 4: Fetch ratings from Firestore
+    await _refreshMarkerRatings(placeId);
+
     if (mounted) {
       setState(() {
-        _ringRating = ringRating;
-        _netzRating = netzRating;
-        _platzRating = platzRating;
-
-        _isSearchVisible = false;
         _infoWindowTitle = name;
         _infoWindowImage = imageUrls.isNotEmpty ? imageUrls[0] : 'https://via.placeholder.com/400';
         _infoWindowAddress = address;
@@ -608,6 +603,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+
 
   // Close the info window and reset the marker appearance
   void _onCloseInfoWindow() {

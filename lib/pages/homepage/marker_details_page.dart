@@ -57,7 +57,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     super.dispose();
   }
 
-  // Fetch comments from Firestore
+  // Fetch comments from Firebase
   Future<void> _fetchComments() async {
     final firestore = FirebaseFirestore.instance;
     final DocumentSnapshot placeDoc = await firestore.collection('basketball_courts').doc(widget.placeId).get();
@@ -109,7 +109,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
     }
   }
 
-  // Add a comment to Firestore
+  // Add a comment to Firebase
   Future<void> _addComment(String commentText) async {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
@@ -124,7 +124,7 @@ class MarkerDetailsPageState extends State<MarkerDetailsPage> {
       return;
     }
 
-    // Fetch user profile from Firestore
+    // Fetch user profile from Firebase
     final DocumentSnapshot userProfile = await firestore.collection('users').doc(user.uid).get();
 
     if (!userProfile.exists || userProfile.data() == null) {

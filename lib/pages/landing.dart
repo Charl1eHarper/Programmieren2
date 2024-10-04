@@ -15,8 +15,9 @@ class _LandingPageState extends State<LandingPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _loginErrorMessage = ''; // Variable to store login error messages
 
-  // Registration logic
+// Registration logic
   Future<void> _register(String email, String password) async {
+    final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
       UserCredential userCredential =
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -30,7 +31,7 @@ class _LandingPageState extends State<LandingPage> {
         'email': email,
         'createdAt': Timestamp.now(),
       });
-      Navigator.pushReplacementNamed(context, '/home');
+      navigator.pushReplacementNamed('/home');  // Use navigator here
     } catch (e) {
       setState(() {
         _loginErrorMessage = _getErrorMessage(e);
@@ -38,23 +39,24 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Login logic
+// Login logic
   Future<void> _login() async {
+    final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      Navigator.pushReplacementNamed(context, '/home');
+      navigator.pushReplacementNamed('/home');  // Use navigator here
     } catch (e) {
       setState(() {
         _loginErrorMessage = _getErrorMessage(e);
       });
     }
   }
-
-  // Google login logic
+// Google login logic
   Future<void> _loginWithGoogle() async {
+    final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
@@ -81,7 +83,7 @@ class _LandingPageState extends State<LandingPage> {
         });
       }
 
-      Navigator.pushReplacementNamed(context, '/home');
+      navigator.pushReplacementNamed('/home');  // Use navigator here
     } catch (e) {
       setState(() {
         _loginErrorMessage = _getErrorMessage(e);
@@ -89,14 +91,15 @@ class _LandingPageState extends State<LandingPage> {
     }
   }
 
-  // Guest login logic
+// Guest login logic
   Future<void> _loginAsGuest() async {
+    final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
       UserCredential userCredential =
       await FirebaseAuth.instance.signInAnonymously();
 
       if (userCredential.user != null && userCredential.user!.isAnonymous) {
-        Navigator.pushReplacementNamed(context, '/home');
+        navigator.pushReplacementNamed('/home');  // Use navigator here
         _showGuestLimitationsDialog();
       }
     } catch (e) {

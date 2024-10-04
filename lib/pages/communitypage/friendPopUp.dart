@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FriendProfilePopup extends StatefulWidget {
   final String friendId; // Pass the friend's userId
 
-  FriendProfilePopup({required this.friendId});
+  const FriendProfilePopup({required this.friendId});
 
   @override
   _FriendProfilePopupState createState() => _FriendProfilePopupState();
@@ -54,7 +54,6 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
         });
       }
     } catch (e) {
-      print('Failed to load friend profile: $e');
     }
   }
 
@@ -63,7 +62,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
     try {
       if (lastCourts.isNotEmpty) {
         // First court
-        if (lastCourts.length > 0) {
+        if (lastCourts.isNotEmpty) {
           var firstCourtId = lastCourts[lastCourts.length - 1]['placeId'];
           var firstCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(firstCourtId).get();
           if (firstCourtDoc.exists) {
@@ -95,7 +94,6 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
         }
       }
     } catch (e) {
-      print('Failed to load court details: $e');
     }
   }
 
@@ -105,7 +103,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
       backgroundColor: Colors.grey[300], // Matching the background color
       title: Text(
         name ?? 'Friend Profile',
-        style: TextStyle(color: Colors.black, fontSize: 22),
+        style: const TextStyle(color: Colors.black, fontSize: 22),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -119,7 +117,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
                     ? NetworkImage(profileImageUrl!)
                     : null,
                 child: profileImageUrl == null || profileImageUrl!.isEmpty
-                    ? Icon(Icons.person, size: 50, color: Colors.black)
+                    ? const Icon(Icons.person, size: 50, color: Colors.black)
                     : null,
               ),
             ),
@@ -133,13 +131,13 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
 
             // Recently Played Section
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Recently Played',
               style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (firstCourtImageUrl == null && secondCourtImageUrl == null)
-              Text(
+              const Text(
                 'This user has not played anywhere yet.',
                 style: TextStyle(color: Colors.black),
               )
@@ -165,7 +163,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text(
+          child: const Text(
             'CLOSE',
             style: TextStyle(color: Colors.blue), // Teal button color
           ),
@@ -183,11 +181,11 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           Text(
             value ?? 'N/A',
-            style: TextStyle(color: Colors.black, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
           ),
         ],
       ),
@@ -207,12 +205,12 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           ),
           child: imageUrl != null
               ? Image.network(imageUrl, fit: BoxFit.cover, width: 100, height: 100)
-              : Icon(Icons.location_on, color: Colors.black, size: 50),
+              : const Icon(Icons.location_on, color: Colors.black, size: 50),
         ),
         const SizedBox(height: 4),
         Text(
           courtName ?? 'Unknown Court',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

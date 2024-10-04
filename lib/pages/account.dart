@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io'; // For File handling
 
 class AccountPage extends StatefulWidget {
+  const AccountPage({super.key});
+
   @override
   _AccountPageState createState() => _AccountPageState();
 }
@@ -72,7 +74,7 @@ class _AccountPageState extends State<AccountPage> {
     try {
       if (lastCourts.isNotEmpty) {
         // First court
-        if (lastCourts.length > 0) {
+        if (lastCourts.isNotEmpty) {
           var firstCourtId = lastCourts[lastCourts.length - 1]['placeId'];
           var firstCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(firstCourtId).get();
           if (firstCourtDoc.exists) {
@@ -84,8 +86,6 @@ class _AccountPageState extends State<AccountPage> {
                   : null;
               firstCourtName = courtData['name'];
 
-              print("First Court PlaceId: $firstCourtId");
-              print("First Court Image URL: $firstCourtImageUrl");
             });
           }
         }
@@ -119,12 +119,12 @@ class _AccountPageState extends State<AccountPage> {
       double height = double.tryParse(heightController.text) ?? 0.0;
 
       if (age < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Age cannot be less than 0")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Age cannot be less than 0")));
         return;
       }
 
       if (height <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Height must be in centimeters")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Height must be in centimeters")));
         return;
       }
 
@@ -139,7 +139,7 @@ class _AccountPageState extends State<AccountPage> {
           'profileImage': _profileImageUrl ?? '',
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Profile saved successfully")),
+          const SnackBar(content: Text("Profile saved successfully")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -157,7 +157,7 @@ class _AccountPageState extends State<AccountPage> {
       });
       _uploadProfileImage();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No image selected!")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No image selected!")));
     }
   }
 
@@ -179,7 +179,7 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile image uploaded and saved successfully")),
+        const SnackBar(content: Text("Profile image uploaded and saved successfully")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -194,15 +194,15 @@ class _AccountPageState extends State<AccountPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text('Edit Profile', style: TextStyle(color: Colors.black, fontSize: 22)),
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.black, fontSize: 22)),
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: Colors.black),
+            icon: const Icon(Icons.save, color: Colors.black),
             onPressed: _saveUserProfile,
           ),
         ],
@@ -214,7 +214,7 @@ class _AccountPageState extends State<AccountPage> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
                       Center(
@@ -227,7 +227,7 @@ class _AccountPageState extends State<AccountPage> {
                                   ? NetworkImage(_profileImageUrl!)
                                   : null,
                               child: _profileImageUrl == null || _profileImageUrl!.isEmpty
-                                  ? Icon(Icons.person, size: 100, color: Colors.black)
+                                  ? const Icon(Icons.person, size: 100, color: Colors.black)
                                   : null,
                             ),
                             Positioned(
@@ -237,7 +237,7 @@ class _AccountPageState extends State<AccountPage> {
                                 onTap: () {
                                   _showImagePickerOptions();
                                 },
-                                child: CircleAvatar(
+                                child: const CircleAvatar(
                                   backgroundColor: Colors.black,
                                   radius: 28,
                                   child: Icon(Icons.camera_alt, color: Colors.white, size: 28),
@@ -247,7 +247,7 @@ class _AccountPageState extends State<AccountPage> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       // Profile form fields
                       IntrinsicHeight(
@@ -258,9 +258,9 @@ class _AccountPageState extends State<AccountPage> {
                               child: Column(
                                 children: [
                                   _buildTextField(label: 'Name', controller: nameController),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   _buildTextField(label: 'City', controller: cityController),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   Expanded(
                                     child: _buildDropdownField(
                                       label: 'Position',
@@ -279,15 +279,15 @@ class _AccountPageState extends State<AccountPage> {
                             Container(
                               width: 2,
                               color: Colors.black,
-                              margin: EdgeInsets.symmetric(horizontal: 16),
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
                             ),
                             Expanded(
                               child: Column(
                                 children: [
                                   _buildTextField(label: 'Age', controller: ageController, keyboardType: TextInputType.number),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   _buildTextField(label: 'Height (cm)', controller: heightController, keyboardType: TextInputType.number),
-                                  SizedBox(height: 20),
+                                  const SizedBox(height: 20),
                                   Expanded(
                                     child: _buildDropdownField(
                                       label: 'Skill Level',
@@ -308,19 +308,19 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
 
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
 // Recently Played Section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center, // Center align the heading
                         children: [
-                          Center(
+                          const Center(
                             child: Text(
                               'Recently Played',
                               style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -344,17 +344,17 @@ class _AccountPageState extends State<AccountPage> {
                                         height: 150,
                                       ),
                                     )
-                                        : Center(
+                                        : const Center(
                                       child: Icon(Icons.location_on, color: Colors.white, size: 50),
                                     ),
                                   ),
-                                  SizedBox(height: 8), // Space between image and name
+                                  const SizedBox(height: 8), // Space between image and name
                                   if (firstCourtName != null)
-                                    Container(
+                                    SizedBox(
                                       width: 150, // Ensure the width is the same as the image
                                       child: Text(
                                         firstCourtName!,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
@@ -387,17 +387,17 @@ class _AccountPageState extends State<AccountPage> {
                                         height: 150,
                                       ),
                                     )
-                                        : Center(
+                                        : const Center(
                                       child: Icon(Icons.location_on, color: Colors.white, size: 50),
                                     ),
                                   ),
-                                  SizedBox(height: 8), // Space between image and name
+                                  const SizedBox(height: 8), // Space between image and name
                                   if (secondCourtName != null)
-                                    Container(
+                                    SizedBox(
                                       width: 150, // Ensure the width is the same as the image
                                       child: Text(
                                         secondCourtName!,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
@@ -432,13 +432,13 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: TextStyle(color: Colors.black, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
@@ -446,7 +446,7 @@ class _AccountPageState extends State<AccountPage> {
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
           ),
         ],
@@ -454,7 +454,13 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildDropdownField({required String label, required List<String> items, String? value, required ValueChanged<String?> onChanged, bool isExpanded = false}) {
+  Widget _buildDropdownField({
+    required String label,
+    required List<String> items,
+    String? value,
+    required ValueChanged<String?> onChanged,
+    bool isExpanded = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -462,17 +468,17 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: value,
             isExpanded: isExpanded,
-            dropdownColor: Colors.grey[850],
-            icon: Icon(Icons.arrow_drop_down, color: Colors.black),
+            dropdownColor: Colors.white, // Set dropdown menu background to white
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Colors.white, // Set the filled color for the dropdown field
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
@@ -481,7 +487,7 @@ class _AccountPageState extends State<AccountPage> {
             items: items.map<DropdownMenuItem<String>>((String item) {
               return DropdownMenuItem<String>(
                 value: item,
-                child: Text(item, style: TextStyle(color: Colors.black, fontSize: 16)),
+                child: Text(item, style: const TextStyle(color: Colors.black)), // Set text color to black
               );
             }).toList(),
             onChanged: onChanged,
@@ -500,16 +506,16 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.camera),
-                  title: Text('Take Photo'),
+                  leading: const Icon(Icons.camera),
+                  title: const Text('Take Photo'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library),
-                  title: Text('Choose from Library'),
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Library'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);

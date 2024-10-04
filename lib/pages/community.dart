@@ -162,7 +162,7 @@ class _CommunityPageState extends State<CommunityPage> {
         .collection('groups')
         .where('isPrivate', isEqualTo: false)
         .where('groupName', isGreaterThanOrEqualTo: searchQuery)
-        .where('groupName', isLessThanOrEqualTo: searchQuery + '\uf8ff')
+        .where('groupName', isLessThanOrEqualTo: '$searchQuery\uf8ff')
         .get();
 
     setState(() {
@@ -183,7 +183,7 @@ class _CommunityPageState extends State<CommunityPage> {
 
       // Show a success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successfully joined the group!')),
+        const SnackBar(content: Text('Successfully joined the group!')),
       );
 
       // Refresh search results to update the UI
@@ -271,7 +271,7 @@ class _CommunityPageState extends State<CommunityPage> {
       stream: firestore.collection('users').doc(currentUser!.uid).collection('friends').snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Padding(
@@ -361,21 +361,18 @@ class _CommunityPageState extends State<CommunityPage> {
         await snapshot.docs.first.reference.delete();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Friend removed successfully')),
+          const SnackBar(content: Text('Friend removed successfully')),
         );
 
         // Confirm successful deletion in the console
-        print("Friend with ID $friendId successfully deleted.");
       } else {
         // No document found with the matching friendId
-        print("No friend found with ID $friendId.");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No friend found with this ID')),
+          const SnackBar(content: Text('No friend found with this ID')),
         );
       }
     } catch (e) {
       // Log any errors encountered during deletion
-      print("Failed to delete friend: $e");
 
       // Show error message if deletion fails
       ScaffoldMessenger.of(context).showSnackBar(
@@ -424,7 +421,6 @@ class _CommunityPageState extends State<CommunityPage> {
                 },
               ),
               onTap: () {
-                print('Tapped on ${group['groupName']}');
               },
             );
           },
@@ -517,14 +513,12 @@ class _CommunityPageState extends State<CommunityPage> {
   Future<void> _updateGroupPrivacy(String groupId, bool isPrivate) async {
     final firestore = FirebaseFirestore.instance;
     await firestore.collection('groups').doc(groupId).update({'isPrivate': isPrivate});
-    print('Group privacy updated.');
   }
 
   // Firestore: Update group invite permission
   Future<void> _updateGroupInvites(String groupId, bool allowInvites) async {
     final firestore = FirebaseFirestore.instance;
     await firestore.collection('groups').doc(groupId).update({'allowInvites': allowInvites});
-    print('Group invites permission updated.');
   }
 
   // Firestore: Invite a user to the group (Send invite instead of adding directly)
@@ -544,9 +538,7 @@ class _CommunityPageState extends State<CommunityPage> {
         'createdAt': Timestamp.now(),
       });
 
-      print('User invited to group.');
     } else {
-      print('User not found.');
     }
   }
 
@@ -554,7 +546,6 @@ class _CommunityPageState extends State<CommunityPage> {
   Future<void> _deleteGroup(String groupId) async {
     final firestore = FirebaseFirestore.instance;
     await firestore.collection('groups').doc(groupId).delete();
-    print('Group deleted.');
   }
 
   // Pop-up for searching friends
@@ -621,9 +612,7 @@ class _CommunityPageState extends State<CommunityPage> {
         'createdAt': Timestamp.now(),
       });
 
-      print("Friend request sent.");
     } else {
-      print('Friend not found.');
     }
   }
 
@@ -706,7 +695,6 @@ class _CommunityPageState extends State<CommunityPage> {
                       await _createCommunity(groupName, isPrivate, allowInvites);
                       Navigator.pop(context);
                     } else {
-                      print('Group name cannot be empty');
                     }
                   },
                   child: const Text('CREATE', style: TextStyle(color: Colors.blue)),
@@ -733,7 +721,6 @@ class _CommunityPageState extends State<CommunityPage> {
       'members': [currentUser.uid],
     });
 
-    print('Group "$groupName" created successfully');
   }
 }
 

@@ -52,10 +52,10 @@ class InboxPage extends StatelessWidget {
       stream: getFriendRequests(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No friend requests.", style: TextStyle(color: Colors.black)));
+          return const Center(child: Text("No friend requests.", style: TextStyle(color: Colors.black)));
         }
 
         final friendRequests = snapshot.data!;
@@ -71,10 +71,10 @@ class InboxPage extends StatelessWidget {
       stream: getGroupInvites(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No group invites.", style: TextStyle(color: Colors.black)));
+          return const Center(child: Text("No group invites.", style: TextStyle(color: Colors.black)));
         }
 
         final groupInvites = snapshot.data!;
@@ -102,8 +102,13 @@ class InboxPage extends StatelessWidget {
           const Divider(color: Colors.white, thickness: 1),
           Column(
             children: invites.map((invite) {
+              // Check if user is anonymous, then display email instead of name
+              String displayName = (isFriendInvite && invite['fromUserName'] == 'Anonymous')
+                  ? invite['fromUserEmail']
+                  : invite[isFriendInvite ? 'fromUserName' : 'groupName'] ?? 'Unknown';
+
               return ListTile(
-                title: Text(invite[isFriendInvite ? 'fromUserName' : 'groupName'] ?? 'Unknown', style: const TextStyle(color: Colors.white)),
+                title: Text(displayName, style: const TextStyle(color: Colors.white)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -172,7 +177,6 @@ class InboxPage extends StatelessWidget {
       await inviteQuery.docs.first.reference.delete();
     }
 
-    print("Group invite for $groupName accepted.");
   }
 
   // Decline Group Invite
@@ -192,7 +196,6 @@ class InboxPage extends StatelessWidget {
       await inviteQuery.docs.first.reference.delete();
     }
 
-    print("Group invite declined.");
   }
 
   // Accept Friend Request Function
@@ -226,7 +229,6 @@ class InboxPage extends StatelessWidget {
       await requestQuery.docs.first.reference.delete();
     }
 
-    print("Friend request accepted.");
   }
 
   // Decline Friend Request Function
@@ -246,7 +248,6 @@ class InboxPage extends StatelessWidget {
       await requestQuery.docs.first.reference.delete();
     }
 
-    print("Friend request declined.");
   }
 }
 

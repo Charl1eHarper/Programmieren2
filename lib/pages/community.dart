@@ -196,7 +196,7 @@ class _CommunityPageState extends State<CommunityPage> {
     }
   }
 
-  // Build sections for friends and groups (existing code)
+  // Build sections for friends and groups
   Widget buildSectionWithButtonAndDropdown({
     required IconData icon,
     required String title,
@@ -263,7 +263,7 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
-  // Fetch friends from Firestore and display them
+// Fetch friends from Firestore and display them
   Widget buildFriendsDropdownContent() {
     final firestore = FirebaseFirestore.instance;
 
@@ -291,19 +291,69 @@ class _CommunityPageState extends State<CommunityPage> {
           itemBuilder: (context, index) {
             var friend = friendsDocs[index];
             return ListTile(
-              title: Text(friend['friendName'], style: const TextStyle(color: Colors.white)),
+              title: Text(friend['friendName'] != 'Anonymous' ? friend['friendName'] : friend['friendEmail'],
+                  style: const TextStyle(color: Colors.white)),
               onTap: () {
                 // Open the FriendProfilePopup when a friend is tapped
                 showDialog(
                   context: context,
-                  builder: (context) => FriendProfilePopup(friendId: friend.id),
+                  builder: (context) => FriendProfilePopup(friendId: friend['friendId']),
                 );
               },
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  _showUnfriendConfirmation(friend['friendId']);
+                },
+              ),
             );
           },
         );
       },
     );
+  }
+
+  // Function to show the unfriend confirmation dialog
+  void _showUnfriendConfirmation(String friendId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Unfriend'),
+          content: const Text('Are you sure you want to unfriend this person?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Unfriend'),
+              onPressed: () {
+                _unfriendUser(friendId); // Call unfriend function
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to remove a friend from Firestore
+  Future<void> _unfriendUser(String friendId) async {
+    final firestore = FirebaseFirestore.instance;
+    try {
+      await firestore.collection('users').doc(currentUser!.uid).collection('friends').doc(friendId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Friend removed successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to remove friend: $e')),
+      );
+    }
   }
 
   // Fetch groups from Firestore and display them
@@ -658,6 +708,8 @@ class _CommunityPageState extends State<CommunityPage> {
     print('Group "$groupName" created successfully');
   }
 }
+
+
 
 
 

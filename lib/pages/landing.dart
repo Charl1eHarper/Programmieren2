@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({Key? key}) : super(key: key);
+  const LandingPage({super.key});
 
   @override
   _LandingPageState createState() => _LandingPageState();
@@ -18,11 +18,15 @@ class _LandingPageState extends State<LandingPage> {
   // Registration logic
   Future<void> _register(String email, String password) async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
         'email': email,
         'createdAt': Timestamp.now(),
       });
@@ -56,17 +60,22 @@ class _LandingPageState extends State<LandingPage> {
 
       if (googleUser == null) return;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithCredential(credential);
 
       if (userCredential.additionalUserInfo!.isNewUser) {
-        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
           'email': userCredential.user!.email,
           'createdAt': Timestamp.now(),
         });
@@ -83,7 +92,8 @@ class _LandingPageState extends State<LandingPage> {
   // Guest login logic
   Future<void> _loginAsGuest() async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInAnonymously();
+      UserCredential userCredential =
+      await FirebaseAuth.instance.signInAnonymously();
 
       if (userCredential.user != null && userCredential.user!.isAnonymous) {
         Navigator.pushReplacementNamed(context, '/home');
@@ -102,14 +112,15 @@ class _LandingPageState extends State<LandingPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Guest Access'),
-          content: Text('You are using the app as a guest. Some features like account settings are restricted.'),
+          title: const Text('Guest Access'),
+          content: const Text(
+              'You are using the app as a guest. Some features like account settings are restricted.'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -121,7 +132,8 @@ class _LandingPageState extends State<LandingPage> {
   void _showSignUpPopup(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
-    final TextEditingController confirmPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+    TextEditingController();
     String signUpErrorMessage = ''; // Error message for the sign-up popup
 
     showDialog(
@@ -148,7 +160,10 @@ class _LandingPageState extends State<LandingPage> {
                       children: [
                         const Text(
                           'Welcome!',
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                         const SizedBox(height: 10),
                         const Text(
@@ -159,7 +174,8 @@ class _LandingPageState extends State<LandingPage> {
 
                         // Email input
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 0, vertical: 8),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFFFFF),
@@ -169,7 +185,8 @@ class _LandingPageState extends State<LandingPage> {
                               controller: emailController,
                               decoration: const InputDecoration(
                                 hintText: 'Email',
-                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                                border: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
                               ),
                             ),
                           ),
@@ -177,7 +194,8 @@ class _LandingPageState extends State<LandingPage> {
 
                         // Password input
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 0, vertical: 8),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFFFFF),
@@ -188,7 +206,8 @@ class _LandingPageState extends State<LandingPage> {
                               obscureText: true,
                               decoration: const InputDecoration(
                                 hintText: 'Password',
-                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                                border: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
                               ),
                             ),
                           ),
@@ -196,7 +215,8 @@ class _LandingPageState extends State<LandingPage> {
 
                         // Confirm password input
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 0, vertical: 8),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFFFFF),
@@ -207,7 +227,8 @@ class _LandingPageState extends State<LandingPage> {
                               obscureText: true,
                               decoration: const InputDecoration(
                                 hintText: 'Confirm Password',
-                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                                border: OutlineInputBorder(
+                                    borderSide: BorderSide.none),
                               ),
                             ),
                           ),
@@ -218,7 +239,8 @@ class _LandingPageState extends State<LandingPage> {
                             padding: const EdgeInsets.symmetric(vertical: 8.0),
                             child: Text(
                               signUpErrorMessage,
-                              style: TextStyle(color: Colors.red, fontSize: 14),
+                              style:
+                              const TextStyle(color: Colors.red, fontSize: 14),
                             ),
                           ),
 
@@ -230,7 +252,8 @@ class _LandingPageState extends State<LandingPage> {
                             onPressed: () {
                               String email = emailController.text.trim();
                               String password = passwordController.text.trim();
-                              String confirmPassword = confirmPasswordController.text.trim();
+                              String confirmPassword =
+                              confirmPasswordController.text.trim();
 
                               if (password != confirmPassword) {
                                 setState(() {
@@ -242,14 +265,17 @@ class _LandingPageState extends State<LandingPage> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding:
+                              const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                               minimumSize: const Size.fromHeight(50),
                               backgroundColor: Colors.black,
                             ),
                             child: const Text(
                               'Create Account',
-                              style: TextStyle(color: Colors.white, fontSize: 18),
+                              style:
+                              TextStyle(color: Colors.white, fontSize: 18),
                             ),
                           ),
                         ),
@@ -267,17 +293,23 @@ class _LandingPageState extends State<LandingPage> {
 
   // Function to get error messages without exposing Firebase state details
   String _getErrorMessage(Object e) {
-    if (e.toString().contains('email-already-in-use')) {
-      return 'Email already in use!';
-    } else if (e.toString().contains('weak-password')) {
-      return 'Password is too weak!';
-    } else if (e.toString().contains('wrong-password')) {
-      return 'Incorrect password!';
-    } else if (e.toString().contains('user-not-found')) {
-      return 'No account found for this email!';
-    } else {
-      return 'An unexpected error occurred. Please try again.';
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'email-already-in-use':
+          return 'Email already in use!';
+        case 'weak-password':
+          return 'Password is too weak!';
+        case 'wrong-password':
+          return 'Incorrect password!';
+        case 'user-not-found':
+          return 'No account found for this email!';
+        case 'invalid-email':
+          return 'The email address is not valid!';
+        default:
+          return 'An unexpected error occurred. Please try again.';
+      }
     }
+    return 'An unexpected error occurred. Please try again.';
   }
 
   @override
@@ -298,7 +330,8 @@ class _LandingPageState extends State<LandingPage> {
 
           // Triangle at the top
           CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.5),
+            size: Size(MediaQuery.of(context).size.width,
+                MediaQuery.of(context).size.height * 0.5),
             painter: EvenWiderTrianglePainter(),
           ),
 
@@ -312,13 +345,11 @@ class _LandingPageState extends State<LandingPage> {
                   // Branding logo and text
                   Column(
                     children: [
-                      Container(
-                        child: Image.asset(
-                          'assets/HoopHub.png',
-                          height: 200,
-                          width: 200,
-                          fit: BoxFit.contain,
-                        ),
+                      Image.asset(
+                        'assets/HoopHub.png',
+                        height: 200,
+                        width: 200,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 5),
                       const Text(
@@ -333,7 +364,8 @@ class _LandingPageState extends State<LandingPage> {
                   Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFFFFF),
@@ -352,7 +384,8 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       const SizedBox(height: 5),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFFFFF),
@@ -363,7 +396,7 @@ class _LandingPageState extends State<LandingPage> {
                             obscureText: true,
                             decoration: const InputDecoration(
                               hintText: 'Password',
-                              border: const OutlineInputBorder(
+                              border: OutlineInputBorder(
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -378,7 +411,7 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Text(
                         _loginErrorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 14),
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
                       ),
                     ),
 
@@ -391,7 +424,8 @@ class _LandingPageState extends State<LandingPage> {
                       onPressed: _login,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         minimumSize: const Size.fromHeight(50),
                         backgroundColor: Colors.black,
                       ),
@@ -404,7 +438,8 @@ class _LandingPageState extends State<LandingPage> {
                   const SizedBox(height: 10),
 
                   // "Or continue with" text
-                  const Text('Or continue with', style: TextStyle(color: Colors.grey)),
+                  const Text('Or continue with',
+                      style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 10),
 
                   // Social login buttons
@@ -413,13 +448,15 @@ class _LandingPageState extends State<LandingPage> {
                     children: [
                       ElevatedButton.icon(
                         onPressed: _loginWithGoogle,
-                        icon: const Icon(Icons.account_circle, color: Colors.red),
+                        icon:
+                        const Icon(Icons.account_circle, color: Colors.red),
                         label: const Text('Google'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
                           elevation: 5,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                             side: const BorderSide(color: Colors.grey),
@@ -434,7 +471,8 @@ class _LandingPageState extends State<LandingPage> {
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
                           elevation: 5,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                             side: const BorderSide(color: Colors.grey),

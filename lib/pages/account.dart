@@ -102,9 +102,6 @@ class _AccountPageState extends State<AccountPage> {
                   ? courtData['imageUrls'][0]
                   : null;
               secondCourtName = courtData['name'];
-
-              print("Second Court PlaceId: $secondCourtId");
-              print("Second Court Image URL: $secondCourtImageUrl");
             });
           }
         }
@@ -195,23 +192,23 @@ class _AccountPageState extends State<AccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text('Edit Profile', style: TextStyle(color: Colors.white, fontSize: 22)),
+        title: Text('Edit Profile', style: TextStyle(color: Colors.black, fontSize: 22)),
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
+            icon: Icon(Icons.save, color: Colors.black),
             onPressed: _saveUserProfile,
           ),
         ],
       ),
       body: Container(
-        color: Colors.grey[850],
+        color: Colors.grey[300],
         child: Column(
           children: [
             Expanded(
@@ -225,12 +222,12 @@ class _AccountPageState extends State<AccountPage> {
                           children: [
                             CircleAvatar(
                               radius: 100,
-                              backgroundColor: Colors.grey[400],
+                              backgroundColor: Colors.grey[500],
                               backgroundImage: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
                                   ? NetworkImage(_profileImageUrl!)
                                   : null,
                               child: _profileImageUrl == null || _profileImageUrl!.isEmpty
-                                  ? Icon(Icons.person, size: 100, color: Colors.white)
+                                  ? Icon(Icons.person, size: 100, color: Colors.black)
                                   : null,
                             ),
                             Positioned(
@@ -241,7 +238,7 @@ class _AccountPageState extends State<AccountPage> {
                                   _showImagePickerOptions();
                                 },
                                 child: CircleAvatar(
-                                  backgroundColor: Colors.teal,
+                                  backgroundColor: Colors.black,
                                   radius: 28,
                                   child: Icon(Icons.camera_alt, color: Colors.white, size: 28),
                                 ),
@@ -281,7 +278,7 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                             Container(
                               width: 2,
-                              color: Colors.white,
+                              color: Colors.black,
                               margin: EdgeInsets.symmetric(horizontal: 16),
                             ),
                             Expanded(
@@ -320,7 +317,7 @@ class _AccountPageState extends State<AccountPage> {
                           Center(
                             child: Text(
                               'Recently Played',
-                              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                           ),
                           SizedBox(height: 20),
@@ -358,7 +355,7 @@ class _AccountPageState extends State<AccountPage> {
                                       child: Text(
                                         firstCourtName!,
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -401,7 +398,7 @@ class _AccountPageState extends State<AccountPage> {
                                       child: Text(
                                         secondCourtName!,
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -435,16 +432,16 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Colors.black, fontSize: 16),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey[800],
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
@@ -465,17 +462,17 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: value,
             isExpanded: isExpanded,
             dropdownColor: Colors.grey[850],
-            icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+            icon: Icon(Icons.arrow_drop_down, color: Colors.black),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey[800],
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
@@ -484,7 +481,7 @@ class _AccountPageState extends State<AccountPage> {
             items: items.map<DropdownMenuItem<String>>((String item) {
               return DropdownMenuItem<String>(
                 value: item,
-                child: Text(item, style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text(item, style: TextStyle(color: Colors.black, fontSize: 16)),
               );
             }).toList(),
             onChanged: onChanged,

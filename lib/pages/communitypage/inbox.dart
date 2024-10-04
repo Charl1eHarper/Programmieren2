@@ -20,17 +20,17 @@ class InboxPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context); // Go back to the Community page
           },
         ),
-        title: const Text('Inbox', style: TextStyle(color: Colors.white, fontSize: 22)),
+        title: const Text('Inbox', style: TextStyle(color: Colors.black, fontSize: 22)),
       ),
       body: Container(
-        color: Colors.grey[850],
+        color: Colors.grey[300],
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           padding: EdgeInsets.zero,
@@ -55,7 +55,7 @@ class InboxPage extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No friend requests.", style: TextStyle(color: Colors.white)));
+          return Center(child: Text("No friend requests.", style: TextStyle(color: Colors.black)));
         }
 
         final friendRequests = snapshot.data!;
@@ -74,7 +74,7 @@ class InboxPage extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text("No group invites.", style: TextStyle(color: Colors.white)));
+          return Center(child: Text("No group invites.", style: TextStyle(color: Colors.black)));
         }
 
         final groupInvites = snapshot.data!;

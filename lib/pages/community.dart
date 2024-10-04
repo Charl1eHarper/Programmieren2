@@ -23,17 +23,17 @@ class _CommunityPageState extends State<CommunityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: const Text('COMMUNITY', style: TextStyle(color: Colors.white, fontSize: 22)),
+        title: const Text('COMMUNITY', style: TextStyle(color: Colors.black, fontSize: 22)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.inbox, color: Colors.white),
+            icon: const Icon(Icons.inbox, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
@@ -44,7 +44,7 @@ class _CommunityPageState extends State<CommunityPage> {
         ],
       ),
       body: Container(
-        color: Colors.grey[850],
+        color: Colors.grey[300], // Light background color
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -65,8 +65,8 @@ class _CommunityPageState extends State<CommunityPage> {
                     bool isMember = members.contains(currentUser!.uid);
 
                     return ListTile(
-                      title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
-                      subtitle: const Text('Public Group', style: TextStyle(color: Colors.grey)),
+                      title: Text(group['groupName'], style: const TextStyle(color: Colors.black)),
+                      subtitle: const Text('Public Group', style: TextStyle(color: Colors.black54)),
                       trailing: isMember
                           ? const Text('Member', style: TextStyle(color: Colors.green)) // Show "Member" if already part of the group
                           : TextButton(
@@ -123,17 +123,17 @@ class _CommunityPageState extends State<CommunityPage> {
   // Build the search bar for public groups
   Widget buildSearchBar() {
     return TextField(
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
         hintText: 'Search for public groups...',
-        hintStyle: const TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: Colors.black),
         filled: true,
-        fillColor: Colors.grey[800],
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
-        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+        prefixIcon: const Icon(Icons.search, color: Colors.black),
       ),
       onChanged: (value) {
         setState(() {
@@ -210,7 +210,7 @@ class _CommunityPageState extends State<CommunityPage> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: Column(
@@ -218,14 +218,14 @@ class _CommunityPageState extends State<CommunityPage> {
         children: [
           Row(
             children: [
-              Icon(icon, color: Colors.white),
+              Icon(icon, color: Colors.black),
               const SizedBox(width: 8.0),
               Expanded(
                 flex: 4,
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: titleFontSize,
                     fontWeight: FontWeight.bold,
                   ),
@@ -234,7 +234,7 @@ class _CommunityPageState extends State<CommunityPage> {
               IconButton(
                 icon: Icon(
                   showDropdown ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
                 onPressed: onDropdownToggle,
               ),
@@ -246,13 +246,13 @@ class _CommunityPageState extends State<CommunityPage> {
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   ),
-                  icon: const Icon(Icons.add, color: Colors.white, size: 18.0),
-                  label: Text(buttonText, style: const TextStyle(color: Colors.white, fontSize: 14.0)),
+                  icon: const Icon(Icons.add, color: Colors.black, size: 18.0),
+                  label: Text(buttonText, style: const TextStyle(color: Colors.black, fontSize: 14.0)),
                 ),
               ),
             ],
           ),
-          const Divider(color: Colors.white, thickness: 1),
+          const Divider(color: Colors.black, thickness: 1),
           AnimatedSize(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -278,7 +278,7 @@ class _CommunityPageState extends State<CommunityPage> {
             padding: EdgeInsets.all(8.0),
             child: Text(
               'No friends added yet.',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.black),
             ),
           );
         }
@@ -292,7 +292,7 @@ class _CommunityPageState extends State<CommunityPage> {
             var friend = friendsDocs[index];
             return ListTile(
               title: Text(friend['friendName'] != 'Anonymous' ? friend['friendName'] : friend['friendEmail'],
-                  style: const TextStyle(color: Colors.white)),
+                  style: const TextStyle(color: Colors.black)),
               onTap: () {
                 // Open the FriendProfilePopup when a friend is tapped
                 showDialog(
@@ -313,23 +313,23 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
-  // Function to show the unfriend confirmation dialog
+// Function to show the unfriend confirmation dialog
   void _showUnfriendConfirmation(String friendId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Unfriend'),
-          content: const Text('Are you sure you want to unfriend this person?'),
+          title: const Text('Unfriend', style: TextStyle(color: Colors.black)),
+          content: const Text('Are you sure you want to unfriend this person?', style: TextStyle(color: Colors.black)),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.black)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Unfriend'),
+              child: const Text('Unfriend', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 _unfriendUser(friendId); // Call unfriend function
                 Navigator.of(context).pop();
@@ -341,15 +341,43 @@ class _CommunityPageState extends State<CommunityPage> {
     );
   }
 
-  // Function to remove a friend from Firestore
+
+// Function to remove a friend from Firestore
   Future<void> _unfriendUser(String friendId) async {
     final firestore = FirebaseFirestore.instance;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     try {
-      await firestore.collection('users').doc(currentUser!.uid).collection('friends').doc(friendId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Friend removed successfully')),
-      );
+      // Query the 'friends' collection to find the document with the matching friendId
+      QuerySnapshot snapshot = await firestore
+          .collection('users')
+          .doc(currentUser!.uid)
+          .collection('friends')
+          .where('friendId', isEqualTo: friendId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // If a matching document is found, delete it
+        await snapshot.docs.first.reference.delete();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Friend removed successfully')),
+        );
+
+        // Confirm successful deletion in the console
+        print("Friend with ID $friendId successfully deleted.");
+      } else {
+        // No document found with the matching friendId
+        print("No friend found with ID $friendId.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No friend found with this ID')),
+        );
+      }
     } catch (e) {
+      // Log any errors encountered during deletion
+      print("Failed to delete friend: $e");
+
+      // Show error message if deletion fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to remove friend: $e')),
       );
@@ -371,7 +399,7 @@ class _CommunityPageState extends State<CommunityPage> {
             padding: EdgeInsets.all(8.0),
             child: Text(
               'No groups found.',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.black),
             ),
           );
         }
@@ -384,12 +412,12 @@ class _CommunityPageState extends State<CommunityPage> {
           itemBuilder: (context, index) {
             var group = groupsDocs[index];
             return ListTile(
-              title: Text(group['groupName'], style: const TextStyle(color: Colors.white)),
+              title: Text(group['groupName'], style: const TextStyle(color: Colors.black)),
               subtitle: group['isPrivate']
-                  ? const Text('Private Group', style: TextStyle(color: Colors.grey))
-                  : const Text('Public Group', style: TextStyle(color: Colors.grey)),
+                  ? const Text('Private Group', style: TextStyle(color: Colors.black))
+                  : const Text('Public Group', style: TextStyle(color: Colors.black)),
               trailing: IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
+                icon: const Icon(Icons.settings, color: Colors.black),
                 onPressed: () {
                   // Open group options when the settings icon is clicked
                   _showGroupOptionsPopup(context, group);
@@ -475,7 +503,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('CLOSE'),
+                  child: const Text('CLOSE', style: TextStyle(color: Colors.black),),
                 ),
               ],
             );
@@ -537,19 +565,19 @@ class _CommunityPageState extends State<CommunityPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.grey[850], // Set the background color to match the page
+          backgroundColor: Colors.grey[300], // Set the background color to match the page
           title: const Text(
             'Search Friends',
-            style: TextStyle(color: Colors.white), // White text to fit the theme
+            style: TextStyle(color: Colors.black), // White text to fit the theme
           ),
           content: TextField(
             controller: searchController,
-            style: const TextStyle(color: Colors.white), // White text inside input
+            style: const TextStyle(color: Colors.black), // White text inside input
             decoration: const InputDecoration(
-              hintText: 'Enter email or username',
-              hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+              hintText: 'Enter email',
+              hintStyle: TextStyle(color: Colors.black), // Subtle hint color
               filled: true,
-              fillColor: Colors.grey, // Dark background for input field
+              fillColor: Colors.white, // Dark background for input field
               border: OutlineInputBorder(
                 borderSide: BorderSide.none,
               ),
@@ -560,14 +588,14 @@ class _CommunityPageState extends State<CommunityPage> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.black)),
             ),
             TextButton(
               onPressed: () async {
                 await sendFriendRequest(searchController.text);
                 Navigator.pop(context);
               },
-              child: const Text('ADD', style: TextStyle(color: Colors.teal)),
+              child: const Text('ADD', style: TextStyle(color: Colors.blue)),
             ),
           ],
         );
@@ -611,22 +639,22 @@ class _CommunityPageState extends State<CommunityPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: Colors.grey[850], // Set the background color to match the page
+              backgroundColor: Colors.grey[300], // Set the background color to match the page
               title: const Text(
                 'Create Community',
-                style: TextStyle(color: Colors.white), // White text to fit the theme
+                style: TextStyle(color: Colors.black), // White text to fit the theme
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: groupNameController,
-                    style: const TextStyle(color: Colors.white), // White text inside input
+                    style: const TextStyle(color: Colors.black), // White text inside input
                     decoration: const InputDecoration(
                       hintText: 'Community Name',
-                      hintStyle: TextStyle(color: Colors.white70), // Subtle hint color
+                      hintStyle: TextStyle(color: Colors.black), // Subtle hint color
                       filled: true,
-                      fillColor: Colors.grey, // Dark background for input field
+                      fillColor: Colors.white, // Dark background for input field
                       border: OutlineInputBorder(
                         borderSide: BorderSide.none,
                       ),
@@ -634,7 +662,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                   Row(
                     children: [
-                      const Text('Private', style: TextStyle(color: Colors.white)),
+                      const Text('Private', style: TextStyle(color: Colors.black)),
                       Switch(
                         value: isPrivate,
                         onChanged: (value) {
@@ -651,7 +679,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   if (isPrivate)
                     Row(
                       children: [
-                        const Text('Allow Invites', style: TextStyle(color: Colors.white)),
+                        const Text('Allow Invites', style: TextStyle(color: Colors.black)),
                         Switch(
                           value: allowInvites,
                           onChanged: (value) {
@@ -669,7 +697,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('CANCEL', style: TextStyle(color: Colors.white)),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.black)),
                 ),
                 TextButton(
                   onPressed: () async {
@@ -681,7 +709,7 @@ class _CommunityPageState extends State<CommunityPage> {
                       print('Group name cannot be empty');
                     }
                   },
-                  child: const Text('CREATE', style: TextStyle(color: Colors.teal)),
+                  child: const Text('CREATE', style: TextStyle(color: Colors.blue)),
                 ),
               ],
             );

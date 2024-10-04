@@ -102,10 +102,10 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.grey[850], // Matching the background color
+      backgroundColor: Colors.grey[300], // Matching the background color
       title: Text(
         name ?? 'Friend Profile',
-        style: TextStyle(color: Colors.white, fontSize: 22),
+        style: TextStyle(color: Colors.black, fontSize: 22),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -114,12 +114,12 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
             Center(
               child: CircleAvatar(
                 radius: 50,
-                backgroundColor: Colors.grey[400],
+                backgroundColor: Colors.grey[500],
                 backgroundImage: profileImageUrl != null && profileImageUrl!.isNotEmpty
                     ? NetworkImage(profileImageUrl!)
                     : null,
                 child: profileImageUrl == null || profileImageUrl!.isEmpty
-                    ? Icon(Icons.person, size: 50, color: Colors.white)
+                    ? Icon(Icons.person, size: 50, color: Colors.black)
                     : null,
               ),
             ),
@@ -135,13 +135,13 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
             const SizedBox(height: 16),
             Text(
               'Recently Played',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (firstCourtImageUrl == null && secondCourtImageUrl == null)
               Text(
                 'This user has not played anywhere yet.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: Colors.black),
               )
             else if (firstCourtImageUrl != null && secondCourtImageUrl == null)
               Column(
@@ -167,7 +167,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           },
           child: Text(
             'CLOSE',
-            style: TextStyle(color: Colors.teal), // Teal button color
+            style: TextStyle(color: Colors.blue), // Teal button color
           ),
         ),
       ],
@@ -183,11 +183,11 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           Text(
             value ?? 'N/A',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: Colors.black, fontSize: 16),
           ),
         ],
       ),
@@ -202,17 +202,17 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           width: 100,
           height: 100,
           decoration: BoxDecoration(
-            color: Colors.grey[700],
+            color: Colors.grey[300],
             borderRadius: BorderRadius.circular(8),
           ),
           child: imageUrl != null
               ? Image.network(imageUrl, fit: BoxFit.cover, width: 100, height: 100)
-              : Icon(Icons.location_on, color: Colors.white, size: 50),
+              : Icon(Icons.location_on, color: Colors.black, size: 50),
         ),
         const SizedBox(height: 4),
         Text(
           courtName ?? 'Unknown Court',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

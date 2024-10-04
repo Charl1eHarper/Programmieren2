@@ -531,7 +531,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       // Handle Google Places errors
-      print("Error fetching from Google Places: $e");
+
     }
 
     // Step 2: If no Google data is available, load from Firestore
@@ -556,7 +556,7 @@ class _HomePageState extends State<HomePage> {
         }
       } catch (e) {
         // Handle Firestore errors
-        print("Error fetching from Firestore: $e");
+
       }
     }
 
@@ -586,6 +586,9 @@ class _HomePageState extends State<HomePage> {
         _infoWindowPosition = infoWindowPosition;
         _imagesForDetailPage = imageUrls;
         _selectedMarkerId = placeId;
+
+        // Close the search bar if it's visible
+        _isSearchVisible = false;
 
         // Change marker appearance when selected
         _markers.removeWhere((marker) => marker.markerId == MarkerId(placeId));

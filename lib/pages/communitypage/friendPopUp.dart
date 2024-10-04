@@ -58,7 +58,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
     }
   }
 
-// Fetch the recently played courts
+  // Fetch the recently played courts
   Future<void> _fetchCourtDetails(List<dynamic> lastCourts) async {
     try {
       if (lastCourts.isNotEmpty) {
@@ -68,10 +68,6 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           var firstCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(firstCourtId).get();
           if (firstCourtDoc.exists) {
             var courtData = firstCourtDoc.data() as Map<String, dynamic>;
-
-            // Debugging - print court details
-            print("First Court ID: $firstCourtId");
-            print("First Court Data: ${courtData.toString()}");
 
             setState(() {
               firstCourtImageUrl = (courtData['imageUrls'] != null && courtData['imageUrls'].isNotEmpty)
@@ -88,10 +84,6 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           var secondCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(secondCourtId).get();
           if (secondCourtDoc.exists) {
             var courtData = secondCourtDoc.data() as Map<String, dynamic>;
-
-            // Debugging - print court details
-            print("Second Court ID: $secondCourtId");
-            print("Second Court Data: ${courtData.toString()}");
 
             setState(() {
               secondCourtImageUrl = (courtData['imageUrls'] != null && courtData['imageUrls'].isNotEmpty)
@@ -146,18 +138,24 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            if (firstCourtImageUrl != null || secondCourtImageUrl != null)
+            if (firstCourtImageUrl == null && secondCourtImageUrl == null)
+              Text(
+                'This user has not played anywhere yet.',
+                style: TextStyle(color: Colors.white70),
+              )
+            else if (firstCourtImageUrl != null && secondCourtImageUrl == null)
+              Column(
+                children: [
+                  _buildCourtImageAndName(firstCourtImageUrl, firstCourtName),
+                ],
+              )
+            else
               Column(
                 children: [
                   _buildCourtImageAndName(firstCourtImageUrl, firstCourtName),
                   const SizedBox(height: 8),
                   _buildCourtImageAndName(secondCourtImageUrl, secondCourtName),
                 ],
-              )
-            else
-              Text(
-                'No recently played courts.',
-                style: TextStyle(color: Colors.white70),
               ),
           ],
         ),
@@ -223,4 +221,5 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
     );
   }
 }
+
 

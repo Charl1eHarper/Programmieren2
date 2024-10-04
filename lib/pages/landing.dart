@@ -13,6 +13,7 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String _loginErrorMessage = ''; // Variable to store login error messages
 
   // Registration logic
   Future<void> _register(String email, String password) async {
@@ -27,7 +28,9 @@ class _LandingPageState extends State<LandingPage> {
       });
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Registration failed: ${e.toString()}')));
+      setState(() {
+        _loginErrorMessage = _getErrorMessage(e);
+      });
     }
   }
 
@@ -40,7 +43,9 @@ class _LandingPageState extends State<LandingPage> {
       );
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: ${e.toString()}')));
+      setState(() {
+        _loginErrorMessage = _getErrorMessage(e);
+      });
     }
   }
 
@@ -49,9 +54,7 @@ class _LandingPageState extends State<LandingPage> {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
-      if (googleUser == null) {
-        return;
-      }
+      if (googleUser == null) return;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
@@ -71,42 +74,40 @@ class _LandingPageState extends State<LandingPage> {
 
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign-in failed: ${e.toString()}')));
+      setState(() {
+        _loginErrorMessage = _getErrorMessage(e);
+      });
     }
   }
 
-  // Guest login logic (allowing any user to sign in anonymously)
+  // Guest login logic
   Future<void> _loginAsGuest() async {
     try {
-      // Use Firebase's anonymous authentication method
       UserCredential userCredential = await FirebaseAuth.instance.signInAnonymously();
 
-      // Ensure the user is correctly signed in
       if (userCredential.user != null && userCredential.user!.isAnonymous) {
-        // Redirect to the home page after successful anonymous login
         Navigator.pushReplacementNamed(context, '/home');
-
-        // Show the guest limitation dialog once user is on the home page
         _showGuestLimitationsDialog();
       }
     } catch (e) {
-      // Show error message in case of failure
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Guest login failed: ${e.toString()}')));
+      setState(() {
+        _loginErrorMessage = 'Guest login failed';
+      });
     }
   }
 
-  // Function to show the guest limitations pop-up
+  // Function to show guest limitations
   void _showGuestLimitationsDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Guest Access'),
-          content: Text('You are using the app as a guest. Please note that some features like account settings and community access are restricted.'),
+          content: Text('You are using the app as a guest. Some features like account settings are restricted.'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog
+                Navigator.pop(context);
               },
               child: Text('OK'),
             ),
@@ -119,9 +120,9 @@ class _LandingPageState extends State<LandingPage> {
   // Function to display the sign-up popup
   void _showSignUpPopup(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
-    final TextEditingController confirmEmailController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
     final TextEditingController confirmPasswordController = TextEditingController();
+    String signUpErrorMessage = ''; // Error message for the sign-up popup
 
     showDialog(
       context: context,
@@ -133,149 +134,128 @@ class _LandingPageState extends State<LandingPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black, // Same as the landing page
-                  Colors.grey,
-                ],
+                colors: [Colors.black, Colors.grey],
               ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Welcome!',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Create your account',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Email input
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
+                child: StatefulBuilder(
+                  builder: (context, setState) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Welcome!',
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
-                        child: TextField(
-                          controller: emailController,
-                          decoration: const InputDecoration(
-                            hintText: 'Email',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Create your account',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email input
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: TextField(
+                              controller: emailController,
+                              decoration: const InputDecoration(
+                                hintText: 'Email',
+                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    // Confirm email input
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: TextField(
-                          controller: confirmEmailController,
-                          decoration: const InputDecoration(
-                            hintText: 'Confirm Email',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
+                        // Password input
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: TextField(
+                              controller: passwordController,
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                hintText: 'Password',
+                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    // Password input
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: TextField(
-                          controller: passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Password',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
+                        // Confirm password input
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: TextField(
+                              controller: confirmPasswordController,
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                hintText: 'Confirm Password',
+                                border: OutlineInputBorder(borderSide: BorderSide.none),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    // Confirm password input
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: TextField(
-                          controller: confirmPasswordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            hintText: 'Confirm Password',
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
+                        if (signUpErrorMessage.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              signUpErrorMessage,
+                              style: TextStyle(color: Colors.red, fontSize: 14),
+                            ),
+                          ),
+
+                        const SizedBox(height: 20),
+
+                        // Sign up button
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              String email = emailController.text.trim();
+                              String password = passwordController.text.trim();
+                              String confirmPassword = confirmPasswordController.text.trim();
+
+                              if (password != confirmPassword) {
+                                setState(() {
+                                  signUpErrorMessage = 'Passwords do not match!';
+                                });
+                              } else {
+                                _register(email, password);
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              minimumSize: const Size.fromHeight(50),
+                              backgroundColor: Colors.black,
+                            ),
+                            child: const Text(
+                              'Create Account',
+                              style: TextStyle(color: Colors.white, fontSize: 18),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Sign up button with same style as login button
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            String email = emailController.text.trim();
-                            String confirmEmail = confirmEmailController.text.trim();
-                            String password = passwordController.text.trim();
-                            String confirmPassword = confirmPasswordController.text.trim();
-
-                            if (email != confirmEmail) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Emails do not match!')));
-                            } else if (password != confirmPassword) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Passwords do not match!')));
-                            } else {
-                              _register(email, password);
-                              Navigator.pop(context);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            minimumSize: const Size.fromHeight(50),
-                            backgroundColor: Colors.black,
-                          ),
-                          child: const Text(
-                            'Create Account',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -283,6 +263,21 @@ class _LandingPageState extends State<LandingPage> {
         );
       },
     );
+  }
+
+  // Function to get error messages without exposing Firebase state details
+  String _getErrorMessage(Object e) {
+    if (e.toString().contains('email-already-in-use')) {
+      return 'Email already in use!';
+    } else if (e.toString().contains('weak-password')) {
+      return 'Password is too weak!';
+    } else if (e.toString().contains('wrong-password')) {
+      return 'Incorrect password!';
+    } else if (e.toString().contains('user-not-found')) {
+      return 'No account found for this email!';
+    } else {
+      return 'An unexpected error occurred. Please try again.';
+    }
   }
 
   @override
@@ -296,10 +291,7 @@ class _LandingPageState extends State<LandingPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black,
-                  Colors.grey,
-                ],
+                colors: [Colors.black, Colors.grey],
               ),
             ),
           ),
@@ -380,6 +372,16 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                     ],
                   ),
+
+                  if (_loginErrorMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        _loginErrorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 14),
+                      ),
+                    ),
+
                   const SizedBox(height: 20),
 
                   // Log In Button
@@ -425,7 +427,7 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: _loginAsGuest, // Guest login now replaces Facebook option
+                        onPressed: _loginAsGuest,
                         icon: const Icon(Icons.person, color: Colors.blue),
                         label: const Text('Guest'),
                         style: ElevatedButton.styleFrom(
@@ -446,7 +448,7 @@ class _LandingPageState extends State<LandingPage> {
                   // Footer
                   TextButton(
                     onPressed: () {
-                      _showSignUpPopup(context); // Call the sign-up popup when clicking 'Create now'
+                      _showSignUpPopup(context);
                     },
                     child: const Text('Don’t have an account? Create now'),
                   ),
@@ -469,9 +471,9 @@ class EvenWiderTrianglePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final path = Path();
-    path.moveTo(-300, 0); // Start even further outside the left of the screen
-    path.lineTo(size.width + 300, 0); // Extend even further outside the right of the screen
-    path.lineTo(size.width / 2, size.height); // Point at the bottom center
+    path.moveTo(-300, 0);
+    path.lineTo(size.width + 300, 0);
+    path.lineTo(size.width / 2, size.height);
     path.close();
 
     canvas.drawPath(path, paint);
@@ -482,6 +484,8 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
+
 
 
 

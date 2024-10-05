@@ -214,7 +214,7 @@ class _AddCourtPageState extends State<AddCourtPage> {
           color: Colors.white, // Set back button color to white
         ),
         title: const Text(
-          'Add Court',
+          'Platz hinzufügen',
           style: TextStyle(
             color: Colors.white, // Set title color to white
             fontWeight: FontWeight.bold, // Set title text to bold

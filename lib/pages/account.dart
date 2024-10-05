@@ -26,7 +26,7 @@ class _AccountPageState extends State<AccountPage> {
   String? selectedSkillLevel;
 
   final List<String> positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-  final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Pro']; // Updated skill levels
+  final List<String> skillLevels = ['Anfänger', 'Amateur', 'Fortgeschritten', 'Experte', 'Pro']; // Updated skill levels
 
   // Variables to store recently played courts
   String? firstCourtImageUrl;
@@ -64,7 +64,7 @@ class _AccountPageState extends State<AccountPage> {
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to load profile: $e")),
+          SnackBar(content: Text("Profil konnte nicht geladen werden: $e")),
         );
       }
     }
@@ -108,7 +108,7 @@ class _AccountPageState extends State<AccountPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load court details: $e")),
+        SnackBar(content: Text("Platz Details konnten nicht geladen werden: $e")),
       );
     }
   }
@@ -119,12 +119,12 @@ class _AccountPageState extends State<AccountPage> {
       double height = double.tryParse(heightController.text) ?? 0.0;
 
       if (age < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Age cannot be less than 0")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Alter kann nicht weniger als 0 sein")));
         return;
       }
 
       if (height <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Height must be in centimeters")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Größe muss in cm angegeben werden")));
         return;
       }
 
@@ -139,11 +139,11 @@ class _AccountPageState extends State<AccountPage> {
           'profileImage': _profileImageUrl ?? '',
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile saved successfully")),
+          const SnackBar(content: Text("Profil gespeichert")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to save profile: $e")),
+          SnackBar(content: Text("Pofil konnte nicht gespeichert werden: $e")),
         );
       }
     }
@@ -157,7 +157,7 @@ class _AccountPageState extends State<AccountPage> {
       });
       _uploadProfileImage();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No image selected!")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kein Bild ausgewählt!")));
     }
   }
 
@@ -179,11 +179,11 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile image uploaded and saved successfully")),
+        const SnackBar(content: Text("Profilbild gespeichert")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to upload image: $e")),
+        SnackBar(content: Text("Profilbildspeicherfehler: $e")),
       );
     }
   }
@@ -199,7 +199,7 @@ class _AccountPageState extends State<AccountPage> {
             Navigator.pop(context);
           },
         ),
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.black, fontSize: 22)),
+        title: const Text('Profil bearbeiten', style: TextStyle(color: Colors.black, fontSize: 22)),
         actions: [
           IconButton(
             icon: const Icon(Icons.save, color: Colors.black),
@@ -259,7 +259,7 @@ class _AccountPageState extends State<AccountPage> {
                                 children: [
                                   _buildTextField(label: 'Name', controller: nameController),
                                   const SizedBox(height: 20),
-                                  _buildTextField(label: 'City', controller: cityController),
+                                  _buildTextField(label: 'Stadt', controller: cityController),
                                   const SizedBox(height: 20),
                                   Expanded(
                                     child: _buildDropdownField(
@@ -284,9 +284,9 @@ class _AccountPageState extends State<AccountPage> {
                             Expanded(
                               child: Column(
                                 children: [
-                                  _buildTextField(label: 'Age', controller: ageController, keyboardType: TextInputType.number),
+                                  _buildTextField(label: 'Alter', controller: ageController, keyboardType: TextInputType.number),
                                   const SizedBox(height: 20),
-                                  _buildTextField(label: 'Height (cm)', controller: heightController, keyboardType: TextInputType.number),
+                                  _buildTextField(label: 'Größe (cm)', controller: heightController, keyboardType: TextInputType.number),
                                   const SizedBox(height: 20),
                                   Expanded(
                                     child: _buildDropdownField(
@@ -310,13 +310,13 @@ class _AccountPageState extends State<AccountPage> {
 
                       const SizedBox(height: 40),
 
-// Recently Played Section
+                      // Recently Played Section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center, // Center align the heading
                         children: [
                           const Center(
                             child: Text(
-                              'Recently Played',
+                              'Zuletzt gespielt',
                               style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -332,14 +332,14 @@ class _AccountPageState extends State<AccountPage> {
                                     height: 150,
                                     decoration: BoxDecoration(
                                       color: Colors.grey[700],
-                                      border: Border.all(color: Colors.grey[800]!), // Optional border for consistency
+                                      border: Border.all(color: Colors.grey[800]!), //border for consistency
                                     ),
                                     child: firstCourtImageUrl != null
                                         ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0), // Optional: Add rounded corners
+                                      borderRadius: BorderRadius.circular(8.0), //rounded corners
                                       child: Image.network(
                                         firstCourtImageUrl!,
-                                        fit: BoxFit.cover, // Cover ensures the image fills the container
+                                        fit: BoxFit.cover, //image fills the container
                                         width: 150,
                                         height: 150,
                                       ),
@@ -351,7 +351,7 @@ class _AccountPageState extends State<AccountPage> {
                                   const SizedBox(height: 8), // Space between image and name
                                   if (firstCourtName != null)
                                     SizedBox(
-                                      width: 150, // Ensure the width is the same as the image
+                                      width: 150, // width is the same as the image
                                       child: Text(
                                         firstCourtName!,
                                         style: const TextStyle(
@@ -394,7 +394,7 @@ class _AccountPageState extends State<AccountPage> {
                                   const SizedBox(height: 8), // Space between image and name
                                   if (secondCourtName != null)
                                     SizedBox(
-                                      width: 150, // Ensure the width is the same as the image
+                                      width: 150, //width is the same as the image
                                       child: Text(
                                         secondCourtName!,
                                         style: const TextStyle(
@@ -507,7 +507,7 @@ class _AccountPageState extends State<AccountPage> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.camera),
-                  title: const Text('Take Photo'),
+                  title: const Text('Ein Bild aufnehmen'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
@@ -515,7 +515,7 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library),
-                  title: const Text('Choose from Library'),
+                  title: const Text('Aus Bibliothek auswählen'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);

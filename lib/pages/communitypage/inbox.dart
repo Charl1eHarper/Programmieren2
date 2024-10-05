@@ -27,7 +27,7 @@ class InboxPage extends StatelessWidget {
             Navigator.pop(context); // Go back to the Community page
           },
         ),
-        title: const Text('Inbox', style: TextStyle(color: Colors.black, fontSize: 22)),
+        title: const Text('Postfach', style: TextStyle(color: Colors.black, fontSize: 22)),
       ),
       body: Container(
         color: Colors.grey[300],
@@ -55,12 +55,12 @@ class InboxPage extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No friend requests.", style: TextStyle(color: Colors.black)));
+          return const Center(child: Text("Keine Freundesanfragen offen.", style: TextStyle(color: Colors.black)));
         }
 
         final friendRequests = snapshot.data!;
 
-        return _buildInviteSection('Friend Invites', friendRequests, true);
+        return _buildInviteSection('Freundesanfragenn', friendRequests, true);
       },
     );
   }
@@ -74,12 +74,12 @@ class InboxPage extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text("No group invites.", style: TextStyle(color: Colors.black)));
+          return const Center(child: Text("Keine Gruppeneinladungen gefunden.", style: TextStyle(color: Colors.black)));
         }
 
         final groupInvites = snapshot.data!;
 
-        return _buildInviteSection('Group Invites', groupInvites, false);
+        return _buildInviteSection('Guppeneinladungen', groupInvites, false);
       },
     );
   }

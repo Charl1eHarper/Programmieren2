@@ -92,7 +92,7 @@ class _SearchWidgetState extends State<SearchWidget> {
                     focusNode: widget.focusNode, // Handle the focus state
                     onChanged: _searchPlaces, // Trigger search when text changes
                     decoration: const InputDecoration(
-                      hintText: 'Search for courts...', // Placeholder text
+                      hintText: 'Nach Platz Suchen...', // Placeholder text
                       border: InputBorder.none, // No border for the input field
                     ),
                   ),

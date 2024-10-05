@@ -33,11 +33,13 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
 
   // Fetch the friend's profile data from Firestore
   void _loadFriendProfile() async {
+    //fetch friends data from db to be displayed later on
     try {
       DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(widget.friendId).get();
       if (doc.exists) {
         var data = doc.data() as Map<String, dynamic>;
         setState(() {
+          //add fields to retrieve
           name = data['name'];
           age = data['age']?.toString();
           city = data['city'];
@@ -60,12 +62,16 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
   // Fetch the recently played courts
   Future<void> _fetchCourtDetails(List<dynamic> lastCourts) async {
     try {
+      // check if user has played in past
       if (lastCourts.isNotEmpty) {
         // First court
         if (lastCourts.isNotEmpty) {
+          //find court in recent courts most recent, next is second most recent
           var firstCourtId = lastCourts[lastCourts.length - 1]['placeId'];
+          // find court data by id in courts
           var firstCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(firstCourtId).get();
           if (firstCourtDoc.exists) {
+            //set variables to court data from db
             var courtData = firstCourtDoc.data() as Map<String, dynamic>;
 
             setState(() {
@@ -77,7 +83,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
           }
         }
 
-        // Second court
+        // Same for Second court
         if (lastCourts.length > 1) {
           var secondCourtId = lastCourts[lastCourts.length - 2]['placeId'];
           var secondCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(secondCourtId).get();
@@ -102,7 +108,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
     return AlertDialog(
       backgroundColor: Colors.grey[300], // Matching the background color
       title: Text(
-        name ?? 'Friend Profile',
+        name ?? 'Profile des Freundes',
         style: const TextStyle(color: Colors.black, fontSize: 22),
       ),
       content: SingleChildScrollView(
@@ -123,22 +129,22 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
             ),
             const SizedBox(height: 16),
             _buildInfoRow('Name', name),
-            _buildInfoRow('Age', age),
-            _buildInfoRow('City', city),
-            _buildInfoRow('Height', height),
+            _buildInfoRow('Alter', age),
+            _buildInfoRow('Stadt', city),
+            _buildInfoRow('Größe', height),
             _buildInfoRow('Position', position),
             _buildInfoRow('Skill Level', skillLevel),
 
             // Recently Played Section
             const SizedBox(height: 16),
             const Text(
-              'Recently Played',
+              'Zuletzt gespielt',
               style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (firstCourtImageUrl == null && secondCourtImageUrl == null)
               const Text(
-                'This user has not played anywhere yet.',
+                'Dieser nutzer hat noch nicht gespielt.',
                 style: TextStyle(color: Colors.black),
               )
             else if (firstCourtImageUrl != null && secondCourtImageUrl == null)
@@ -164,7 +170,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
             Navigator.pop(context);
           },
           child: const Text(
-            'CLOSE',
+            'SCHLIEßEN',
             style: TextStyle(color: Colors.blue), // Teal button color
           ),
         ),
@@ -209,7 +215,7 @@ class _FriendProfilePopupState extends State<FriendProfilePopup> {
         ),
         const SizedBox(height: 4),
         Text(
-          courtName ?? 'Unknown Court',
+          courtName ?? 'Unbekannter Platz',
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 14),
           textAlign: TextAlign.center,
           maxLines: 2,

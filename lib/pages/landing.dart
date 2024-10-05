@@ -24,17 +24,17 @@ class _LandingPageState extends State<LandingPage> {
         email: email,
         password: password,
       );
-      await FirebaseFirestore.instance
+      await FirebaseFirestore.instance //create new user
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
         'email': email,
         'createdAt': Timestamp.now(),
       });
-      navigator.pushReplacementNamed('/home');  // Use navigator here
+      navigator.pushReplacementNamed('/home');  // move to homepage after user creation
     } catch (e) {
       setState(() {
-        _loginErrorMessage = _getErrorMessage(e);
+        _loginErrorMessage = _getErrorMessage(e); // get error if method fails
       });
     }
   }
@@ -42,36 +42,38 @@ class _LandingPageState extends State<LandingPage> {
 // Login logic
   Future<void> _login() async {
     final navigator = Navigator.of(context);  // Capture the Navigator before async
+    //pass credentials to firebase for verfication of login
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      navigator.pushReplacementNamed('/home');  // Use navigator here
+      navigator.pushReplacementNamed('/home');  // move to home after login
     } catch (e) {
       setState(() {
-        _loginErrorMessage = _getErrorMessage(e);
+        _loginErrorMessage = _getErrorMessage(e); // get error if method fails
       });
     }
   }
-// Google login logic
-  Future<void> _loginWithGoogle() async {
-    final navigator = Navigator.of(context);  // Capture the Navigator before async
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
-      if (googleUser == null) return;
+  // Google login logic
+  Future<void> _loginWithGoogle() async {
+    final navigator = Navigator.of(context);  // Capture the Navigator before async to avoid losing context after await
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();  // prompt user to sign in with Google
+
+      if (googleUser == null) return;  // ff the sign-in was canceled, exit early
 
       final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
+      await googleUser.authentication;  //get Google authentication tokens
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
-      );
+      );  // create Firebase credential using Google auth tokens
 
       UserCredential userCredential =
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      await FirebaseAuth.instance.signInWithCredential(credential);  // sign in to Firebase with the Google credential
 
       if (userCredential.additionalUserInfo!.isNewUser) {
         await FirebaseFirestore.instance
@@ -80,31 +82,33 @@ class _LandingPageState extends State<LandingPage> {
             .set({
           'email': userCredential.user!.email,
           'createdAt': Timestamp.now(),
-        });
+        });  // if the user is new, add their information to the Firestore database
       }
 
-      navigator.pushReplacementNamed('/home');  // Use navigator here
+      navigator.pushReplacementNamed('/home');  // navigate to home screen after loginn
     } catch (e) {
       setState(() {
-        _loginErrorMessage = _getErrorMessage(e);
+        _loginErrorMessage = _getErrorMessage(e);  // display error message
       });
     }
   }
+
 
 // Guest login logic
   Future<void> _loginAsGuest() async {
     final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
+      //make us of firebase anonymous signin
       UserCredential userCredential =
       await FirebaseAuth.instance.signInAnonymously();
 
       if (userCredential.user != null && userCredential.user!.isAnonymous) {
-        navigator.pushReplacementNamed('/home');  // Use navigator here
+        navigator.pushReplacementNamed('/home');  // move to homepage after guest login
         _showGuestLimitationsDialog();
       }
     } catch (e) {
       setState(() {
-        _loginErrorMessage = 'Guest login failed';
+        _loginErrorMessage = 'Guest login failed'; //get error message
       });
     }
   }
@@ -503,7 +507,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 }
 
-// Custom painter to draw an even wider and taller triangle
+// Custom painter to draw black from top triangle
 class EvenWiderTrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

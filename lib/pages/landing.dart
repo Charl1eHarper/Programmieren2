@@ -62,7 +62,7 @@ class _LandingPageState extends State<LandingPage> {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();  // prompt user to sign in with Google
 
-      if (googleUser == null) return;  // ff the sign-in was canceled, exit early
+      if (googleUser == null) return;  // if the sign-in was canceled, exit early
 
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;  //get Google authentication tokens
@@ -85,7 +85,7 @@ class _LandingPageState extends State<LandingPage> {
         });  // if the user is new, add their information to the Firestore database
       }
 
-      navigator.pushReplacementNamed('/home');  // navigate to home screen after loginn
+      navigator.pushReplacementNamed('/home');  // navigate to home screen after login
     } catch (e) {
       setState(() {
         _loginErrorMessage = _getErrorMessage(e);  // display error message
@@ -98,7 +98,7 @@ class _LandingPageState extends State<LandingPage> {
   Future<void> _loginAsGuest() async {
     final navigator = Navigator.of(context);  // Capture the Navigator before async
     try {
-      //make us of firebase anonymous signin
+      //make use of firebase anonymous signin
       UserCredential userCredential =
       await FirebaseAuth.instance.signInAnonymously();
 
@@ -108,7 +108,7 @@ class _LandingPageState extends State<LandingPage> {
       }
     } catch (e) {
       setState(() {
-        _loginErrorMessage = 'Guest login failed'; //get error message
+        _loginErrorMessage = 'Gast-Anmeldung fehlgeschlagen'; //get error message
       });
     }
   }
@@ -119,9 +119,9 @@ class _LandingPageState extends State<LandingPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Guest Access'),
+          title: const Text('Gastzugang'),
           content: const Text(
-              'You are using the app as a guest. Some features like account settings are restricted.'),
+              'Sie verwenden die App als Gast. Einige Funktionen wie die Kontoeinstellungen sind eingeschränkt.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -166,7 +166,7 @@ class _LandingPageState extends State<LandingPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Welcome!',
+                          'Willkommen!',
                           style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -174,7 +174,7 @@ class _LandingPageState extends State<LandingPage> {
                         ),
                         const SizedBox(height: 10),
                         const Text(
-                          'Create your account',
+                          'Erstellen Sie Ihr Konto',
                           style: TextStyle(fontSize: 16, color: Colors.grey),
                         ),
                         const SizedBox(height: 20),
@@ -191,7 +191,7 @@ class _LandingPageState extends State<LandingPage> {
                             child: TextField(
                               controller: emailController,
                               decoration: const InputDecoration(
-                                hintText: 'Email',
+                                hintText: 'E-Mail',
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide.none),
                               ),
@@ -212,7 +212,7 @@ class _LandingPageState extends State<LandingPage> {
                               controller: passwordController,
                               obscureText: true,
                               decoration: const InputDecoration(
-                                hintText: 'Password',
+                                hintText: 'Passwort',
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide.none),
                               ),
@@ -233,7 +233,7 @@ class _LandingPageState extends State<LandingPage> {
                               controller: confirmPasswordController,
                               obscureText: true,
                               decoration: const InputDecoration(
-                                hintText: 'Confirm Password',
+                                hintText: 'Passwort bestätigen',
                                 border: OutlineInputBorder(
                                     borderSide: BorderSide.none),
                               ),
@@ -264,7 +264,7 @@ class _LandingPageState extends State<LandingPage> {
 
                               if (password != confirmPassword) {
                                 setState(() {
-                                  signUpErrorMessage = 'Passwords do not match!';
+                                  signUpErrorMessage = 'Passwörter stimmen nicht überein!';
                                 });
                               } else {
                                 _register(email, password);
@@ -280,7 +280,7 @@ class _LandingPageState extends State<LandingPage> {
                               backgroundColor: Colors.black,
                             ),
                             child: const Text(
-                              'Create Account',
+                              'Konto erstellen',
                               style:
                               TextStyle(color: Colors.white, fontSize: 18),
                             ),
@@ -303,20 +303,20 @@ class _LandingPageState extends State<LandingPage> {
     if (e is FirebaseAuthException) {
       switch (e.code) {
         case 'email-already-in-use':
-          return 'Email already in use!';
+          return 'E-Mail wird bereits verwendet!';
         case 'weak-password':
-          return 'Password is too weak!';
+          return 'Passwort ist zu schwach!';
         case 'wrong-password':
-          return 'Incorrect password!';
+          return 'Falsches Passwort!';
         case 'user-not-found':
-          return 'No account found for this email!';
+          return 'Kein Konto für diese E-Mail gefunden!';
         case 'invalid-email':
-          return 'The email address is not valid!';
+          return 'Die E-Mail-Adresse ist ungültig!';
         default:
-          return 'An unexpected error occurred. Please try again.';
+          return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       }
     }
-    return 'An unexpected error occurred. Please try again.';
+    return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
   }
 
   @override
@@ -360,7 +360,7 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       const SizedBox(height: 5),
                       const Text(
-                        'Connect with the game',
+                        'Werde eins mit dem Spiel',
                         style: TextStyle(fontSize: 16, color: Colors.white54),
                       ),
                     ],
@@ -381,7 +381,7 @@ class _LandingPageState extends State<LandingPage> {
                           child: TextField(
                             controller: _emailController,
                             decoration: const InputDecoration(
-                              hintText: 'Email',
+                              hintText: 'E-Mail',
                               border: OutlineInputBorder(
                                 borderSide: BorderSide.none,
                               ),
@@ -402,7 +402,7 @@ class _LandingPageState extends State<LandingPage> {
                             controller: _passwordController,
                             obscureText: true,
                             decoration: const InputDecoration(
-                              hintText: 'Password',
+                              hintText: 'Passwort',
                               border: OutlineInputBorder(
                                 borderSide: BorderSide.none,
                               ),
@@ -437,7 +437,7 @@ class _LandingPageState extends State<LandingPage> {
                         backgroundColor: Colors.black,
                       ),
                       child: const Text(
-                        'Log In',
+                        'Einloggen',
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ),
@@ -445,7 +445,7 @@ class _LandingPageState extends State<LandingPage> {
                   const SizedBox(height: 10),
 
                   // "Or continue with" text
-                  const Text('Or continue with',
+                  const Text('Oder weiter mit',
                       style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 10),
 
@@ -473,7 +473,7 @@ class _LandingPageState extends State<LandingPage> {
                       ElevatedButton.icon(
                         onPressed: _loginAsGuest,
                         icon: const Icon(Icons.person, color: Colors.blue),
-                        label: const Text('Guest'),
+                        label: const Text('Gast'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
@@ -495,7 +495,7 @@ class _LandingPageState extends State<LandingPage> {
                     onPressed: () {
                       _showSignUpPopup(context);
                     },
-                    child: const Text('Don’t have an account? Create now'),
+                    child: const Text('Kein Konto? Jetzt erstellen'),
                   ),
                 ],
               ),
@@ -529,6 +529,7 @@ class EvenWiderTrianglePainter extends CustomPainter {
     return false;
   }
 }
+
 
 
 

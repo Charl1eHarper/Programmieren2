@@ -509,7 +509,7 @@ class _HomePageState extends State<HomePage> {
 
     bool isGoogleDataLoaded = false;
 
-    // Step 1: Try loading data from Google Places
+    // Try loading data from Google Places
     try {
       final placeDetails = await places.getDetailsByPlaceId(placeId);
 
@@ -534,7 +534,7 @@ class _HomePageState extends State<HomePage> {
 
     }
 
-    // Step 2: If no Google data is available, load from Firestore
+    // No Google data, load from Firestore
     if (!isGoogleDataLoaded || imageUrls.isEmpty) {
       try {
         DocumentSnapshot placeDoc = await FirebaseFirestore.instance
@@ -560,7 +560,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    // Step 3: If no images are available, add a placeholder image
+    // no images available, add a placeholder image
     if (imageUrls.isEmpty) {
       imageUrls.add('https://via.placeholder.com/400');
     }
@@ -574,7 +574,7 @@ class _HomePageState extends State<HomePage> {
 
     final infoWindowPosition = Offset(screenWidth * 0.36, screenHeight * 0.21);
 
-    // Step 4: Fetch ratings from Firestore
+    // Fetch ratings from Firestore
     await _refreshMarkerRatings(placeId);
 
     if (mounted) {

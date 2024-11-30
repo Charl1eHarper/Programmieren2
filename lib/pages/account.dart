@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io'; // For File handling
 
 class AccountPage extends StatefulWidget {
+  const AccountPage({super.key});
+
   @override
   _AccountPageState createState() => _AccountPageState();
 }
@@ -24,7 +26,13 @@ class _AccountPageState extends State<AccountPage> {
   String? selectedSkillLevel;
 
   final List<String> positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-  final List<String> skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'Pro']; // Updated skill levels
+  final List<String> skillLevels = ['Anfänger', 'Amateur', 'Fortgeschritten', 'Experte', 'Pro']; // Updated skill levels
+
+  // Variables to store recently played courts
+  String? firstCourtImageUrl;
+  String? secondCourtImageUrl;
+  String? firstCourtName;
+  String? secondCourtName;
 
   @override
   void initState() {
@@ -44,15 +52,64 @@ class _AccountPageState extends State<AccountPage> {
             cityController.text = data['city'] ?? '';
             heightController.text = data['height']?.toString() ?? '';
             selectedPosition = positions.contains(data['position']) ? data['position'] : null;
-            selectedSkillLevel = skillLevels.contains(data['skillLevel']) ? data['skillLevel'] : null; // Skill level
+            selectedSkillLevel = skillLevels.contains(data['skillLevel']) ? data['skillLevel'] : null;
             _profileImageUrl = data['profileImage'] ?? '';
+
+            // Fetch the last two played courts
+            if (data['last_courts'] != null && data['last_courts'].length > 0) {
+              List<dynamic> lastCourts = data['last_courts'];
+              _fetchCourtDetails(lastCourts); // Fetch last two courts
+            }
           });
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to load profile: $e")),
+          SnackBar(content: Text("Profil konnte nicht geladen werden: $e")),
         );
       }
+    }
+  }
+
+  Future<void> _fetchCourtDetails(List<dynamic> lastCourts) async {
+    try {
+      if (lastCourts.isNotEmpty) {
+        // First court
+        if (lastCourts.isNotEmpty) {
+          var firstCourtId = lastCourts[lastCourts.length - 1]['placeId'];
+          var firstCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(firstCourtId).get();
+          if (firstCourtDoc.exists) {
+            var courtData = firstCourtDoc.data() as Map<String, dynamic>;
+
+            setState(() {
+              firstCourtImageUrl = (courtData['imageUrls'] != null && courtData['imageUrls'].isNotEmpty)
+                  ? courtData['imageUrls'][0]
+                  : null;
+              firstCourtName = courtData['name'];
+
+            });
+          }
+        }
+
+        // Second court
+        if (lastCourts.length > 1) {
+          var secondCourtId = lastCourts[lastCourts.length - 2]['placeId'];
+          var secondCourtDoc = await FirebaseFirestore.instance.collection('basketball_courts').doc(secondCourtId).get();
+          if (secondCourtDoc.exists) {
+            var courtData = secondCourtDoc.data() as Map<String, dynamic>;
+
+            setState(() {
+              secondCourtImageUrl = (courtData['imageUrls'] != null && courtData['imageUrls'].isNotEmpty)
+                  ? courtData['imageUrls'][0]
+                  : null;
+              secondCourtName = courtData['name'];
+            });
+          }
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Platz Details konnten nicht geladen werden: $e")),
+      );
     }
   }
 
@@ -62,12 +119,12 @@ class _AccountPageState extends State<AccountPage> {
       double height = double.tryParse(heightController.text) ?? 0.0;
 
       if (age < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Age cannot be less than 0")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Alter kann nicht weniger als 0 sein")));
         return;
       }
 
       if (height <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Height must be in centimeters")));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Größe muss in cm angegeben werden")));
         return;
       }
 
@@ -78,15 +135,15 @@ class _AccountPageState extends State<AccountPage> {
           'city': cityController.text,
           'height': height,
           'position': selectedPosition ?? positions[0],
-          'skillLevel': selectedSkillLevel ?? skillLevels[0], // Save the selected skill level
+          'skillLevel': selectedSkillLevel ?? skillLevels[0],
           'profileImage': _profileImageUrl ?? '',
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Profile saved successfully")),
+          const SnackBar(content: Text("Profil gespeichert")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to save profile: $e")),
+          SnackBar(content: Text("Pofil konnte nicht gespeichert werden: $e")),
         );
       }
     }
@@ -100,7 +157,7 @@ class _AccountPageState extends State<AccountPage> {
       });
       _uploadProfileImage();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No image selected!")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Kein Bild ausgewählt!")));
     }
   }
 
@@ -122,11 +179,11 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Profile image uploaded and saved successfully")),
+        const SnackBar(content: Text("Profilbild gespeichert")),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to upload image: $e")),
+        SnackBar(content: Text("Profilbildspeicherfehler: $e")),
       );
     }
   }
@@ -135,42 +192,42 @@ class _AccountPageState extends State<AccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: Text('Edit Profile', style: TextStyle(color: Colors.white, fontSize: 22)),
+        title: const Text('Profil bearbeiten', style: TextStyle(color: Colors.black, fontSize: 22)),
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
+            icon: const Icon(Icons.save, color: Colors.black),
             onPressed: _saveUserProfile,
           ),
         ],
       ),
       body: Container(
-        color: Colors.grey[850],  // Ensure background covers entire screen
+        color: Colors.grey[300],
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
                       Center(
                         child: Stack(
                           children: [
                             CircleAvatar(
-                              radius: 100,  // Profile picture size
-                              backgroundColor: Colors.grey[400],
+                              radius: 100,
+                              backgroundColor: Colors.grey[500],
                               backgroundImage: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
-                                  ? NetworkImage(_profileImageUrl!)  // Load image from Firestore URL
+                                  ? NetworkImage(_profileImageUrl!)
                                   : null,
                               child: _profileImageUrl == null || _profileImageUrl!.isEmpty
-                                  ? Icon(Icons.person, size: 100, color: Colors.white)  // Default icon if no image
+                                  ? const Icon(Icons.person, size: 100, color: Colors.black)
                                   : null,
                             ),
                             Positioned(
@@ -180,9 +237,9 @@ class _AccountPageState extends State<AccountPage> {
                                 onTap: () {
                                   _showImagePickerOptions();
                                 },
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.teal,
-                                  radius: 28,  // Camera icon size
+                                child: const CircleAvatar(
+                                  backgroundColor: Colors.black,
+                                  radius: 28,
                                   child: Icon(Icons.camera_alt, color: Colors.white, size: 28),
                                 ),
                               ),
@@ -190,7 +247,7 @@ class _AccountPageState extends State<AccountPage> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       // Profile form fields
                       IntrinsicHeight(
@@ -201,10 +258,10 @@ class _AccountPageState extends State<AccountPage> {
                               child: Column(
                                 children: [
                                   _buildTextField(label: 'Name', controller: nameController),
-                                  SizedBox(height: 20),
-                                  _buildTextField(label: 'City', controller: cityController),
-                                  SizedBox(height: 20),
-                                  Expanded(  // Wrap the Position Dropdown inside Expanded
+                                  const SizedBox(height: 20),
+                                  _buildTextField(label: 'Stadt', controller: cityController),
+                                  const SizedBox(height: 20),
+                                  Expanded(
                                     child: _buildDropdownField(
                                       label: 'Position',
                                       items: positions,
@@ -221,17 +278,17 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                             Container(
                               width: 2,
-                              color: Colors.white,
-                              margin: EdgeInsets.symmetric(horizontal: 16),
+                              color: Colors.black,
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
                             ),
                             Expanded(
                               child: Column(
                                 children: [
-                                  _buildTextField(label: 'Age', controller: ageController, keyboardType: TextInputType.number),
-                                  SizedBox(height: 20),
-                                  _buildTextField(label: 'Height (cm)', controller: heightController, keyboardType: TextInputType.number),
-                                  SizedBox(height: 20),
-                                  Expanded(  // Wrap the Skill Level Dropdown inside Expanded
+                                  _buildTextField(label: 'Alter', controller: ageController, keyboardType: TextInputType.number),
+                                  const SizedBox(height: 20),
+                                  _buildTextField(label: 'Größe (cm)', controller: heightController, keyboardType: TextInputType.number),
+                                  const SizedBox(height: 20),
+                                  Expanded(
                                     child: _buildDropdownField(
                                       label: 'Skill Level',
                                       items: skillLevels,
@@ -241,7 +298,7 @@ class _AccountPageState extends State<AccountPage> {
                                           selectedSkillLevel = newValue;
                                         });
                                       },
-                                      isExpanded: true,  // Ensure it uses full width
+                                      isExpanded: true,
                                     ),
                                   ),
                                 ],
@@ -251,39 +308,106 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
 
-                      SizedBox(height: 40),
+                      const SizedBox(height: 40),
 
                       // Recently Played Section
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center, // Center align the heading
                         children: [
-                          Center(
+                          const Center(
                             child: Text(
-                              'Recently Played',
-                              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                              'Zuletzt gespielt',
+                              style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              // Placeholder for the first court
-                              Container(
-                                width: 150,
-                                height: 150,
-                                color: Colors.grey[700],
-                                child: Center(
-                                  child: Icon(Icons.location_on, color: Colors.white, size: 50),
-                                ),
+                              // First Court Image with Name below
+                              Column(
+                                children: [
+                                  Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      border: Border.all(color: Colors.grey[800]!), //border for consistency
+                                    ),
+                                    child: firstCourtImageUrl != null
+                                        ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0), //rounded corners
+                                      child: Image.network(
+                                        firstCourtImageUrl!,
+                                        fit: BoxFit.cover, //image fills the container
+                                        width: 150,
+                                        height: 150,
+                                      ),
+                                    )
+                                        : const Center(
+                                      child: Icon(Icons.location_on, color: Colors.white, size: 50),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8), // Space between image and name
+                                  if (firstCourtName != null)
+                                    SizedBox(
+                                      width: 150, // width is the same as the image
+                                      child: Text(
+                                        firstCourtName!,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2, // Limit the text to 2 lines
+                                        overflow: TextOverflow.ellipsis, // Add ellipsis if text overflows
+                                      ),
+                                    ),
+                                ],
                               ),
-                              // Placeholder for the second court
-                              Container(
-                                width: 150,
-                                height: 150,
-                                color: Colors.grey[700],
-                                child: Center(
-                                  child: Icon(Icons.location_on, color: Colors.white, size: 50),
-                                ),
+
+                              // Second Court Image with Name below
+                              Column(
+                                children: [
+                                  Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      border: Border.all(color: Colors.grey[800]!),
+                                    ),
+                                    child: secondCourtImageUrl != null
+                                        ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        secondCourtImageUrl!,
+                                        fit: BoxFit.cover,
+                                        width: 150,
+                                        height: 150,
+                                      ),
+                                    )
+                                        : const Center(
+                                      child: Icon(Icons.location_on, color: Colors.white, size: 50),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8), // Space between image and name
+                                  if (secondCourtName != null)
+                                    SizedBox(
+                                      width: 150, //width is the same as the image
+                                      child: Text(
+                                        secondCourtName!,
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
@@ -308,21 +432,21 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey[800],
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             ),
           ),
         ],
@@ -330,7 +454,13 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildDropdownField({required String label, required List<String> items, String? value, required ValueChanged<String?> onChanged, bool isExpanded = false}) {
+  Widget _buildDropdownField({
+    required String label,
+    required List<String> items,
+    String? value,
+    required ValueChanged<String?> onChanged,
+    bool isExpanded = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -338,17 +468,17 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             value: value,
-            isExpanded: isExpanded,  // Allow the dropdown to take full width
-            dropdownColor: Colors.grey[850],
-            icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+            isExpanded: isExpanded,
+            dropdownColor: Colors.white, // Set dropdown menu background to white
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey[800],
+              fillColor: Colors.white, // Set the filled color for the dropdown field
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10.0),
                 borderSide: BorderSide.none,
@@ -357,7 +487,7 @@ class _AccountPageState extends State<AccountPage> {
             items: items.map<DropdownMenuItem<String>>((String item) {
               return DropdownMenuItem<String>(
                 value: item,
-                child: Text(item, style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: Text(item, style: const TextStyle(color: Colors.black)), // Set text color to black
               );
             }).toList(),
             onChanged: onChanged,
@@ -376,16 +506,16 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.camera),
-                  title: Text('Take Photo'),
+                  leading: const Icon(Icons.camera),
+                  title: const Text('Ein Bild aufnehmen'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera);
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library),
-                  title: Text('Choose from Library'),
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Aus Bibliothek auswählen'),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery);
@@ -397,6 +527,8 @@ class _AccountPageState extends State<AccountPage> {
         });
   }
 }
+
+
 
 
 
